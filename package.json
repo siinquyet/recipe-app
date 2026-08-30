@@ -1,0 +1,28 @@
+{
+  "name": "Cook",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "recipe-*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,yml,yaml,kt,kts,gradle}\"",
+    "db:generate": "turbo run db:generate --filter=recipe-backend-api",
+    "db:push": "turbo run db:push --filter=recipe-backend-api",
+    "db:studio": "turbo run db:studio --filter=recipe-backend-api"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "prettier": "^3.3.0",
+    "@types/node": "^20.12.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

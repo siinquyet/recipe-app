@@ -1,0 +1,468 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum RecipeStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum RecipeSource {
+  LOCAL
+  SPOONACULAR
+}
+
+enum ReferenceStatus {
+  ACTIVE
+  UNAVAILABLE
+}
+
+enum UnitCategory {
+  MASS
+  VOLUME
+  COUNT
+}
+
+enum IngredientMappingStatus {
+  MAPPED
+  UNMAPPED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum ShoppingListStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+enum UserActivityType {
+  VIEW
+  FAVORITE
+  RATE
+  COMMENT
+  SHARE
+  CREATE_RECIPE
+  GENERATE_SHOPPING
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  HIDE
+  UNHIDE
+  BAN_USER
+  ACTIVATE_USER
+  CHANGE_ROLE
+  SYNC_REFERENCE
+  RESOLVE_REPORT
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  displayName   String
+  avatarUrl     String?
+  role          Role      @default(USER)
+  status        String    @default("ACTIVE") // ACTIVE, BANNED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  recipes       Recipe[]
+  preferences   UserPreferences?
+  favorites     Favorite[]
+  ratings       Rating[]
+  comments      Comment[]
+  reports       Report[]
+  mealPlans     MealPlan[]
+  shoppingLists ShoppingList[]
+  activities    UserActivity[]
+  auditLogs     AuditLog[]
+}
+
+model UserPreferences {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dietaryTags    Json     // vegetarian, vegan, gluten-free, keto, etc.
+  allergies      Json
+  cuisinePrefs   Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  parentId    String?
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  recipes     Recipe[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  recipes   Recipe[]
+  createdAt DateTime  @default(now())
+}
+
+model Recipe {
+  id              String        @id @default(uuid())
+  title           String
+  description     String?
+  thumbnailUrl    String?
+  cookTimeMinutes Int
+  prepTimeMinutes Int?
+  servings        Int
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id])
+  status          RecipeStatus  @default(DRAFT)
+  source          RecipeSource  @default(LOCAL)
+  externalId      String?       // Spoonacular ID nếu source = SPOONACULAR
+  rejectionReason String?
+  categoryId      String?
+  category        Category?     @relation(fields: [categoryId], references: [id])
+  tags            Tag[]
+  ingredients     RecipeIngredient[]
+  steps           RecipeStep[]
+  nutrition       NutritionInfo?
+  favorites       Favorite[]
+  ratings         Rating[]
+  comments        Comment[]
+  reports         Report[]
+  mealPlanItems   MealPlanItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?     // soft delete
+  
+  @@index([authorId])
+  @@index([status])
+  @@index([source])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([title])
+}
+
+model RecipeReference {
+  id            String           @id @default(uuid())
+  source        RecipeSource     @default(SPOONACULAR)
+  externalId    String
+  title         String
+  imageUrl      String?
+  servings      Int
+  status        ReferenceStatus  @default(ACTIVE)
+  spoonacularScore Float?
+  healthScore   Float?
+  aggregateLikes Int?
+  lastSyncedAt  DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  favorites     Favorite[]
+  ratings       Rating[]
+  comments      Comment[]
+  reports       Report[]
+  mealPlanItems MealPlanItem[]
+  externalMetrics ExternalRecipeMetrics?
+  
+  @@unique([source, externalId])
+  @@index([status])
+  @@index([title])
+}
+
+model InternalIngredient {
+  id             String   @id @default(uuid())
+  canonicalName  String   @unique // tên chuẩn: "thịt bò"
+  normalizedName String   // tên đã chuẩn hóa: "thit bo"
+  category       String?  // meat, vegetable, spice, dairy, grain, etc.
+  unitCategory   UnitCategory @default(COUNT)
+  defaultUnit    String   @default("g")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  mappings       IngredientMapping[]
+  recipeIngredients RecipeIngredient[]
+  shoppingListItems ShoppingListItem[]
+}
+
+model IngredientMapping {
+  id                   String   @id @default(uuid())
+  internalIngredientId String
+  internalIngredient   InternalIngredient @relation(fields: [internalIngredientId], references: [id])
+  externalName         String   // tên từ Spoonacular: "beef, ground"
+  source               RecipeSource @default(SPOONACULAR)
+  status               IngredientMappingStatus @default(MAPPED)
+  confidence           Float    @default(1.0) // 0-1
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@unique([source, externalName])
+  @@index([internalIngredientId])
+}
+
+model RecipeIngredient {
+  id                   String   @id @default(uuid())
+  recipeId             String
+  recipe               Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  internalIngredientId String?
+  internalIngredient   InternalIngredient? @relation(fields: [internalIngredientId], references: [id])
+  originalText         String   // văn bản gốc: "500g thịt bò băm"
+  quantity             Decimal  @db.Decimal(10, 3) // 500.000
+  unit                 String   // "g"
+  sortOrder            Int      // STT 1,2,3...
+  createdAt            DateTime @default(now())
+  
+  @@index([recipeId])
+  @@index([internalIngredientId])
+  @@unique([recipeId, sortOrder])
+}
+
+model RecipeStep {
+  id        String  @id @default(uuid())
+  recipeId  String
+  recipe    Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  stepOrder Int
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  
+  @@index([recipeId])
+  @@unique([recipeId, stepOrder])
+}
+
+model NutritionInfo {
+  id        String  @id @default(uuid())
+  recipeId  String  @unique
+  recipe    Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  calories  Int
+  protein   Decimal @db.Decimal(10, 2)
+  carbs     Decimal @db.Decimal(10, 2)
+  fat       Decimal @db.Decimal(10, 2)
+  fiber     Decimal? @db.Decimal(10, 2)
+  sugar     Decimal? @db.Decimal(10, 2)
+  sodium    Decimal? @db.Decimal(10, 2)
+}
+
+model Favorite {
+  id                  String  @id @default(uuid())
+  userId              String
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId            String? // Local recipe
+  recipe              Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeReferenceId   String? // Spoonacular recipe
+  recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  
+  @@unique([userId, recipeId])
+  @@unique([userId, recipeReferenceId])
+  @@index([userId])
+}
+
+model Rating {
+  id                  String  @id @default(uuid())
+  userId              String
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId            String?
+  recipe              Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeReferenceId   String?
+  recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
+  score               Int     // 1-5
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@unique([userId, recipeId])
+  @@unique([userId, recipeReferenceId])
+  @@index([recipeId])
+  @@index([recipeReferenceId])
+}
+
+model Comment {
+  id                  String  @id @default(uuid())
+  userId              String
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId            String?
+  recipe              Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeReferenceId   String?
+  recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
+  content             String
+  parentId            String? // reply
+  parent              Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies             Comment[] @relation("CommentReplies")
+  reports             Report[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+  
+  @@index([recipeId])
+  @@index([recipeReferenceId])
+  @@index([userId])
+}
+
+model Report {
+  id                  String  @id @default(uuid())
+  userId              String
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId            String?
+  recipe              Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeReferenceId   String?
+  recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
+  commentId           String?
+  comment             Comment? @relation(fields: [commentId], references: [id])
+  reason              String
+  status              String  @default("PENDING") // PENDING, RESOLVED, REJECTED
+  adminNote           String?
+  createdAt           DateTime @default(now())
+  resolvedAt          DateTime?
+  
+  @@index([userId])
+  @@index([recipeId])
+  @@index([recipeReferenceId])
+  @@index([status])
+}
+
+model MealPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  items     MealPlanItem[]
+  @@index([userId])
+  @@index([startDate, endDate])
+}
+
+model MealPlanItem {
+  id              String  @id @default(uuid())
+  mealPlanId      String
+  mealPlan        MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipeId        String?
+  recipe          Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  recipeReferenceId String?
+  recipeReference RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: SetNull)
+  date            DateTime
+  mealType        MealType
+  servings        Int     // override recipe servings
+  sortOrder       Int
+  createdAt       DateTime @default(now())
+  
+  @@index([mealPlanId])
+  @@index([date, mealType])
+  @@unique([mealPlanId, date, mealType, sortOrder])
+}
+
+model ShoppingList {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  sourceType String  // RECIPE, MEAL_PLAN, MANUAL
+  sourceId  String?  // recipeId or mealPlanId
+  status    ShoppingListStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  items     ShoppingListItem[]
+  @@index([userId])
+  @@index([status])
+}
+
+model ShoppingListItem {
+  id                     String   @id @default(uuid())
+  shoppingListId         String
+  shoppingList           ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  internalIngredientId   String?
+  internalIngredient     InternalIngredient? @relation(fields: [internalIngredientId], references: [id])
+  originalText           String   // văn bản gốc từ recipe
+  quantity               Decimal  @db.Decimal(10, 3)
+  unit                   String
+  isChecked              Boolean  @default(false)
+  sortOrder              Int
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  @@index([shoppingListId])
+  @@index([internalIngredientId])
+}
+
+model UserActivity {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      UserActivityType
+  entityType String  // RECIPE, RECIPE_REFERENCE
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    AuditAction
+  entityType String
+  entityId  String
+  oldData   Json?
+  newData   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+}
+
+model ExternalRecipeMetrics {
+  id              String   @id @default(uuid())
+  recipeReferenceId String @unique
+  recipeReference RecipeReference @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
+  spoonacularScore Float?
+  healthScore     Float?
+  aggregateLikes  Int?
+  lastSyncedAt    DateTime @default(now())
+}
