@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cook.ui.theme.CookTheme
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun TrangThaiDangTai(
@@ -32,10 +32,10 @@ fun TrangThaiDangTai(
         ) {
             CircularProgressIndicator(
                 modifier = Modifier.size(kichThuoc),
-                color = CookTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 4.dp
             )
-            BodyText(text = thongDiep, kichThuoc = 16.sp, mau = CookTheme.colorScheme.onSurfaceVariant)
+            BodyText(text = thongDiep, kichThuoc = 16.sp, mau = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -52,11 +52,11 @@ fun TrangThaiDangTaiNho(
     ) {
         CircularProgressIndicator(
             modifier = Modifier.size(24.dp),
-            color = CookTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.primary,
             strokeWidth = 3.dp
         )
         if (thongDiep.isNotBlank()) {
-            BodyText(text = thongDiep, kichThuoc = 14.sp, mau = CookTheme.colorScheme.onSurfaceVariant)
+            BodyText(text = thongDiep, kichThuoc = 14.sp, mau = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

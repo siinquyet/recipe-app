@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,11 +22,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextOverflow
+import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
-import com.example.cook.ui.theme.CookTheme
+import androidx.compose.material3.MaterialTheme
 import com.example.cook.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -40,6 +41,7 @@ data class CongThucCardData(
     val tacGiaAvatar: String?
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CongThucCard(
     duLieu: CongThucCardData,
@@ -104,12 +106,12 @@ fun CongThucCard(
                         Icon(
                             imageVector = Icons.Filled.AccessTime,
                             contentDescription = "Thời gian nấu",
-                            tint = CookTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         BodyText(
                             text = "${duLieu.thoiGianNau} phút",
                             kichThuoc = 13.sp,
-                            mau = CookTheme.colorScheme.onSurfaceVariant
+                            mau = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -121,12 +123,12 @@ fun CongThucCard(
                         Icon(
                             imageVector = Icons.Filled.Restaurant,
                             contentDescription = "Khẩu phần",
-                            tint = CookTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         BodyText(
                             text = "${duLieu.khauPhan} người",
                             kichThuoc = 13.sp,
-                            mau = CookTheme.colorScheme.onSurfaceVariant
+                            mau = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -146,7 +148,7 @@ fun CongThucCard(
                         BodyText(
                             text = duLieu.tacGia,
                             kichThuoc = 13.sp,
-                            mau = CookTheme.colorScheme.onSurfaceVariant
+                            mau = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

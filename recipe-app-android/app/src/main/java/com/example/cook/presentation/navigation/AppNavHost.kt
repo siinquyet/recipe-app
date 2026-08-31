@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -34,20 +34,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavGraphBuilder
+import androidx.compose.material3.MaterialTheme
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.getString
-import androidx.navigation.compose.navArgument
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.cook.presentation.ui.components.BodyText
 import com.example.cook.presentation.ui.components.CaptionText
 import com.example.cook.presentation.ui.components.TitleText
-import com.example.cook.ui.theme.CookTheme
-import org.koin.androidx.viewmodel.compose.viewModel
 
 @Composable
 fun AppNavHost(
@@ -82,8 +75,8 @@ fun BottomNavigationBar(navController: NavHostController) {
 
     NavigationBar(
         modifier = Modifier,
-        containerColor = CookTheme.colorScheme.surface,
-        contentColor = CookTheme.colorScheme.onSurface
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         tabs.forEach { tab ->
             val isSelected = currentRoute.value == tab.route
@@ -92,7 +85,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                     Icon(
                         imageVector = if (isSelected) tab.iconSelected ?: tab.icon else tab.icon,
                         contentDescription = tab.ten,
-                        tint = if (isSelected) CookTheme.colorScheme.primary else CookTheme.colorScheme.onSurfaceVariant
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 label = { CaptionText(text = tab.ten) },
@@ -191,6 +184,7 @@ fun HoSoScreen(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChiTietCongThucScreen(id: String, nguon: String, navController: NavHostController) {
     Scaffold(
@@ -200,14 +194,14 @@ fun ChiTietCongThucScreen(id: String, nguon: String, navController: NavHostContr
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Quay lại"
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CookTheme.colorScheme.surface,
-                    titleContentColor = CookTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -222,6 +216,7 @@ fun ChiTietCongThucScreen(id: String, nguon: String, navController: NavHostContr
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaoCongThucScreen(idChinhSua: String?, navController: NavHostController) {
     Scaffold(
@@ -231,7 +226,7 @@ fun TaoCongThucScreen(idChinhSua: String?, navController: NavHostController) {
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Quay lại"
                         )
                     }

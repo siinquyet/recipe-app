@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application") version "8.3.2"
-    id("org.jetbrains.kotlin.android") version "1.9.20"
-    id("com.google.devtools.ksp") version "1.9.20-1.0.14"
+    id("org.jetbrains.kotlin.android") version "2.0.21"
+    id("com.google.devtools.ksp") version "2.0.21-1.0.28"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
 android {
@@ -37,14 +38,10 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
-    }
-
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE,LICENSE.txt,NOTICE,NOTICE.txt}"
         }
@@ -52,7 +49,7 @@ android {
 
     buildFeatures {
         compose = true
-        viewBinding = true
+        viewBinding = false
         dataBinding = false
     }
 }
@@ -77,7 +74,6 @@ dependencies {
     // Koin (DI)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
-    implementation(libs.androidx.compose.material.icons.extended)
 
     // Retrofit & Serialization
     implementation(libs.retrofit)

@@ -1,11 +1,11 @@
 package com.example.cook.presentation.ui.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextAlign
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.example.cook.ui.theme.CookTheme
 
 @Composable
 fun NumberText(
@@ -14,7 +14,7 @@ fun NumberText(
     modifier: Modifier = Modifier,
     kichThuoc: androidx.compose.ui.unit.TextUnit = 16.sp,
     canLe: TextAlign = TextAlign.End,
-    mau: androidx.compose.ui.graphics.Color = CookTheme.colorScheme.onSurface
+    mau: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Text(
         text = "${value.formatVn()} $donVi".trim(),
@@ -32,7 +32,7 @@ fun NumberText(
     modifier: Modifier = Modifier,
     kichThuoc: androidx.compose.ui.unit.TextUnit = 16.sp,
     canLe: TextAlign = TextAlign.End,
-    mau: androidx.compose.ui.graphics.Color = CookTheme.colorScheme.onSurface
+    mau: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Text(
         text = "${value.formatVn()} $donVi".trim(),
@@ -50,7 +50,7 @@ fun NumberText(
     modifier: Modifier = Modifier,
     kichThuoc: androidx.compose.ui.unit.TextUnit = 16.sp,
     canLe: TextAlign = TextAlign.End,
-    mau: androidx.compose.ui.graphics.Color = CookTheme.colorScheme.onSurface
+    mau: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Text(
         text = "${value} $donVi".trim(),

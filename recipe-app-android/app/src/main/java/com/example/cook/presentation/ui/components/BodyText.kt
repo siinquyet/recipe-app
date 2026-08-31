@@ -1,14 +1,14 @@
 package com.example.cook.presentation.ui.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextAlign
-import androidx.compose.ui.text.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.cook.ui.theme.CookTheme
 
 @Composable
 fun BodyText(
@@ -16,7 +16,7 @@ fun BodyText(
     modifier: Modifier = Modifier,
     kichThuoc: androidx.compose.ui.unit.TextUnit = 16.sp,
     canLe: TextAlign = TextAlign.Start,
-    mau: androidx.compose.ui.graphics.Color = CookTheme.colorScheme.onSurface,
+    mau: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
     soDongToiDa: Int = Int.MAX_VALUE,
     dam: Boolean = false,
     nghieng: Boolean = false
@@ -39,7 +39,7 @@ fun TitleText(
     text: String,
     modifier: Modifier = Modifier,
     kichThuoc: androidx.compose.ui.unit.TextUnit = 22.sp,
-    mau: androidx.compose.ui.graphics.Color = CookTheme.colorScheme.onSurface
+    mau: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Text(
         text = text,
@@ -56,7 +56,7 @@ fun CaptionText(
     text: String,
     modifier: Modifier = Modifier,
     kichThuoc: androidx.compose.ui.unit.TextUnit = 12.sp,
-    mau: androidx.compose.ui.graphics.Color = CookTheme.colorScheme.onSurfaceVariant
+    mau: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     Text(
         text = text,

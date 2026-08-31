@@ -15,10 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextAlign
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cook.ui.theme.CookTheme
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +45,7 @@ fun TrangThaiRong(
             Icon(
                 imageVector = icon,
                 contentDescription = "",
-                tint = CookTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier.size(80.dp)
             )
             BodyText(
@@ -52,13 +53,13 @@ fun TrangThaiRong(
                 kichThuoc = 20.sp,
                 dam = true,
                 canLe = TextAlign.Center,
-                mau = CookTheme.colorScheme.onSurface
+                mau = MaterialTheme.colorScheme.onSurface
             )
             BodyText(
                 text = thongDiep,
                 kichThuoc = 15.sp,
                 canLe = TextAlign.Center,
-                mau = CookTheme.colorScheme.onSurfaceVariant
+                mau = MaterialTheme.colorScheme.onSurfaceVariant
             )
             hanhDong?.let { text ->
                 khiBamHanhDong?.let { onClick ->
@@ -81,7 +82,7 @@ fun TrangThaiRongNho(
             .fillMaxWidth()
             .padding(16.dp)
             .background(
-                color = CookTheme.colorScheme.surfaceVariant,
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(16.dp)
@@ -94,9 +95,9 @@ fun TrangThaiRongNho(
             Icon(
                 imageVector = Icons.Filled.Inbox,
                 contentDescription = "",
-                tint = CookTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            BodyText(text = thongDiep, mau = CookTheme.colorScheme.onSurfaceVariant)
+            BodyText(text = thongDiep, mau = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

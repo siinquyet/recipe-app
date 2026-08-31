@@ -15,14 +15,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextAlign
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cook.ui.theme.CookTheme
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.layout.background
 
 @Composable
 fun TrangThaiLoi(
@@ -43,7 +43,7 @@ fun TrangThaiLoi(
             Icon(
                 imageVector = Icons.Filled.ErrorOutline,
                 contentDescription = "Lỗi",
-                tint = CookTheme.colorScheme.error,
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(64.dp)
             )
             BodyText(
@@ -53,13 +53,13 @@ fun TrangThaiLoi(
                 canLe = TextAlign.Center
             )
             if (maLoi.isNotBlank()) {
-                CaptionText(text = "Mã lỗi: $maLoi", mau = CookTheme.colorScheme.onSurfaceVariant)
+                CaptionText(text = "Mã lỗi: $maLoi", mau = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Button(
                 onClick = khiThuLai,
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = CookTheme.colorScheme.error)
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(text = "Thử lại", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = CookTheme.colorScheme.onError)
+                Text(text = "Thử lại", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onError)
             }
         }
     }
@@ -76,7 +76,7 @@ fun TrangThaiLoiNho(
             .fillMaxWidth()
             .padding(16.dp)
             .background(
-                color = CookTheme.colorScheme.errorContainer,
+                color = MaterialTheme.colorScheme.errorContainer,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp)
@@ -93,13 +93,13 @@ fun TrangThaiLoiNho(
                 Icon(
                     imageVector = Icons.Filled.ErrorOutline,
                     contentDescription = "Lỗi",
-                    tint = CookTheme.colorScheme.onErrorContainer
+                    tint = MaterialTheme.colorScheme.onErrorContainer
                 )
-                BodyText(text = thongDiep, mau = CookTheme.colorScheme.onErrorContainer)
+                BodyText(text = thongDiep, mau = MaterialTheme.colorScheme.onErrorContainer)
             }
             Button(
                 onClick = khiThuLai,
-                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = CookTheme.colorScheme.onErrorContainer)
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onErrorContainer)
             ) {
                 Text(text = "Thử lại", fontWeight = FontWeight.Medium)
             }

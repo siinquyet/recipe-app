@@ -2,9 +2,8 @@ package com.example.cook.presentation.navigation
 
 import androidx.navigation.NavType
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.getString
+import androidx.navigation.navArgument
 
 sealed interface DuongDan {
     object TrangChu : DuongDan
@@ -33,16 +32,16 @@ fun NavGraphBuilder.themDuongDan(navController: androidx.navigation.NavHostContr
     composable(
         route = "chi_tiet_cong_thuc/{id}/{nguon}",
         arguments = listOf(navArgument("id") { type = NavType.StringType }, navArgument("nguon") { type = NavType.StringType })
-    ) {
-        val id = getString("id")!!
-        val nguon = getString("nguon")!!
+    ) { backStackEntry ->
+        val id = backStackEntry.arguments?.getString("id")!!
+        val nguon = backStackEntry.arguments?.getString("nguon")!!
         ChiTietCongThucScreen(id = id, nguon = nguon, navController = navController)
     }
     composable(
         route = "tao_cong_thuc?chinh_sua_id={idChinhSua}",
         arguments = listOf(navArgument("idChinhSua") { type = NavType.StringType; nullable = true })
-    ) {
-        val idChinhSua = getString("idChinhSua")
+    ) { backStackEntry ->
+        val idChinhSua = backStackEntry.arguments?.getString("idChinhSua")
         TaoCongThucScreen(idChinhSua = idChinhSua, navController = navController)
     }
     composable(route = "dang_nhap") { DangNhapScreen(navController = navController) }
