@@ -3,13 +3,14 @@ package com.example.cook.data.api
 import com.example.cook.data.model.ApiResponse
 import com.example.cook.data.model.CongThuc
 import com.example.cook.data.model.DanhSachCongThuc
+import com.example.cook.data.model.DangKyRequest
 import com.example.cook.data.model.DangNhapRequest
 import com.example.cook.data.model.DangNhapResponse
-import com.example.cook.data.model.DangKyRequest
+import com.example.cook.data.model.NguoiDung
 import kotlinx.serialization.Serializable
-import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path

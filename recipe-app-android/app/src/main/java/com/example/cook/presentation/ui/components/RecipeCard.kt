@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -26,6 +25,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextOverflow
 import coil.compose.AsyncImage
 import com.example.cook.ui.theme.CookTheme
+import com.example.cook.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Restaurant
 
 data class CongThucCardData(
     val id: String,
@@ -56,7 +59,6 @@ fun CongThucCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Hình ảnh món ăn
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -69,19 +71,17 @@ fun CongThucCard(
                         contentDescription = duLieu.tenMon,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
-                        placeholder = androidx.compose.ui.res.painterResource(id = androidx.compose.ui.res.R.drawable.ic_launcher_background),
-                        error = androidx.compose.ui.res.painterResource(id = androidx.compose.ui.res.R.drawable.ic_launcher_background)
+                        placeholder = painterResource(id = R.drawable.ic_launcher_background),
+                        error = painterResource(id = R.drawable.ic_launcher_background)
                     )
-                } ?: androidx.compose.ui.res.painterResource(id = androidx.compose.ui.res.R.drawable.ic_launcher_background)
+                } ?: painterResource(id = R.drawable.ic_launcher_background)
             }
 
-            // Thông tin món ăn
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
             ) {
-                // Tên món
                 BodyText(
                     text = duLieu.tenMon,
                     kichThuoc = 18.sp,
@@ -91,20 +91,18 @@ fun CongThucCard(
 
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 8.dp))
 
-                // Meta row: thời gian + khẩu phần + tác giả
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Thời gian nấu
                     Row(
                         modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.AccessTime,
+                            imageVector = Icons.Filled.AccessTime,
                             contentDescription = "Thời gian nấu",
                             tint = CookTheme.colorScheme.onSurfaceVariant
                         )
@@ -115,14 +113,13 @@ fun CongThucCard(
                         )
                     }
 
-                    // Khẩu phần
                     Row(
                         modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Restaurant,
+                            imageVector = Icons.Filled.Restaurant,
                             contentDescription = "Khẩu phần",
                             tint = CookTheme.colorScheme.onSurfaceVariant
                         )
@@ -133,7 +130,6 @@ fun CongThucCard(
                         )
                     }
 
-                    // Tác giả
                     Row(
                         modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End,

@@ -4,17 +4,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cook.ui.theme.CookTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.background
 
 @Composable
 fun TrangThaiLoi(
@@ -33,7 +41,7 @@ fun TrangThaiLoi(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.ErrorOutline,
+                imageVector = Icons.Filled.ErrorOutline,
                 contentDescription = "Lỗi",
                 tint = CookTheme.colorScheme.error,
                 modifier = Modifier.size(64.dp)
@@ -42,7 +50,7 @@ fun TrangThaiLoi(
                 text = thongDiep,
                 kichThuoc = 18.sp,
                 dam = true,
-                canLe = androidx.compose.ui.text.TextAlign.Center
+                canLe = TextAlign.Center
             )
             if (maLoi.isNotBlank()) {
                 CaptionText(text = "Mã lỗi: $maLoi", mau = CookTheme.colorScheme.onSurfaceVariant)
@@ -69,7 +77,7 @@ fun TrangThaiLoiNho(
             .padding(16.dp)
             .background(
                 color = CookTheme.colorScheme.errorContainer,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp)
     ) {
@@ -83,7 +91,7 @@ fun TrangThaiLoiNho(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.ErrorOutline,
+                    imageVector = Icons.Filled.ErrorOutline,
                     contentDescription = "Lỗi",
                     tint = CookTheme.colorScheme.onErrorContainer
                 )

@@ -2,9 +2,11 @@ package com.example.cook.presentation.ui.components
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextAlign
+import androidx.compose.ui.text.TextOverflow
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.cook.ui.theme.CookTheme
 
@@ -26,9 +28,9 @@ fun BodyText(
         fontSize = kichThuoc,
         color = mau,
         maxLines = soDongToiDa,
-        overflow = androidx.compose.ui.text.TextOverflow.Ellipsis,
-        fontWeight = if (dam) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal,
-        fontStyle = if (nghieng) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+        overflow = TextOverflow.Ellipsis,
+        fontWeight = if (dam) FontWeight.Bold else FontWeight.Normal,
+        fontStyle = if (nghieng) FontStyle.Italic else FontStyle.Normal
     )
 }
 
@@ -45,7 +47,7 @@ fun TitleText(
         textAlign = TextAlign.Start,
         fontSize = kichThuoc,
         color = mau,
-        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+        fontWeight = FontWeight.Bold
     )
 }
 
