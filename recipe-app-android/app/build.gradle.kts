@@ -99,6 +99,9 @@ dependencies {
     // Coil (Image loading)
     implementation(libs.coil.compose)
 
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockito.kotlin)
