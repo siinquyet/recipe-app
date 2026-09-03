@@ -1,6 +1,8 @@
 package com.example.cook
 
 import android.app.Application
+import com.example.cook.data.local.TokenStorage
+import com.example.cook.data.session.AuthGate
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
@@ -16,5 +18,6 @@ class CookApplication : Application() {
 }
 
 val diModule = module {
-    // Modules sẽ được thêm sau
+    single { TokenStorage(androidContext()) }
+    single { AuthGate(get()) }
 }

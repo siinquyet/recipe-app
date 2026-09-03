@@ -26,8 +26,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,8 +33,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cook.presentation.ui.components.BodyText
 import com.example.cook.presentation.ui.components.CaptionText
@@ -60,6 +60,13 @@ data class TabItem(
     val iconSelected: androidx.compose.ui.graphics.vector.ImageVector? = null
 )
 
+private val bottomTabRoutes = setOf("trang_chu", "tim_kiem", "ke_hoach_an", "danh_sach_di_cho", "ho_so")
+
+fun layRouteTabDangChon(routeHienTai: String?): String {
+    if (routeHienTai != null && routeHienTai in bottomTabRoutes) return routeHienTai
+    return "trang_chu"
+}
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun BottomNavigationBar(navController: NavHostController) {
@@ -71,7 +78,8 @@ fun BottomNavigationBar(navController: NavHostController) {
         TabItem(route = "ho_so", ten = "Hồ sơ", icon = Icons.Filled.Person, iconSelected = Icons.Filled.Person)
     )
 
-    val currentRoute = remember { mutableStateOf("trang_chu") }
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = layRouteTabDangChon(backStackEntry?.destination?.route)
 
     NavigationBar(
         modifier = Modifier,
@@ -79,7 +87,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         tabs.forEach { tab ->
-            val isSelected = currentRoute.value == tab.route
+            val isSelected = currentRoute == tab.route
             NavigationBarItem(
                 icon = {
                     Icon(
@@ -91,11 +99,13 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = { CaptionText(text = tab.ten) },
                 selected = isSelected,
                 onClick = {
-                    navController.navigate(tab.route) {
-                        popUpTo("trang_chu") { inclusive = false }
-                        launchSingleTop = true
+                    if (!isSelected) {
+                        navController.navigate(tab.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                    currentRoute.value = tab.route
                 },
                 alwaysShowLabel = true
             )

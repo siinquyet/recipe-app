@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,7 +33,8 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     onDangNhapThanhCong: () -> Unit,
     onChuyenDangKy: () -> Unit,
-    onQuenMatKhau: () -> Unit
+    onQuenMatKhau: () -> Unit,
+    onDungThu: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var matKhau by remember { mutableStateOf("") }
@@ -87,6 +89,14 @@ fun LoginScreen(
             enabled = uiState !is AuthUiState.DangXuLy
         ) {
             Text("Đăng nhập")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = onDungThu,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = uiState !is AuthUiState.DangXuLy
+        ) {
+            Text("Dùng thử không cần đăng nhập")
         }
         Spacer(modifier = Modifier.height(16.dp))
         TextButton(onClick = onChuyenDangKy) {
