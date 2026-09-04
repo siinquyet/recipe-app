@@ -11,3 +11,10 @@ val Hong80 = Color(0xFFEFB8C8)
 val Tim40 = Color(0xFF6650a4)
 val TimXam40 = Color(0xFF625b71)
 val Hong40 = Color(0xFF7D5260)
+
+// BR-AUTH-08: Bảng màu theo Recipely "Create Account Options" SVG
+val TealBackground = Color(0xFF70B9BE)
+val TealPatternStroke = Color(0xFF3DA0A7)
+val ButtonDark = Color(0xFF042628)
+val ButtonOnDark = Color(0xFFFFFFFF)
+val SurfaceTranslucent = Color(0xFFFFFFFF)

@@ -1,11 +1,20 @@
 package com.example.cook
 
 import android.app.Application
+import com.example.cook.data.api.ApiService
 import com.example.cook.data.local.TokenStorage
+import com.example.cook.data.repository.AuthRepository
 import com.example.cook.data.session.AuthGate
+import com.example.cook.presentation.auth.AuthViewModel
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class CookApplication : Application() {
     override fun onCreate() {
@@ -20,4 +29,19 @@ class CookApplication : Application() {
 val diModule = module {
     single { TokenStorage(androidContext()) }
     single { AuthGate(get()) }
+
+    single {
+        val json = Json { ignoreUnknownKeys = true }
+        OkHttpClient.Builder().build()
+    }
+    single<ApiService> {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:3000/api/v1/")
+            .client(get())
+            .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(ApiService::class.java)
+    }
+    single { AuthRepository(get(), get()) }
+    viewModel { AuthViewModel(get()) }
 }
