@@ -188,46 +188,6 @@ fun BannerKhach(onDangNhap: () -> Unit) {
 
 // Screen composables
 @Composable
-fun TrangChuScreen(navController: NavHostController, authGate: AuthGate) {
-    val trangThai by authGate.trangThai.collectAsState()
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            if (trangThai == TrangThaiXacThuc.Khach) {
-                BannerKhach(onDangNhap = { navController.navigate(ROUTE_DANG_NHAP) })
-            }
-            BodyText(
-                text = "Trang Chủ - Danh sách công thức",
-                kichThuoc = 24.sp,
-                dam = true,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun TimKiemScreen(navController: NavHostController) {
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            BodyText(
-                text = "Tìm Kiếm Công Thức",
-                kichThuoc = 24.sp,
-                dam = true,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-    }
-}
-
-@Composable
 fun KeHoachAnScreen(navController: NavHostController) {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
@@ -277,38 +237,6 @@ fun HoSoScreen(navController: NavHostController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChiTietCongThucScreen(id: String, nguon: String, navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { TitleText(text = "Chi Tiết Công Thức") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            BodyText(
-                text = "Chi Tiết: $id ($nguon)",
-                kichThuoc = 18.sp,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun TaoCongThucScreen(idChinhSua: String?, navController: NavHostController) {
     Scaffold(
         topBar = {
@@ -332,53 +260,5 @@ fun TaoCongThucScreen(idChinhSua: String?, navController: NavHostController) {
                 modifier = Modifier.padding(16.dp)
             )
         }
-    }
-}
-
-@Composable
-fun DangNhapScreen(navController: NavHostController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        BodyText(
-            text = "Màn hình Đăng Nhập",
-            kichThuoc = 24.sp,
-            dam = true
-        )
-    }
-}
-
-@Composable
-fun DangKyScreen(navController: NavHostController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        BodyText(
-            text = "Màn hình Đăng Ký",
-            kichThuoc = 24.sp,
-            dam = true
-        )
-    }
-}
-
-@Composable
-fun QuenMatKhauScreen(navController: NavHostController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        BodyText(
-            text = "Màn hình Quên Mật Khẩu",
-            kichThuoc = 24.sp,
-            dam = true
-        )
     }
 }

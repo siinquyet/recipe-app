@@ -6,8 +6,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.cook.data.session.AuthGate
 import com.example.cook.presentation.auth.AuthViewModel
+import com.example.cook.presentation.auth.ForgotPasswordScreen
 import com.example.cook.presentation.auth.LoginScreen
 import com.example.cook.presentation.auth.RegisterScreen
+import com.example.cook.presentation.home.HomeScreen
+import com.example.cook.presentation.home.HomeViewModel
+import com.example.cook.presentation.recipe.RecipeDetailScreen
+import com.example.cook.presentation.recipe.RecipeDetailViewModel
+import com.example.cook.presentation.search.SearchScreen
+import com.example.cook.presentation.search.SearchViewModel
 import org.koin.androidx.compose.koinViewModel
 
 sealed interface DuongDan {
@@ -29,18 +36,26 @@ sealed interface DuongDan {
 }
 
 fun NavGraphBuilder.themDuongDan(navController: androidx.navigation.NavHostController, authGate: AuthGate) {
-    composable(route = "trang_chu") { TrangChuScreen(navController = navController, authGate = authGate) }
-    composable(route = "tim_kiem") { TimKiemScreen(navController = navController) }
+    composable(route = "trang_chu") {
+        val viewModel: HomeViewModel = koinViewModel()
+        HomeScreen(navController = navController, authGate = authGate, viewModel = viewModel)
+    }
+    composable(route = "tim_kiem") {
+        val viewModel: SearchViewModel = koinViewModel()
+        SearchScreen(navController = navController, viewModel = viewModel)
+    }
     composable(route = "ke_hoach_an") { KeHoachAnScreen(navController = navController) }
     composable(route = "danh_sach_di_cho") { DanhSachDiChoScreen(navController = navController) }
     composable(route = "ho_so") { HoSoScreen(navController = navController) }
     composable(
         route = "chi_tiet_cong_thuc/{id}/{nguon}",
         arguments = listOf(navArgument("id") { type = NavType.StringType }, navArgument("nguon") { type = NavType.StringType })
-    ) { backStackEntry ->
-        val id = backStackEntry.arguments?.getString("id")!!
-        val nguon = backStackEntry.arguments?.getString("nguon")!!
-        ChiTietCongThucScreen(id = id, nguon = nguon, navController = navController)
+    ) {
+        val viewModel: RecipeDetailViewModel = koinViewModel()
+        RecipeDetailScreen(
+            onQuayLai = { navController.popBackStack() },
+            viewModel = viewModel
+        )
     }
     composable(
         route = "tao_cong_thuc?chinh_sua_id={idChinhSua}",
@@ -73,5 +88,10 @@ fun NavGraphBuilder.themDuongDan(navController: androidx.navigation.NavHostContr
             onQuayLaiDangNhap = { navController.popBackStack() }
         )
     }
-    composable(route = "quen_mat_khau") { QuenMatKhauScreen(navController = navController) }
+    composable(route = "quen_mat_khau") {
+        ForgotPasswordScreen(
+            onGuiYeuCau = { /* TODO wire API */ },
+            onQuayLai = { navController.popBackStack() }
+        )
+    }
 }

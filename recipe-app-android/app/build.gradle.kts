@@ -77,7 +77,6 @@ dependencies {
     // Koin (DI)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
-    implementation(libs.koin.androidx.viewmodel)
 
     // Retrofit & Serialization
     implementation(libs.retrofit)
