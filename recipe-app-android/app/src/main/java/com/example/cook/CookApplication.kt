@@ -35,13 +35,11 @@ val diModule = module {
     single { TokenStorage(androidContext()) }
     single { AuthGate(get()) }
 
-    single {
-        val json = Json { ignoreUnknownKeys = true }
-        OkHttpClient.Builder().build()
-    }
+    single { Json { ignoreUnknownKeys = true } }
+    single { OkHttpClient.Builder().build() }
     single<ApiService> {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/api/v1/")
+            .baseUrl(com.example.cook.BuildConfig.BASE_URL)
             .client(get())
             .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
             .build()
