@@ -57,15 +57,19 @@ val diModule = module {
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(false)
+            .callTimeout(45, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .connectionPool(okhttp3.ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
             .addInterceptor(get<AuthInterceptor>())
             .addInterceptor(get<HttpLoggingInterceptor>())
             .build()
     }
 
     single<ApiService> {
+        val baseUrl = com.example.cook.BuildConfig.BASE_URL
+        android.util.Log.i("CookApp", "BASE_URL='$baseUrl'")
         Retrofit.Builder()
-            .baseUrl(com.example.cook.BuildConfig.BASE_URL)
+            .baseUrl(baseUrl)
             .client(get())
             .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
             .build()

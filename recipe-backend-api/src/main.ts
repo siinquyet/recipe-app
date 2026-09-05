@@ -5,7 +5,9 @@ import { ResponseInterceptor } from './common/response.interceptor';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 
 async function khoiDong() {
-    const ungDung = await NestFactory.create(AppModule);
+    const ungDung = await NestFactory.create(AppModule, {
+        bodyParser: true,
+    });
 
     ungDung.setGlobalPrefix('api/v1');
     ungDung.enableCors();
@@ -22,7 +24,17 @@ async function khoiDong() {
     ungDung.useGlobalFilters(new AllExceptionsFilter());
 
     const cong = Number(process.env.PORT) || 3000;
-    await ungDung.listen(cong, '0.0.0.0');
+    const httpServer = await ungDung.listen(cong, '0.0.0.0');
+
+    const httpServerInstance = httpServer as unknown as {
+        keepAliveTimeout?: number;
+        headersTimeout?: number;
+        requestTimeout?: number;
+    };
+    httpServerInstance.keepAliveTimeout = 65000;
+    httpServerInstance.headersTimeout = 66000;
+    httpServerInstance.requestTimeout = 60000;
+
     console.log(`Backend dang nghe o cong ${cong}`);
 }
 

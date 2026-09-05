@@ -1,6 +1,8 @@
 package com.example.cook.presentation.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,14 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,11 +35,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -69,7 +82,8 @@ fun HomeScreen(
                     IconButton(onClick = { /* TODO notifications */ }) {
                         Icon(
                             imageVector = Icons.Filled.Notifications,
-                            contentDescription = "Thông báo"
+                            contentDescription = "Thông báo",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -119,54 +133,217 @@ private fun NoiDungTrangChu(
             hanhDong = "Tải lại",
             khiBamHanhDong = onThuLai
         )
-        is HomeUiState.ThanhCong -> LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            item {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    BodyText(text = "Chào buổi sáng", kichThuoc = 24.sp, dam = true)
-                    BodyText(
-                        text = "Hôm nay bạn muốn nấu món gì?",
-                        kichThuoc = 14.sp,
-                        mau = MaterialTheme.colorScheme.onSurfaceVariant
+        is HomeUiState.ThanhCong -> NoiDungThanhCong(
+            danhSach = uiState.danhSach,
+            onBamCongThuc = onBamCongThuc
+        )
+    }
+}
+
+@Composable
+private fun NoiDungThanhCong(
+    danhSach: List<com.example.cook.presentation.ui.components.CongThucCardData>,
+    onBamCongThuc: (String) -> Unit
+) {
+    var danhMucDaChon by remember { mutableStateOf("Tất cả") }
+
+    val trending = danhSach.take(5)
+    val recommended = danhSach.drop(5).take(6)
+    val ganDay = danhSach.takeLast(3).reversed()
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 24.dp)
+    ) {
+        item { ChaoHoi() }
+
+        item {
+            HanhDongNhanh(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
+        item {
+            TieuDeSection(
+                tieuDe = "Danh mục",
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+            )
+        }
+
+        item {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(danhMuc) { ten ->
+                    FilterChip(
+                        selected = ten == danhMucDaChon,
+                        onClick = { danhMucDaChon = ten },
+                        label = { Text(ten) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        }
+
+        if (trending.isNotEmpty()) {
+            item {
+                TieuDeSection(
+                    tieuDe = "Thịnh hành tuần này",
+                    hanhDongXemTatCa = true,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp)
+                )
+            }
+
             item {
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(danhMuc) { ten ->
-                        AssistChip(
-                            onClick = { /* TODO filter */ },
-                            label = { Text(ten) },
-                            colors = AssistChipDefaults.assistChipColors()
+                    items(trending) { congThuc ->
+                        CongThucCard(
+                            duLieu = congThuc,
+                            khiBam = { onBamCongThuc(congThuc.id) },
+                            variant = com.example.cook.presentation.ui.components.CardVariant.COMPACT
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
+        }
+
+        if (recommended.isNotEmpty()) {
             item {
+                TieuDeSection(
+                    tieuDe = "Gợi ý cho bạn",
+                    hanhDongXemTatCa = true,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp)
+                )
+            }
+
+            items(recommended.chunked(2)) { hang ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    BodyText(text = "Công thức nổi bật", kichThuoc = 18.sp, dam = true)
-                    TextButton(onClick = { /* TODO xem tất cả */ }) {
-                        Text("Xem tất cả")
+                    hang.forEach { congThuc ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            CongThucCard(
+                                duLieu = congThuc,
+                                khiBam = { onBamCongThuc(congThuc.id) },
+                                variant = com.example.cook.presentation.ui.components.CardVariant.GRID
+                            )
+                        }
+                    }
+                    if (hang.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
-            items(uiState.danhSach) { congThuc ->
+        }
+
+        if (ganDay.isNotEmpty()) {
+            item {
+                TieuDeSection(
+                    tieuDe = "Tiếp tục nấu",
+                    hanhDongXemTatCa = true,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp)
+                )
+            }
+
+            items(ganDay) { congThuc ->
                 CongThucCard(
                     duLieu = congThuc,
-                    khiBam = { onBamCongThuc(congThuc.id) }
+                    khiBam = { onBamCongThuc(congThuc.id) },
+                    variant = com.example.cook.presentation.ui.components.CardVariant.LARGE
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChaoHoi() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        BodyText(
+            text = "Chào buổi sáng",
+            kichThuoc = 28.sp,
+            dam = true,
+            mau = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        BodyText(
+            text = "Hôm nay bạn muốn nấu món gì?",
+            kichThuoc = 14.sp,
+            mau = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun HanhDongNhanh(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        HanhDongChip(label = "Kế hoạch", icon = "📅")
+        HanhDongChip(label = "Đi chợ", icon = "🛒")
+        HanhDongChip(label = "Yêu thích", icon = "❤️")
+    }
+}
+
+@Composable
+private fun HanhDongChip(label: String, icon: String) {
+    AssistChip(
+        onClick = { },
+        label = { Text(label) },
+        leadingIcon = {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = icon, fontSize = 12.sp)
+            }
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    )
+}
+
+@Composable
+private fun TieuDeSection(
+    tieuDe: String,
+    hanhDongXemTatCa: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        BodyText(
+            text = tieuDe,
+            kichThuoc = 18.sp,
+            dam = true,
+            mau = MaterialTheme.colorScheme.onSurface
+        )
+        if (hanhDongXemTatCa) {
+            TextButton(onClick = { /* TODO view all */ }) {
+                Text(
+                    text = "Xem tất cả",
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

@@ -19,20 +19,20 @@ import retrofit2.http.Query
 interface ApiService {
 
     // Auth
-    @POST("/auth/register")
+    @POST("auth/register")
     suspend fun dangKy(@Body request: DangKyRequest): Response<DangNhapResponse>
 
-    @POST("/auth/login")
+    @POST("auth/login")
     suspend fun dangNhap(@Body request: DangNhapRequest): Response<DangNhapResponse>
 
-    @POST("/auth/refresh")
+    @POST("auth/refresh")
     suspend fun lamMoiToken(@Body request: LamMoiTokenRequest): Response<DangNhapResponse>
 
-    @GET("/auth/me")
+    @GET("auth/me")
     suspend fun layThongTinNguoiDung(): Response<ApiResponse<NguoiDung>>
 
     // Recipes
-    @GET("/recipes")
+    @GET("recipes")
     suspend fun layDanhSachCongThuc(
         @Query("page") trang: Int = 0,
         @Query("size") kichThuoc: Int = 10,
@@ -46,64 +46,64 @@ interface ApiService {
         @Query("sort") sapXep: String? = null
     ): Response<ApiResponse<DanhSachCongThuc>>
 
-    @GET("/recipes/{id}")
+    @GET("recipes/{id}")
     suspend fun layChiTietCongThuc(@Path("id") id: String): Response<ApiResponse<CongThuc>>
 
-    @GET("/recipes/{id}/similar")
+    @GET("recipes/{id}/similar")
     suspend fun layCongThucTuongTu(@Path("id") id: String): Response<ApiResponse<DanhSachCongThuc>>
 
-    @GET("/recipes/search/by-ingredients")
+    @GET("recipes/search/by-ingredients")
     suspend fun timKiemTheoNguyenLieu(
         @Query("ingredients") nguyenLieu: String,
         @Query("number") soLuong: Int = 10
     ): Response<ApiResponse<DanhSachCongThuc>>
 
     // Favorites
-    @POST("/recipes/{id}/favorite")
+    @POST("recipes/{id}/favorite")
     suspend fun themYeuThich(@Path("id") id: String): Response<ApiResponse<Unit>>
 
-    @DELETE("/recipes/{id}/favorite")
+    @DELETE("recipes/{id}/favorite")
     suspend fun xoaYeuThich(@Path("id") id: String): Response<ApiResponse<Unit>>
 
     // Ratings
-    @POST("/recipes/{id}/rating")
+    @POST("recipes/{id}/rating")
     suspend fun danhGia(@Path("id") id: String, @Body request: DanhGiaRequest): Response<ApiResponse<DanhGiaResponse>>
 
     // Comments
-    @GET("/recipes/{id}/comments")
+    @GET("recipes/{id}/comments")
     suspend fun layBinhLuan(
         @Path("id") id: String,
         @Query("page") trang: Int = 0,
         @Query("size") kichThuoc: Int = 20
     ): Response<ApiResponse<DanhSachBinhLuan>>
 
-    @POST("/recipes/{id}/comments")
+    @POST("recipes/{id}/comments")
     suspend fun taoBinhLuan(@Path("id") id: String, @Body request: TaoBinhLuanRequest): Response<ApiResponse<BinhLuan>>
 
     // Meal Plans
-    @GET("/meal-plans")
+    @GET("meal-plans")
     suspend fun layDanhSachKeHoachAn(
         @Query("page") trang: Int = 0,
         @Query("size") kichThuoc: Int = 10
     ): Response<ApiResponse<DanhSachKeHoachAn>>
 
-    @POST("/meal-plans")
+    @POST("meal-plans")
     suspend fun taoKeHoachAn(@Body request: TaoKeHoachAnRequest): Response<ApiResponse<KeHoachAn>>
 
-    @GET("/meal-plans/{id}")
+    @GET("meal-plans/{id}")
     suspend fun layChiTietKeHoachAn(@Path("id") id: String): Response<ApiResponse<KeHoachAn>>
 
     // Shopping Lists
-    @GET("/shopping-lists")
+    @GET("shopping-lists")
     suspend fun layDanhSachDiCho(
         @Query("page") trang: Int = 0,
         @Query("size") kichThuoc: Int = 10
     ): Response<ApiResponse<DanhSachDiCho>>
 
-    @POST("/shopping-lists")
+    @POST("shopping-lists")
     suspend fun taoDanhSachDiCho(@Body request: TaoDanhSachDiChoRequest): Response<ApiResponse<DanhSachDiCho>>
 
-    @GET("/shopping-lists/{id}")
+    @GET("shopping-lists/{id}")
     suspend fun layChiTietDanhSachDiCho(@Path("id") id: String): Response<ApiResponse<DanhSachDiCho>>
 }
 
