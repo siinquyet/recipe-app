@@ -12,6 +12,35 @@ interface ListParams {
 export class RecipesService {
     constructor(private readonly prisma: PrismaService) {}
 
+    async layTuongTu(id: string) {
+        const recipe = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { categoryId: true },
+        });
+
+        if (!recipe) {
+            return { noiDung: [], tongSoPhanTu: 0, tongSoTrang: 0 };
+        }
+
+        const items = await this.prisma.recipe.findMany({
+            where: {
+                deletedAt: null,
+                status: RecipeStatus.APPROVED,
+                categoryId: recipe.categoryId,
+                id: { not: id },
+            },
+            take: 6,
+            orderBy: { createdAt: 'desc' },
+            include: { author: true },
+        });
+
+        return {
+            noiDung: items.map((r) => this.toCongThuc(r, r.author)),
+            tongSoPhanTu: items.length,
+            tongSoTrang: 1,
+        };
+    }
+
     async layDanhSach(params: ListParams) {
         const where = {
             deletedAt: null,

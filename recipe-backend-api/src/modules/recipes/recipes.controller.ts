@@ -8,15 +8,37 @@ export class RecipesController {
     @Get()
     layDanhSach(
         @Query('trang', new DefaultValuePipe(0), ParseIntPipe) trang: number,
+        @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
         @Query('kichThuoc', new DefaultValuePipe(10), ParseIntPipe) kichThuoc: number,
+        @Query('size', new DefaultValuePipe(10), ParseIntPipe) size: number,
         @Query('tuKhoa') tuKhoa?: string,
+        @Query('search') search?: string,
     ) {
-        const safeSize = Math.min(Math.max(kichThuoc, 1), 50);
+        const finalTrang = page > 0 ? page : trang;
+        const finalSize = size !== 10 ? size : kichThuoc;
+        const safeSize = Math.min(Math.max(finalSize, 1), 50);
+        const finalKeyword = (search || tuKhoa)?.trim() || undefined;
         return this.recipesService.layDanhSach({
-            trang,
+            trang: finalTrang,
             kichThuoc: safeSize,
-            tuKhoa: tuKhoa?.trim() || undefined,
+            tuKhoa: finalKeyword,
         });
+    }
+
+    @Get('search/by-ingredients')
+    layTheoNguyenLieu(
+        @Query('ingredients') nguyenLieu: string,
+        @Query('number', new DefaultValuePipe(10), ParseIntPipe) number: number,
+    ) {
+        return this.recipesService.layDanhSach({
+            trang: 0,
+            kichThuoc: Math.min(Math.max(number, 1), 20),
+        });
+    }
+
+    @Get(':id/similar')
+    layTuongTu(@Param('id') id: string) {
+        return this.recipesService.layTuongTu(id);
     }
 
     @Get(':id')
