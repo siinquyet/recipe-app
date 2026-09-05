@@ -11,6 +11,8 @@ import com.example.cook.presentation.auth.LoginScreen
 import com.example.cook.presentation.auth.RegisterScreen
 import com.example.cook.presentation.home.HomeScreen
 import com.example.cook.presentation.home.HomeViewModel
+import com.example.cook.presentation.mealplan.MealPlanScreen
+import com.example.cook.presentation.mealplan.MealPlanViewModel
 import com.example.cook.presentation.recipe.RecipeDetailScreen
 import com.example.cook.presentation.recipe.RecipeDetailViewModel
 import com.example.cook.presentation.search.SearchScreen
@@ -44,7 +46,10 @@ fun NavGraphBuilder.themDuongDan(navController: androidx.navigation.NavHostContr
         val viewModel: SearchViewModel = koinViewModel()
         SearchScreen(navController = navController, viewModel = viewModel)
     }
-    composable(route = "ke_hoach_an") { KeHoachAnScreen(navController = navController) }
+    composable(route = "ke_hoach_an") {
+        val viewModel: MealPlanViewModel = koinViewModel()
+        MealPlanScreen(navController = navController, viewModel = viewModel)
+    }
     composable(route = "danh_sach_di_cho") { DanhSachDiChoScreen(navController = navController) }
     composable(route = "ho_so") { HoSoScreen(navController = navController) }
     composable(

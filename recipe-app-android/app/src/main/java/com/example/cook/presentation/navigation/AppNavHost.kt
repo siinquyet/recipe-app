@@ -188,22 +188,6 @@ fun BannerKhach(onDangNhap: () -> Unit) {
 
 // Screen composables
 @Composable
-fun KeHoachAnScreen(navController: NavHostController) {
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            BodyText(
-                text = "Kế Hoạch Ăn Tuần",
-                kichThuoc = 24.sp,
-                dam = true,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-    }
-}
-
-@Composable
 fun DanhSachDiChoScreen(navController: NavHostController) {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }

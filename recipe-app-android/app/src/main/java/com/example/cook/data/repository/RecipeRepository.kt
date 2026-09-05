@@ -1,6 +1,8 @@
 package com.example.cook.data.repository
 
 import com.example.cook.data.api.ApiService
+import com.example.cook.data.api.KeHoachAn
+import com.example.cook.data.api.TaoKeHoachAnRequest
 import com.example.cook.data.model.CongThuc
 
 class RecipeRepository(
@@ -57,6 +59,36 @@ class RecipeRepository(
             }
         } catch (e: Exception) {
             KetQua.Loi("REC-00", e.message ?: "Lỗi kết nối")
+        }
+    }
+
+    suspend fun layDanhSachKeHoachAn(trang: Int = 0, kichThuoc: Int = 20): KetQua<List<KeHoachAn>> {
+        return try {
+            val response = api.layDanhSachKeHoachAn(trang = trang, kichThuoc = kichThuoc)
+            val body = response.body()
+            if (response.isSuccessful && body != null && body.success && body.data != null) {
+                KetQua.ThanhCong(body.data.noiDung)
+            } else {
+                val maLoi = body?.error?.code ?: xuLyMaLoi(response.code())
+                KetQua.Loi(maLoi, body?.error?.message ?: "Không thể tải kế hoạch ăn")
+            }
+        } catch (e: Exception) {
+            KetQua.Loi("MEAL-00", e.message ?: "Lỗi kết nối")
+        }
+    }
+
+    suspend fun taoKeHoachAn(ten: String, ngayBatDau: String, ngayKetThuc: String): KetQua<KeHoachAn> {
+        return try {
+            val response = api.taoKeHoachAn(TaoKeHoachAnRequest(ten = ten, ngayBatDau = ngayBatDau, ngayKetThuc = ngayKetThuc))
+            val body = response.body()
+            if (response.isSuccessful && body != null && body.success && body.data != null) {
+                KetQua.ThanhCong(body.data)
+            } else {
+                val maLoi = body?.error?.code ?: xuLyMaLoi(response.code())
+                KetQua.Loi(maLoi, body?.error?.message ?: "Không thể tạo kế hoạch ăn")
+            }
+        } catch (e: Exception) {
+            KetQua.Loi("MEAL-00", e.message ?: "Lỗi kết nối")
         }
     }
 

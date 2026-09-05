@@ -8,6 +8,7 @@ import com.example.cook.data.repository.RecipeRepository
 import com.example.cook.data.session.AuthGate
 import com.example.cook.presentation.auth.AuthViewModel
 import com.example.cook.presentation.home.HomeViewModel
+import com.example.cook.presentation.mealplan.MealPlanViewModel
 import com.example.cook.presentation.recipe.RecipeDetailViewModel
 import com.example.cook.presentation.search.SearchViewModel
 import kotlinx.serialization.json.Json
@@ -51,5 +52,6 @@ val diModule = module {
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
     viewModel { SearchViewModel(get()) }
+    viewModel { MealPlanViewModel(get()) }
     viewModel { (handle: androidx.lifecycle.SavedStateHandle) -> RecipeDetailViewModel(get(), handle) }
 }
