@@ -1,23 +1,37 @@
 package com.example.cook.presentation.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,10 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cook.ui.theme.ButtonDark
-import com.example.cook.ui.theme.ButtonOnDark
 
 @Composable
 fun RegisterScreen(
@@ -41,92 +54,162 @@ fun RegisterScreen(
     onDangKyThanhCong: () -> Unit,
     onQuayLaiDangNhap: () -> Unit
 ) {
+    var tenHienThi by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var matKhau by remember { mutableStateOf("") }
-    var tenHienThi by remember { mutableStateOf("") }
+    var xacNhanMatKhau by remember { mutableStateOf("") }
+    var hienMatKhau by remember { mutableStateOf(false) }
+    var dongYDieuKhoan by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
 
     AuthScaffold {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 32.dp),
-            contentAlignment = Alignment.TopCenter
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
+            LogoHeader()
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            FormCard {
                 Text(
                     text = "Tạo tài khoản",
-                    color = Color.White,
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 16.dp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "Bắt đầu hành trình nấu ăn",
-                    color = Color.White.copy(alpha = 0.85f),
                     fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                val fieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
-                    cursorColor = Color.White,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.White.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
                 )
 
                 OutlinedTextField(
                     value = tenHienThi,
                     onValueChange = { tenHienThi = it },
                     label = { Text("Tên hiển thị") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Filled.Person, contentDescription = null)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = fieldColors
+                    shape = RoundedCornerShape(12.dp)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Filled.Email, contentDescription = null)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = fieldColors
+                    shape = RoundedCornerShape(12.dp)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = matKhau,
                     onValueChange = { matKhau = it },
                     label = { Text("Mật khẩu") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Filled.Lock, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { hienMatKhau = !hienMatKhau }) {
+                            Icon(
+                                imageVector = if (hienMatKhau) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation = if (hienMatKhau) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = fieldColors
+                    shape = RoundedCornerShape(12.dp)
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = xacNhanMatKhau,
+                    onValueChange = { xacNhanMatKhau = it },
+                    label = { Text("Xác nhận mật khẩu") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Filled.Lock, contentDescription = null)
+                    },
+                    visualTransformation = if (hienMatKhau) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = xacNhanMatKhau.isNotEmpty() && matKhau != xacNhanMatKhau,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Checkbox(
+                        checked = dongYDieuKhoan,
+                        onCheckedChange = { dongYDieuKhoan = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    Text(
+                        text = "Tôi đồng ý với ",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Điều khoản dịch vụ",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { /* TODO terms */ }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 when (uiState) {
-                    is AuthUiState.DangXuLy -> CircularProgressIndicator(color = Color.White)
+                    is AuthUiState.DangXuLy -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(strokeWidth = 2.dp)
+                        }
+                    }
                     is AuthUiState.Loi -> {
                         val loi = uiState as AuthUiState.Loi
-                        Text(
-                            text = loi.thongDiep,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Text(
+                                text = loi.thongDiep,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
                     }
                     is AuthUiState.ThanhCong -> onDangKyThanhCong()
                     else -> {}
@@ -137,28 +220,53 @@ fun RegisterScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonDark,
-                        contentColor = ButtonOnDark
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    enabled = uiState !is AuthUiState.DangXuLy,
-                    contentPadding = PaddingValues(0.dp)
+                    enabled = uiState !is AuthUiState.DangXuLy && dongYDieuKhoan && matKhau == xacNhanMatKhau
                 ) {
-                    Text("Đăng ký", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Tạo tài khoản", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                DividerWithText(text = "Hoặc đăng ký với")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SocialButton(icon = "G", label = "Google", modifier = Modifier.weight(1f))
+                    SocialButton(icon = "f", label = "Facebook", modifier = Modifier.weight(1f))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Đã có tài khoản? Đăng nhập",
+                    text = "Đã có tài khoản? ",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = "Đăng nhập",
                     color = Color.White,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .clickable { onQuayLaiDangNhap() }
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 4.dp)
                 )
-                Spacer(modifier = Modifier.height(24.dp))
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
