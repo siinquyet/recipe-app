@@ -13,6 +13,7 @@ export class RecipesController {
         @Query('size', new DefaultValuePipe(10), ParseIntPipe) size: number,
         @Query('tuKhoa') tuKhoa?: string,
         @Query('search') search?: string,
+        @Query('tacGiaId') tacGiaId?: string,
     ) {
         const finalTrang = page > 0 ? page : trang;
         const finalSize = size !== 10 ? size : kichThuoc;
@@ -22,6 +23,7 @@ export class RecipesController {
             trang: finalTrang,
             kichThuoc: safeSize,
             tuKhoa: finalKeyword,
+            tacGiaId: tacGiaId?.trim() || undefined,
         });
     }
 

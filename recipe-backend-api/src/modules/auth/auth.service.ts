@@ -112,6 +112,12 @@ export class AuthService {
         };
     }
 
+    // BR-AUTH: Quên mật khẩu — luôn trả lời chung để chống dò email, gửi mail sẽ làm ở bước sau
+    async quenMatKhau(email: string) {
+        await this.prisma.user.findUnique({ where: { email } });
+        return { daGui: true };
+    }
+
     private async taoTokens(userId: string, email: string): Promise<AuthTokens> {
         const payload: JwtPayload = { sub: userId, email };
 

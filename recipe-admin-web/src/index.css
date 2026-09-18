@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* BR-UI: Số căn phải + format VN, chữ căn trái */
+.number-vn {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

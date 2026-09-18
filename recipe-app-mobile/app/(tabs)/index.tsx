@@ -13,6 +13,7 @@ import { Chip } from '../../src/components/ui/Chip';
 import { SectionHeader } from '../../src/components/ui/SectionHeader';
 import { CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { useAuthStore } from '../../src/stores/authStore';
+import { layUrlAnh } from '../../src/lib/utils/anh';
 import { useDanhSachCongThuc } from '../../src/hooks/useRecipes';
 
 // Category theo SVG gốc: theo bữa ăn
@@ -20,7 +21,7 @@ const NHOM_MON = ['Tất cả', 'Sáng', 'Trưa', 'Tối', 'Đồ ăn nhẹ'] as
 
 const HinhAnh: FC<{ ct: CongThuc }> = ({ ct }) =>
   ct.anhThumbnail ? (
-    <Image source={{ uri: ct.anhThumbnail }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+    <Image source={{ uri: layUrlAnh(ct.anhThumbnail) }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
   ) : (
     <View className="h-full w-full items-center justify-center bg-cream">
       <Text className="text-3xl font-bold text-accent">{ct.ten.trim().charAt(0).toUpperCase()}</Text>

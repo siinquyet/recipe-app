@@ -1,52 +1,69 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { aggregateQuantities } from '@cook/shared';
 import { NutBam } from '../../src/components/ui/NutBam';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { NumberDisplay } from '../../src/components/ui/NumberDisplay';
-import {
+import { parseVn } from '../../src/lib/utils/dinh-dang';import {
   useChiTietDanhSachDiCho,
+  useChuyenTrangThaiMon,
   useDanhSachDiCho,
   useTaoDanhSachDiCho,
 } from '../../src/hooks/useMealShopping';
 
+// BR-SHOP: Trạng thái đã mua lưu server (optimistic), gộp định lượng theo BR-03
 function ChiTietDiCho({ id, khiDong }: { id: string; khiDong: () => void }) {
   const { data, isLoading, isError } = useChiTietDanhSachDiCho(id);
-  const [daChon, setDaChon] = useState<Set<string>>(new Set());
+  const chuyenTrangThai = useChuyenTrangThaiMon(id);
+
+  const tongHop = useMemo(() => {
+    if (!data) return [];
+    return [...aggregateQuantities(
+      data.cacMon.map((mon) => ({
+        ...(mon.nguyenLieuId ? { internalIngredientId: mon.nguyenLieuId } : {}),
+        originalText: mon.tenGoc,
+        quantity: parseVn(mon.dinhLuong) || 0,
+        unit: mon.donVi,
+      })),
+    ).values()];
+  }, [data]);
 
   if (isLoading) return <TrangDangTai />;
   if (isError || !data) return <TrangLoi loi="Không tải được chi tiết" />;
 
-  const chuyenChon = (monId: string) => {
-    setDaChon((truoc) => {
-      const moi = new Set(truoc);
-      if (moi.has(monId)) moi.delete(monId);
-      else moi.add(monId);
-      return moi;
-    });
-  };
-
   return (
     <View className="mt-2 rounded-xl bg-neutral-100 p-3">
-      {data.cacMon.map((mon) => {
-        const chon = daChon.has(mon.id);
-        return (
-          <Pressable
-            key={mon.id}
-            onPress={() => chuyenChon(mon.id)}
-            className="flex-row items-center justify-between border-b border-neutral-200 py-2"
-          >
-            <View className="flex-1">
-              <BodyText soDongToiDa={1} className={chon ? 'text-neutral-400 line-through' : ''}>
-                {mon.tenGoc}
+      {tongHop.length > 1 ? (
+        <View className="mb-2 rounded-xl bg-white p-3">
+          <CaptionText dam>Tổng hợp ({tongHop.length} nhóm)</CaptionText>
+          {tongHop.map((nhom, i) => (
+            <View key={i} className="flex-row items-center justify-between py-1">
+              <BodyText soDongToiDa={1} className="flex-1">
+                {nhom.originalTexts[0]}
+                {nhom.originalTexts.length > 1 ? ` (+${nhom.originalTexts.length - 1})` : ''}
               </BodyText>
+              <NumberDisplay value={nhom.quantity} unit={nhom.unit} className="text-sm" />
             </View>
-            <NumberDisplay value={mon.dinhLuong} unit={mon.donVi} className="text-sm" />
-          </Pressable>
-        );
-      })}
+          ))}
+        </View>
+      ) : null}
+      {data.cacMon.map((mon) => (
+        <Pressable
+          key={mon.id}
+          onPress={() => chuyenTrangThai.mutate({ itemId: mon.id, daChon: !mon.daChon })}
+          className="flex-row items-center justify-between border-b border-neutral-200 py-2"
+        >
+          <View className="flex-1">
+            <BodyText soDongToiDa={1} className={mon.daChon ? 'text-neutral-400 line-through' : ''}>
+              {mon.tenGoc}
+            </BodyText>
+          </View>
+          <NumberDisplay value={mon.dinhLuong} unit={mon.donVi} className="text-sm" />
+        </Pressable>
+      ))}
       <NutBam tieuDe="Đóng" bienThe="mo" khiBam={khiDong} className="mt-2" />
     </View>
   );

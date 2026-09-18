@@ -49,9 +49,10 @@ export class MealPlansService {
     }
 
     async layChiTiet(id: string) {
+        // BR-MEAL: Join công thức để mobile hiển thị tên + ảnh, không chỉ recipeId
         const mealPlan = await this.prisma.mealPlan.findUnique({
             where: { id },
-            include: { items: true },
+            include: { items: { include: { recipe: { include: { author: true } } }, orderBy: { sortOrder: 'asc' } } },
         });
 
         if (!mealPlan) {
@@ -77,6 +78,11 @@ export class MealPlansService {
             servings: number;
             sortOrder: number;
             recipeId: string | null;
+            recipe?: {
+                id: string;
+                title: string;
+                thumbnailUrl: string | null;
+            } | null;
         }>;
     }) {
         return {
@@ -91,7 +97,9 @@ export class MealPlansService {
                 loaiBuoiAn: item.mealType,
                 khauPhan: item.servings,
                 thuTu: item.sortOrder,
-                congThuc: item.recipeId ? { id: item.recipeId } : null,
+                congThuc: item.recipe
+                    ? { id: item.recipe.id, ten: item.recipe.title, anhThumbnail: item.recipe.thumbnailUrl }
+                    : null,
             })),
         };
     }

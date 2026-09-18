@@ -1,16 +1,23 @@
-﻿import { Link, useRouter } from 'expo-router';
+﻿import { useMutation } from '@tanstack/react-query';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NutBam } from '../../src/components/ui/NutBam';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
+import { TrangLoi } from '../../src/components/ui/TrangThai';
 import { BodyText, TitleText } from '../../src/components/ui/VanBan';
+import { quenMatKhau } from '../../src/lib/api/auth';
 
-// S05: Backend chưa có API quên mật khẩu — UI khung, mô phỏng gửi thành công
+// BR-AUTH: Gọi POST auth/forgot-password thật, giữ thông báo chung chống dò email
 export default function ManHinhQuenMatKhau() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [daGui, setDaGui] = useState(false);
+  const guiMail = useMutation({
+    mutationFn: () => quenMatKhau(email.trim()),
+    onSuccess: () => setDaGui(true),
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -31,14 +38,19 @@ export default function ManHinhQuenMatKhau() {
             </BodyText>
           </View>
         ) : (
-          <ONhapLieu
-            nhan="Email"
-            giaTri={email}
-            khiDoi={setEmail}
-            goiY="ban@example.com"
-            banPhim="email-address"
-            className="mt-6"
-          />
+          <View>
+            <ONhapLieu
+              nhan="Email"
+              giaTri={email}
+              khiDoi={setEmail}
+              goiY="ban@example.com"
+              banPhim="email-address"
+              className="mt-6"
+            />
+            {guiMail.isError && (
+              <TrangLoi loi={(guiMail.error as Error)?.message ?? 'Không gửi được, thử lại sau'} />
+            )}
+          </View>
         )}
 
         {daGui ? (
@@ -47,7 +59,8 @@ export default function ManHinhQuenMatKhau() {
           <NutBam
             tieuDe="Gửi hướng dẫn"
             voHieuHoa={!email.includes('@')}
-            khiBam={() => setDaGui(true)}
+            dangTai={guiMail.isPending}
+            khiBam={() => guiMail.mutate()}
             className="mt-6"
           />
         )}

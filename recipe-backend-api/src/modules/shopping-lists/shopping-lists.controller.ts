@@ -1,6 +1,6 @@
-import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ShoppingListsService } from './shopping-lists.service';
-import { TaoDanhSachDiChoDto } from './dto/shopping-list.dto';
+import { TaoDanhSachDiChoDto, CapNhatTrangThaiMonDto, TaoTuKeHoachAnDto } from './dto/shopping-list.dto';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -27,8 +27,23 @@ export class ShoppingListsController {
         return this.shoppingListsService.taoMoi(req.user.id, dto);
     }
 
+    @Post('generate-from-meal-plan')
+    taoTuKeHoachAn(@Body() body: TaoTuKeHoachAnDto, @Req() req: { user: { id: string } }) {
+        return this.shoppingListsService.taoTuKeHoachAn(req.user.id, body.mealPlanId);
+    }
+
     @Get(':id')
     layChiTiet(@Param('id') id: string, @Req() req: { user: { id: string } }) {
         return this.shoppingListsService.layChiTiet(id, req.user.id);
+    }
+
+    @Patch(':id/items/:itemId')
+    capNhatTrangThaiMon(
+        @Param('id') id: string,
+        @Param('itemId') itemId: string,
+        @Body() body: CapNhatTrangThaiMonDto,
+        @Req() req: { user: { id: string } },
+    ) {
+        return this.shoppingListsService.capNhatTrangThaiMon(id, itemId, req.user.id, body.daChon);
     }
 }

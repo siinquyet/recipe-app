@@ -31,3 +31,8 @@ export class RefreshTokenDto {
     @IsString()
     refreshToken!: string;
 }
+
+export class QuenMatKhauDto {
+    @IsEmail({}, { message: 'AUTH-00 Email không hợp lệ' })
+    email!: string;
+}

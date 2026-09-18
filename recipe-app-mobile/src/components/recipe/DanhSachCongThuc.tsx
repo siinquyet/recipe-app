@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import type { CongThuc } from '../../types/api';
+import { layUrlAnh } from '../../lib/utils/anh';
 import { TheCongThuc, type BienTheCard } from './TheCongThuc';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../ui/TrangThai';
 
@@ -20,7 +21,7 @@ interface DanhSachCongThucProps {
 export function chuyenThanhDuLieuThe(congThuc: CongThuc) {
   return {
     id: congThuc.id,
-    hinhAnh: congThuc.anhThumbnail,
+    hinhAnh: layUrlAnh(congThuc.anhThumbnail),
     tenMon: congThuc.ten,
     thoiGianNau: congThuc.thoiGianNauPhut,
     khauPhan: congThuc.khauPhan,

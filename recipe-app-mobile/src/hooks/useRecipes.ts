@@ -4,6 +4,7 @@ import {
   layChiTietCongThuc,
   layCongThucTuongTu,
   layDanhSachCongThuc,
+  layDanhSachYeuThich,
   taoBinhLuan,
   taoCongThuc,
   themYeuThich,
@@ -68,7 +69,10 @@ export function useChuyenDoiYeuThich(id: string, dangYeuThich: boolean) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => (dangYeuThich ? xoaYeuThich(id) : themYeuThich(id)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
+      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'danh-sach'] });
+    },
   });
 }
 
@@ -77,5 +81,14 @@ export function useTaoBinhLuan(id: string) {
   return useMutation({
     mutationFn: (noiDung: string) => taoBinhLuan(id, noiDung),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) }),
+  });
+}
+
+// BR-SOC: Danh sách yêu thích, tự invalidate khi đổi trạng thái tim
+export function useDanhSachYeuThich(page = 0, size = 20) {
+  return useQuery({
+    queryKey: [...khoaTruyVan.congThuc.danhSach({ yeuThich: true }), page, size],
+    queryFn: () => layDanhSachYeuThich({ page, size }),
+    placeholderData: keepPreviousData,
   });
 }

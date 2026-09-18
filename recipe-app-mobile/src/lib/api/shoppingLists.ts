@@ -34,3 +34,27 @@ export async function layChiTietDanhSachDiCho(id: string): Promise<DanhSachDiCho
   const duLieu = await goiApi(apiClient.get(`shopping-lists/${id}`).json<ApiResponse<DanhSachDiCho>>());
   return danhSachDiChoSchema.parse(duLieu);
 }
+
+// BR-SHOP + BR-03/BR-04: Sinh danh sách đi chợ từ kế hoạch ăn (server gộp + scale)
+export async function taoTuKeHoachAn(mealPlanId: string): Promise<DanhSachDiCho> {
+  const duLieu = await goiApi(
+    apiClient
+      .post('shopping-lists/generate-from-meal-plan', { json: { mealPlanId } })
+      .json<ApiResponse<DanhSachDiCho>>(),
+  );
+  return danhSachDiChoSchema.parse(duLieu);
+}
+
+// BR-SHOP: Đánh dấu đã mua/bỏ chọn — persist server, mobile optimistic update
+export async function capNhatTrangThaiMon(
+  listId: string,
+  itemId: string,
+  daChon: boolean,
+): Promise<DanhSachDiCho> {
+  const duLieu = await goiApi(
+    apiClient
+      .patch(`shopping-lists/${listId}/items/${itemId}`, { json: { daChon } })
+      .json<ApiResponse<DanhSachDiCho>>(),
+  );
+  return danhSachDiChoSchema.parse(duLieu);
+}

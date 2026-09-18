@@ -11,12 +11,12 @@ import { NutBam } from '../../src/components/ui/NutBam';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TitleText } from '../../src/components/ui/VanBan';
 
-// S06: Social auth chưa có API backend — UI khung, bấm sẽ hiện thông báo
-function NutXaHoi({ nhan }: { nhan: string }) {
+// S06: Social auth chưa có API backend — bấm hiện thông báo rõ ràng thay vì im lặng
+function NutXaHoi({ nhan, khiBam }: { nhan: string; khiBam: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => {}}
+      onPress={khiBam}
       className="flex-1 items-center rounded-xl border border-neutral-300 bg-white px-4 py-3"
     >
       <Text className="text-sm font-medium text-neutral-700">{nhan}</Text>
@@ -28,6 +28,7 @@ export default function ManHinhDangNhap() {
   const router = useRouter();
   const mutation = useDangNhap();
   const [ghiNho, setGhiNho] = useState(true);
+  const [thongBaoSocial, setThongBaoSocial] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -112,10 +113,13 @@ export default function ManHinhDangNhap() {
           <View className="h-px flex-1 bg-neutral-200" />
         </View>
         <View className="mt-4 flex-row gap-3">
-          <NutXaHoi nhan="Google" />
-          <NutXaHoi nhan="Apple" />
-          <NutXaHoi nhan="Facebook" />
+          <NutXaHoi nhan="Google" khiBam={() => setThongBaoSocial('Đăng nhập Google chưa hỗ trợ trong bản này')} />
+          <NutXaHoi nhan="Apple" khiBam={() => setThongBaoSocial('Đăng nhập Apple chưa hỗ trợ trong bản này')} />
+          <NutXaHoi nhan="Facebook" khiBam={() => setThongBaoSocial('Đăng nhập Facebook chưa hỗ trợ trong bản này')} />
         </View>
+        {thongBaoSocial ? (
+          <Text className="mt-3 text-center text-sm text-neutral-500">{thongBaoSocial}</Text>
+        ) : null}
 
         <Text className="mt-6 text-center text-sm text-neutral-500">
           Chưa có tài khoản?{' '}

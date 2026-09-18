@@ -1,13 +1,16 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Heart } from 'lucide-react-native';
-import { TrangTrong } from '../src/components/ui/TrangThai';
+import { ChevronLeft } from 'lucide-react-native';
+import { DanhSachCongThuc } from '../src/components/recipe/DanhSachCongThuc';
+import { TrangDangTai } from '../src/components/ui/TrangThai';
 import { TitleText } from '../src/components/ui/VanBan';
+import { useDanhSachYeuThich } from '../src/hooks/useRecipes';
 
-// S17: Backend chưa có GET danh sách yêu thích — UI khung empty state
+// BR-SOC: Danh sách yêu thích lấy từ GET /favorites của chính người dùng
 export default function ManHinhYeuThich() {
   const router = useRouter();
+  const { data, isLoading, isFetching, isError, error, refetch } = useDanhSachYeuThich(0, 50);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -17,11 +20,18 @@ export default function ManHinhYeuThich() {
         </Pressable>
         <TitleText className="text-xl">Công thức yêu thích</TitleText>
       </View>
-      <TrangTrong
-        tieuDe="Chưa có món yêu thích"
-        moTa="Nhấn tim trên công thức để lưu vào đây"
-        bieuTuong={<Heart size={48} color="#D4D4D4" />}
-      />
+      {isLoading ? (
+        <TrangDangTai />
+      ) : (
+        <DanhSachCongThuc
+          duLieu={data?.noiDung ?? []}
+          dangTai={false}
+          dangTaiThem={isFetching && !isLoading}
+          loi={isError ? (error as Error)?.message : null}
+          khiLamMoi={() => refetch()}
+          khiChon={(id) => router.push(`/recipe/${id}`)}
+        />
+      )}
     </SafeAreaView>
   );
 }

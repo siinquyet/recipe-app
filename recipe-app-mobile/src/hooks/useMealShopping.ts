@@ -10,6 +10,7 @@ import {
 import type { TaoKeHoachAnPayload, ThemMonVaoKeHoachPayload } from '../lib/api/mealPlans';
 import { layChiTietDanhSachDiCho, layDanhSachDiCho, taoDanhSachDiCho } from '../lib/api/shoppingLists';
 import type { TaoDanhSachDiChoPayload } from '../lib/api/shoppingLists';
+import { capNhatTrangThaiMon, taoTuKeHoachAn } from '../lib/api/shoppingLists';
 import { khoaTruyVan } from '../lib/queryClient';
 
 export function useDanhSachKeHoachAn() {
@@ -80,5 +81,24 @@ export function useTaoDanhSachDiCho() {
   return useMutation({
     mutationFn: (payload: TaoDanhSachDiChoPayload) => taoDanhSachDiCho(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] }),
+  });
+}
+
+// BR-SHOP: Sinh danh sách đi chợ từ kế hoạch ăn (server đã gộp + scale)
+export function useTaoTuKeHoachAn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (mealPlanId: string) => taoTuKeHoachAn(mealPlanId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] }),
+  });
+}
+
+// BR-SHOP: Toggle đã mua với optimistic update để UI phản hồi ngay
+export function useChuyenTrangThaiMon(listId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, daChon }: { itemId: string; daChon: boolean }) =>
+      capNhatTrangThaiMon(listId, itemId, daChon),
+    onSuccess: (duLieu) => queryClient.setQueryData(khoaTruyVan.danhSachDiCho.chiTiet(listId), duLieu),
   });
 }

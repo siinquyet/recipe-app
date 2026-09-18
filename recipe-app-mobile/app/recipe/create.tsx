@@ -1,15 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { launchImageLibraryAsync } from 'expo-image-picker';
 import { ChevronLeft } from 'lucide-react-native';
 import { NutBam } from '../../src/components/ui/NutBam';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TrangDangTai } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { taoCongThucSchema, type TaoCongThucForm } from '../../src/lib/validation/schemas';
+import { taiAnhLen } from '../../src/lib/api/uploads';
+import { layUrlAnh } from '../../src/lib/utils/anh';
 import {
   useCapNhatCongThuc,
   useChiTietCongThuc,
@@ -39,11 +43,32 @@ export default function ManHinhTaoCongThuc() {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<TaoCongThucForm>({
     resolver: zodResolver(taoCongThucSchema),
     defaultValues: GIA_TRI_BAN_DAU,
   });
+  const [dangTaiAnh, setDangTaiAnh] = useState(false);
+  const [loiAnh, setLoiAnh] = useState<string | null>(null);
+  const anhXemTruoc = watch('anhThumbnail') ?? '';
+
+  // BR-UREC: Chọn ảnh từ thư viện → upload binary → lưu URL vào form
+  const chonAnh = async () => {
+    const ketQua = await launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (ketQua.canceled || ketQua.assets.length === 0) return;
+    setDangTaiAnh(true);
+    setLoiAnh(null);
+    try {
+      const url = await taiAnhLen(ketQua.assets[0].uri);
+      setValue('anhThumbnail', url, { shouldValidate: true });
+    } catch (e) {
+      setLoiAnh(e instanceof Error ? e.message : 'Tải ảnh thất bại');
+    } finally {
+      setDangTaiAnh(false);
+    }
+  };
 
   const dsNguyenLieu = useFieldArray({ control, name: 'nguyenLieu' });
   const dsBuoc = useFieldArray({ control, name: 'cacBuoc' });
@@ -53,6 +78,7 @@ export default function ManHinhTaoCongThuc() {
       reset({
         ten: chiTiet.data.ten,
         moTa: chiTiet.data.moTa ?? '',
+        anhThumbnail: chiTiet.data.anhThumbnail ?? '',
         thoiGianNauPhut: chiTiet.data.thoiGianNauPhut,
         thoiGianChuanBiPhut: chiTiet.data.thoiGianChuanBiPhut ?? undefined,
         khauPhan: chiTiet.data.khauPhan,
@@ -101,6 +127,28 @@ export default function ManHinhTaoCongThuc() {
             <ONhapLieu nhan="Mô tả" giaTri={value ?? ''} khiDoi={onChange} goiY="Mô tả ngắn..." className="mt-3" />
           )}
         />
+        <View className="mt-4">
+          <BodyText dam>Ảnh món ăn</BodyText>
+          {anhXemTruoc ? (
+            <Image
+              source={{ uri: layUrlAnh(anhXemTruoc) }}
+              style={{ width: '100%', height: 180, borderRadius: 12, marginTop: 8 }}
+              contentFit="cover"
+            />
+          ) : null}
+          <NutBam
+            tieuDe={anhXemTruoc ? 'Đổi ảnh' : 'Chọn ảnh từ thư viện'}
+            bienThe="vien"
+            dangTai={dangTaiAnh}
+            khiBam={() => void chonAnh()}
+            className="mt-2"
+          />
+          {loiAnh ? (
+            <Text className="mt-2 text-left text-sm text-red-600">{loiAnh}</Text>
+          ) : (
+            <CaptionText>Ảnh JPG/PNG/WebP dưới 5MB</CaptionText>
+          )}
+        </View>
         <View className="mt-3 flex-row gap-3">
           <View className="flex-1">
             <Controller

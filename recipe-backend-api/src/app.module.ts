@@ -7,6 +7,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { RatingsModule } from './modules/ratings/ratings.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { ShoppingListsModule } from './modules/shopping-lists/shopping-lists.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Controller('health')
 export class HealthController {
@@ -30,6 +31,7 @@ export class HealthController {
         RatingsModule,
         CommentsModule,
         ShoppingListsModule,
+        UploadsModule,
     ],
     controllers: [HealthController],
 })

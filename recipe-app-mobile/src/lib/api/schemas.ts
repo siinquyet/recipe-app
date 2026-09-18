@@ -65,6 +65,13 @@ export const danhSachTrangSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
     tongSoTrang: z.number(),
   });
 
+// BR-MEAL: Chi tiết kế hoạch chỉ cần tên + ảnh món, không tải full công thức
+export const congThucTomTatSchema = z.object({
+  id: z.string(),
+  ten: z.string(),
+  anhThumbnail: z.string().nullable(),
+});
+
 export const dangNhapResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
@@ -85,7 +92,7 @@ export const monTrongKeHoachSchema = z.object({
   loaiBuoiAn: z.string(),
   khauPhan: z.number(),
   thuTu: z.number(),
-  congThuc: congThucSchema.nullable(),
+  congThuc: congThucTomTatSchema.nullable(),
 });
 
 export const keHoachAnSchema = z.object({

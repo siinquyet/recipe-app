@@ -82,7 +82,14 @@ export interface MonTrongKeHoach {
   loaiBuoiAn: string;
   khauPhan: number;
   thuTu: number;
-  congThuc: CongThuc | null;
+  congThuc: CongThucTomTat | null;
+}
+
+// BR-MEAL: Món trong kế hoạch chỉ mang tên + ảnh, đủ để hiển thị lịch tuần
+export interface CongThucTomTat {
+  id: string;
+  ten: string;
+  anhThumbnail: string | null;
 }
 
 export interface KeHoachAn {

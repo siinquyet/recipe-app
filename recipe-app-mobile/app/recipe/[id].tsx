@@ -17,6 +17,7 @@ import { TrangDangTai, TrangLoi } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { DanhSachCongThuc } from '../../src/components/recipe/DanhSachCongThuc';
 import { dinhDangNgay } from '../../src/lib/utils/dinh-dang';
+import { layUrlAnh } from '../../src/lib/utils/anh';
 import { danhGiaCongThuc } from '../../src/lib/api/recipes';
 import { themMonVaoKeHoach } from '../../src/lib/api/mealPlans';
 import { khoaTruyVan } from '../../src/lib/queryClient';
@@ -184,7 +185,7 @@ export default function ManHinhChiTietCongThuc() {
       <ScrollView className="flex-1">
         <View className="relative">
           {data.anhThumbnail ? (
-            <Image source={{ uri: data.anhThumbnail }} style={{ width: '100%', height: 260 }} contentFit="cover" />
+            <Image source={{ uri: layUrlAnh(data.anhThumbnail) }} style={{ width: '100%', height: 260 }} contentFit="cover" />
           ) : (
             <View className="h-40 w-full items-center justify-center bg-cream">
               <Text className="text-5xl font-bold text-accent">{data.ten.trim().charAt(0).toUpperCase()}</Text>

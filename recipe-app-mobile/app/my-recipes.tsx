@@ -9,14 +9,18 @@ import { TitleText } from '../src/components/ui/VanBan';
 import { useDanhSachCongThuc } from '../src/hooks/useRecipes';
 import { useAuthStore } from '../src/stores/authStore';
 
-// S13: Backend chưa có endpoint "my-recipes" — lọc client-side theo tác giả
+// BR-UREC: Lọc server-side theo tacGiaId, không tải thừa rồi lọc client
 export default function ManHinhCongThucCuaToi() {
   const router = useRouter();
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
   const [trang, setTrang] = useState(0);
-  const { data, isLoading, isFetching, isError, error, refetch } = useDanhSachCongThuc({ page: trang, size: 50 });
+  const { data, isLoading, isFetching, isError, error, refetch } = useDanhSachCongThuc({
+    page: trang,
+    size: 50,
+    ...(nguoiDung?.id ? { tacGiaId: nguoiDung.id } : {}),
+  });
 
-  const cuaToi = (data?.noiDung ?? []).filter((ct) => ct.tacGia.id === nguoiDung?.id);
+  const cuaToi = data?.noiDung ?? [];
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -41,6 +45,11 @@ export default function ManHinhCongThucCuaToi() {
           }}
           khiChon={(id) => router.push(`/recipe/${id}`)}
         />
+      )}
+      {!nguoiDung && !isLoading && (
+        <Text className="px-4 pb-4 text-left text-sm text-neutral-500">
+          Đăng nhập để xem công thức của bạn
+        </Text>
       )}
     </SafeAreaView>
   );

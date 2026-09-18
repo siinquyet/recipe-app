@@ -1,0 +1,14 @@
+import axios from 'axios';
+
+// BR-API: Base /api/v1, gắn Bearer token admin từ localStorage
+export const apiClient = axios.create({
+  baseURL: '/api/v1',
+  timeout: 30000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});

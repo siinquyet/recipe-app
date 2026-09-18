@@ -15,6 +15,7 @@ export interface ThamSoDanhSachCongThuc {
   page?: number;
   size?: number;
   search?: string;
+  tacGiaId?: string;
   category?: string;
   cuisine?: string;
   diet?: string;
@@ -55,6 +56,7 @@ export async function layDanhSachCongThuc(
           page: thamSo.page ?? 0,
           size: thamSo.size ?? KICH_THUOC_TRANG_MAC_DINH,
           ...(thamSo.search ? { search: thamSo.search } : {}),
+          ...(thamSo.tacGiaId ? { tacGiaId: thamSo.tacGiaId } : {}),
           ...(thamSo.category ? { category: thamSo.category } : {}),
           ...(thamSo.cuisine ? { cuisine: thamSo.cuisine } : {}),
           ...(thamSo.diet ? { diet: thamSo.diet } : {}),
@@ -118,6 +120,23 @@ export async function xoaCongThuc(id: string): Promise<void> {
 // BR-SOC: Yêu thích / đánh giá / bình luận
 export async function themYeuThich(id: string): Promise<void> {
   await goiApi(apiClient.post(`recipes/${id}/favorite`).json<ApiResponse<unknown>>());
+}
+
+// BR-SOC: Danh sách công thức đã yêu thích của chính người dùng
+export async function layDanhSachYeuThich(
+  thamSo: { page?: number; size?: number } = {},
+): Promise<DanhSachTrang<CongThuc>> {
+  const duLieu = await goiApi(
+    apiClient
+      .get('favorites', {
+        searchParams: {
+          page: thamSo.page ?? 0,
+          size: thamSo.size ?? KICH_THUOC_TRANG_MAC_DINH,
+        },
+      })
+      .json<ApiResponse<DanhSachTrang<CongThuc>>>(),
+  );
+  return danhSachCongThucSchema.parse(duLieu);
 }
 
 export async function xoaYeuThich(id: string): Promise<void> {

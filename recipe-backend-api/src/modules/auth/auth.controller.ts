@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, QuenMatKhauDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 
 @Controller('auth')
@@ -20,6 +20,11 @@ export class AuthController {
     @Post('refresh')
     lamMoiToken(@Body() body: RefreshTokenDto) {
         return this.authService.lamMoiToken(body.refreshToken);
+    }
+
+    @Post('forgot-password')
+    quenMatKhau(@Body() body: QuenMatKhauDto) {
+        return this.authService.quenMatKhau(body.email);
     }
 
     @UseGuards(JwtAuthGuard)

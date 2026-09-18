@@ -1,4 +1,14 @@
-import { IsString, MinLength, MaxLength, IsOptional, IsIn } from 'class-validator';
+import { IsString, MinLength, MaxLength, IsOptional, IsIn, IsBoolean } from 'class-validator';
+
+export class CapNhatTrangThaiMonDto {
+    @IsBoolean({ message: 'SHOP-00 daChon phải là true/false' })
+    daChon!: boolean;
+}
+
+export class TaoTuKeHoachAnDto {
+    @IsString({ message: 'SHOP-00 mealPlanId không hợp lệ' })
+    mealPlanId!: string;
+}
 
 export class TaoDanhSachDiChoDto {
     @IsString()

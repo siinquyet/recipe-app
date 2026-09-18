@@ -6,6 +6,7 @@ interface ListParams {
     trang: number;
     kichThuoc: number;
     tuKhoa?: string;
+    tacGiaId?: string;
 }
 
 @Injectable()
@@ -42,9 +43,11 @@ export class RecipesService {
     }
 
     async layDanhSach(params: ListParams) {
+        // BR-UREC: Lọc công thức của tôi khi có tacGiaId, vẫn chỉ lấy bài APPROVED
         const where = {
             deletedAt: null,
             status: RecipeStatus.APPROVED,
+            ...(params.tacGiaId ? { authorId: params.tacGiaId } : {}),
             ...(params.tuKhoa
                 ? {
                       title: {

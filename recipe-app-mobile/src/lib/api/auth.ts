@@ -31,3 +31,8 @@ export async function layThongTinNguoiDung(): Promise<NguoiDung> {
   const duLieu = await goiApi(apiClient.get('auth/me').json<ApiResponse<NguoiDung>>());
   return nguoiDungSchema.parse(duLieu);
 }
+
+// BR-AUTH: Quên mật khẩu — backend luôn trả lời chung để chống dò email
+export async function quenMatKhau(email: string): Promise<void> {
+  await goiApi(apiClient.post('auth/forgot-password', { json: { email } }).json<ApiResponse<unknown>>());
+}
