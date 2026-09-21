@@ -92,7 +92,7 @@ export function TaoCongThuc() {
               <h2 className="font-serif text-2xl font-black text-ink">1. Thông tin chung & Ảnh bìa</h2>
               <label className="mt-4 block overflow-hidden rounded-3xl border-2 border-dashed border-slate-300 bg-mist text-center">
                 {anhHien ? (
-                  <img src={anhHien.startsWith('http') || anhHien.startsWith('/') ? anhHien : `http://localhost:3000${anhHien}`} alt="Ảnh bìa" className="max-h-64 w-full object-cover" />
+                  <img src={anhHien} alt="Ảnh bìa" className="max-h-64 w-full object-cover" />
                 ) : (
                   <span className="block px-6 py-10 text-sm text-slate-500">
                     {dangTaiAnh ? 'Đang tải ảnh...' : 'Bấm để chọn ảnh bìa món ăn (JPG/PNG/WebP)'}
@@ -244,7 +244,7 @@ export function TaoCongThuc() {
             <CaptionText dam>Xem trước thể hiển thị</CaptionText>
             <div className="mt-2 overflow-hidden rounded-3xl bg-mist">
               {anhHien ? (
-                <img src={anhHien.startsWith('http') || anhHien.startsWith('/') ? anhHien : `http://localhost:3000${anhHien}`} alt="" className="h-40 w-full object-cover" />
+                <img src={anhHien} alt="" className="h-40 w-full object-cover" />
               ) : (
                 <div className="flex h-40 w-full items-center justify-center bg-cream">
                   <span className="font-serif text-4xl font-black text-accent-dark">

@@ -17,6 +17,11 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      // BR-UREC: Ảnh /uploads/* cũng về backend để URL tương đối hiển thị được ở dev
+      '/uploads': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
   build: {
@@ -25,5 +30,6 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
   },
 })

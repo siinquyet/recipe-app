@@ -15,7 +15,7 @@ export default function ManHinhCaiDat() {
   const datDinhDangNgay = useUiStore((s) => s.datDinhDangNgay);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F1F5F5]">
+    <SafeAreaView className="flex-1 bg-mist">
       <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
         <View className="flex-row items-center gap-2">
           <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()}>

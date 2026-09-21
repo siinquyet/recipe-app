@@ -169,7 +169,7 @@ export default function ManHinhKeHoachAn() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50">
+    <SafeAreaView className="flex-1 bg-mist">
       <ScrollView className="flex-1 px-4 pt-4">
         <View className="flex-row items-center justify-between">
           <TitleText className="text-2xl">Kế hoạch ăn</TitleText>

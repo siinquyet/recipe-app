@@ -8,8 +8,11 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
-      // Recipely tokens trích từ SVG gốc: navy chủ đạo, teal accent, kem nền minh họa
+      // BR-UI: Tokens đồng bộ với web Bếp Nhà (DESIGN.md): mực Ink, teal, nền Mist
       colors: {
+        mist: '#F1F5F5',
+        muted: '#97A2B0',
+        star: '#FFC107',
         primary: {
           DEFAULT: '#0A2533',
           dark: '#042628',

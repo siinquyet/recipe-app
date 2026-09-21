@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { RecipeStatus } from '@prisma/client';
+import { Prisma, RecipeStatus } from '@prisma/client';
 
 interface ListParams {
     trang: number;
@@ -123,9 +123,9 @@ export class RecipesService {
             status: string;
         },
         extra?: {
-            ingredients?: Array<{ originalText: string; quantity: any; unit: string }>;
+            ingredients?: Array<{ originalText: string; quantity: Prisma.Decimal; unit: string }>;
             steps?: Array<{ stepOrder: number; content: string; imageUrl: string | null }>;
-            nutrition?: { calories: number; protein: any; carbs: any; fat: any } | null;
+            nutrition?: { calories: number; protein: Prisma.Decimal; carbs: Prisma.Decimal; fat: Prisma.Decimal } | null;
         },
     ) {
         return {

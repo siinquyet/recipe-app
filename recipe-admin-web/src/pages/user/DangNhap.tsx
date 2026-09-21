@@ -68,6 +68,11 @@ export function DangNhap() {
         />
         <NutBam tieuDe="Đăng nhập" loai="submit" className="mt-6 w-full" />
       </form>
+      <p className="mt-3 text-right text-sm">
+        <Link to="/quen-mat-khau" className="font-semibold text-deepteal">
+          Quên mật khẩu?
+        </Link>
+      </p>
       <div className="mt-4 flex gap-2">
         <NutBam tieuDe="Google" bienThe="phu" className="flex-1" khiBam={() => alert('Đăng nhập Google chưa hỗ trợ')} />
         <NutBam tieuDe="Apple" bienThe="phu" className="flex-1" khiBam={() => alert('Đăng nhập Apple chưa hỗ trợ')} />

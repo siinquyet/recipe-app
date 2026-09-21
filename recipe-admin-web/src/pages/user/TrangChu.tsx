@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { HeartIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { TrangDangTai, TrangLoi } from '../../components/ui/TrangThai';
 import { CaptionText } from '../../components/ui/VanBan';
 import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { TheCongThuc, layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
-import { layDanhSachCongThucUser } from '../../api/congThuc';
+import { layDanhSachCongThucUser, layDanhSachYeuThichUser } from '../../api/congThuc';
+import { NutTim } from '../../components/recipe/NutTim';
 import { useAuthStore } from '../../stores/authStore';
 
 const NHOM_BUA = ['Tất cả món ngon', 'Bữa sáng thanh đạm', 'Bữa trưa văn phòng', 'Bữa tối quây quần'] as const;
+
+// BR-UI: Gợi ý tìm nhanh theo design — điều hướng thật sang /tim-kiem, không số liệu giả
+const GOI_Y_NHANH = ['Thịt kho tàu', 'Canh chua cá lóc', 'Bún chả', 'Gà om nấm'] as const;
 
 // BR-UI: Trang chủ mẫu Stitch — hero editorial + card navy + lưới nổi bật
 export function TrangChu() {
@@ -25,6 +29,12 @@ export function TrangChu() {
   const phoBien = useQuery({
     queryKey: ['user', 'recipes', 'pho-bien'],
     queryFn: () => layDanhSachCongThucUser({ trang: 0, kichThuoc: 6 }),
+  });
+  // BR-SOC: Tổng số món đã lưu để vẽ badge thật (trạng thái tim từng món do NutTim tự quản)
+  const yeuThich = useQuery({
+    queryKey: ['user', 'favorites', 'ids'],
+    queryFn: () => layDanhSachYeuThichUser(0, 100),
+    enabled: !!nguoiDung,
   });
 
   const hero = noiBat.data?.noiDung[0];
@@ -47,6 +57,11 @@ export function TrangChu() {
           <span className="rounded-2xl bg-white px-4 py-2 text-sm shadow-sm">
             <strong className="font-serif text-lg text-ink"><NumberDisplay value={phoBien.data?.tongSoPhanTu ?? 0} /></strong> công thức
           </span>
+          {nguoiDung ? (
+            <span className="rounded-2xl bg-white px-4 py-2 text-sm shadow-sm">
+              <strong className="font-serif text-lg text-ink"><NumberDisplay value={yeuThich.data?.tongSoPhanTu ?? 0} /></strong> món đã lưu
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -79,6 +94,21 @@ export function TrangChu() {
               Tìm kiếm
             </button>
           </form>
+          <p className="mt-2 text-left text-xs text-muted">
+            Tìm kiếm nhanh:{' '}
+            {GOI_Y_NHANH.map((goiY, i) => (
+              <span key={goiY}>
+                {i > 0 ? ' • ' : null}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/tim-kiem?tuKhoa=${encodeURIComponent(goiY)}`)}
+                  className="font-semibold text-deepteal hover:underline"
+                >
+                  {goiY}
+                </button>
+              </span>
+            ))}
+          </p>
         </div>
 
         {hero ? (
@@ -86,17 +116,23 @@ export function TrangChu() {
             {heroAnh ? (
               <img src={heroAnh} alt={hero.ten} className="h-72 w-full object-cover md:h-80" />
             ) : (
-              <div className="flex h-72 w-full items-center justify-center bg-ink md:h-80">
-                <span className="font-serif text-6xl font-black text-cream">
+              <div className="flex h-72 w-full items-start justify-center bg-ink pt-10 md:h-80">
+                <span className="font-serif text-5xl font-black text-cream/40">
                   {hero.ten.trim().charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
-            <span className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90">
-              <HeartIcon className="h-5 w-5 text-ink" />
+            <span className="absolute left-4 top-4 rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink">
+              Món Bếp Nhà chọn hôm nay
+            </span>
+            <span className="absolute right-4 top-4">
+              <NutTim id={hero.id} ten={hero.ten} />
             </span>
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5 pt-12">
               <p className="font-serif text-2xl font-black">{hero.ten}</p>
+              {hero.moTa ? (
+                <p className="mt-1 line-clamp-2 text-left text-xs text-white/80">{hero.moTa}</p>
+              ) : null}
               <div className="mt-2 flex gap-2 text-center text-xs">
                 <span className="rounded-xl bg-white/15 px-3 py-1.5">
                   <NumberDisplay value={hero.thoiGianNauPhut} unit="phút" />
@@ -113,6 +149,9 @@ export function TrangChu() {
               <p className="mt-2 text-left text-xs text-white/80">
                 Bếp • {hero.tacGia.tenHienThi}
               </p>
+              <span className="mt-3 inline-block rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink">
+                Xem công thức
+              </span>
             </div>
           </Link>
         ) : null}
@@ -158,8 +197,8 @@ export function TrangChu() {
                     </span>
                   </div>
                 )}
-                <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90">
-                  <HeartIcon className="h-4 w-4 text-ink" />
+                <span className="absolute right-3 top-3">
+                  <NutTim id={ct.id} ten={ct.ten} />
                 </span>
               </Link>
               <p className="mt-3 text-left text-xs text-muted">
@@ -174,6 +213,12 @@ export function TrangChu() {
                 {ct.ten}
               </Link>
               <p className="mt-1 text-left text-xs text-muted">Công thức bởi {ct.tacGia.tenHienThi}</p>
+              <Link
+                to={`/cong-thuc/${ct.id}`}
+                className="mt-3 block rounded-xl bg-accent-light/60 px-4 py-2 text-center text-sm font-semibold text-ink transition hover:bg-accent-light"
+              >
+                Nấu ngay
+              </Link>
             </article>
           ))}
         </div>
@@ -226,8 +271,13 @@ export function TrangChu() {
               </article>
             ) : null}
             <div className="flex flex-col gap-3">
-              {(phoBien.data?.noiDung.slice(1, 4) ?? []).map((ct) => (
-                <TheCongThuc key={ct.id} duLieu={ct} bienThe="large" />
+              {(phoBien.data?.noiDung.slice(1, 4) ?? []).map((ct, i) => (
+                <div key={ct.id} className="relative">
+                  <span className="absolute -left-1 -top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-ink font-serif text-sm font-black text-white">
+                    <NumberDisplay value={i + 1} />
+                  </span>
+                  <TheCongThuc duLieu={ct} bienThe="large" />
+                </div>
               ))}
             </div>
           </div>
@@ -240,6 +290,22 @@ export function TrangChu() {
           “Nấu ăn không chỉ là nêm nếm gia vị, mà là nêm cả sự chăm chút và tình yêu vào từng
           bữa cơm gia đình.”
         </blockquote>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(nguoiDung ? '/cong-thuc/moi' : '/dang-nhap')}
+            className="rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Đóng góp công thức của bạn
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/tim-kiem')}
+            className="rounded-xl border-[1.5px] border-ink px-5 py-2.5 text-sm font-semibold text-ink"
+          >
+            Khám phá công thức
+          </button>
+        </div>
       </figure>
     </div>
   );

@@ -6,6 +6,7 @@ import { TrangDangTai, TrangLoi, TrangTrong } from '../../components/ui/TrangTha
 import { CaptionText } from '../../components/ui/VanBan';
 import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
+import { NutTim } from '../../components/recipe/NutTim';
 import { layDanhSachCongThucUser } from '../../api/congThuc';
 
 const KICH_THUOC_TRANG = 6;
@@ -92,7 +93,14 @@ export function TimKiem() {
                 to={`/cong-thuc/${ct.id}`}
                 className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-mist"
               >
-                <span className="flex-1 truncate text-left text-sm font-medium text-ink">{ct.ten}</span>
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="block truncate text-sm font-medium text-ink">{ct.ten}</span>
+                  {ct.nguyenLieu.length > 0 ? (
+                    <span className="block truncate text-xs text-muted">
+                      Nguyên liệu: {ct.nguyenLieu.slice(0, 3).map((nl) => nl.ten).join(', ')}
+                    </span>
+                  ) : null}
+                </span>
                 <ArrowRightIcon className="h-4 w-4 shrink-0 -rotate-45 text-muted" />
               </Link>
             ))}
@@ -186,6 +194,9 @@ export function TimKiem() {
                         </span>
                       </div>
                     )}
+                    <span className="absolute right-3 top-3">
+                      <NutTim id={ct.id} ten={ct.ten} />
+                    </span>
                   </Link>
                   <p className="mt-3 text-left text-xs text-muted">
                     <NumberDisplay value={ct.thoiGianNauPhut} unit="phút" /> •{' '}

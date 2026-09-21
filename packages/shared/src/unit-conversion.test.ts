@@ -9,7 +9,6 @@ import {
   scaleQuantity,
   generateShoppingItems,
 } from './unit-conversion';
-import { formatVn } from './number';
 
 describe('unit-conversion.ts - Unit conversion & aggregation (BR-03, BR-04)', () => {
   describe('getUnitInfo', () => {

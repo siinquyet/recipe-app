@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MagnifyingGlassIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { NutBam } from '../../components/ui/NutBam';
 import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../components/ui/TrangThai';
@@ -112,10 +112,7 @@ export function CongThucCuaToi() {
                   </Link>
                   <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
                     <Link to={`/cong-thuc/${ct.id}`} className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-mist py-2 text-sm font-semibold text-ink">
-                      Xem
-                    </Link>
-                    <Link to={`/cong-thuc/moi?id=${ct.id}`} className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-accent-light/60 py-2 text-sm font-semibold text-ink">
-                      <PencilIcon className="h-4 w-4" /> Sửa
+                      Xem chi tiết
                     </Link>
                   </div>
                 </article>

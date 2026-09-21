@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +20,12 @@ const THOI_GIAN = ['< 15 phút', '< 30 phút', '< 60 phút', 'Bất kỳ'] as co
 
 export default function ManHinhTimKiem() {
   const router = useRouter();
-  const [tuKhoa, setTuKhoa] = useState('');
+  // BR-UI: Nhận từ khóa nhanh từ trang chủ (params.tuKhoa) để điền sẵn ô tìm kiếm
+  const thamSoDieuHuong = useLocalSearchParams<{ tuKhoa?: string | string[] }>();
+  const tuKhoaDieuHuong = Array.isArray(thamSoDieuHuong.tuKhoa)
+    ? (thamSoDieuHuong.tuKhoa[0] ?? '')
+    : (thamSoDieuHuong.tuKhoa ?? '');
+  const [tuKhoa, setTuKhoa] = useState(tuKhoaDieuHuong);
   const [lichSu, setLichSu] = useState<string[]>([]);
   const [moFilter, setMoFilter] = useState(false);
   const [kieuAnChon, setKieuAnChon] = useState<string | null>(null);
@@ -40,6 +45,11 @@ export default function ManHinhTimKiem() {
   useEffect(() => {
     boNhoCongThuc.layTuKhoa().then(setLichSu).catch(() => {});
   }, []);
+
+  // BR-UI: Đồng bộ khi trang chủ đẩy từ khóa nhanh sang (params đổi → điền lại ô tìm kiếm)
+  useEffect(() => {
+    if (tuKhoaDieuHuong.length > 0) setTuKhoa(tuKhoaDieuHuong);
+  }, [tuKhoaDieuHuong]);
 
   useEffect(() => {
     if (tuKhoaTre.length === 0) {
@@ -62,7 +72,7 @@ export default function ManHinhTimKiem() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50">
+    <SafeAreaView className="flex-1 bg-mist">
       <View className="px-4 pb-2 pt-4">
         <View className="flex-row items-center gap-2">
           <View className="flex-1">

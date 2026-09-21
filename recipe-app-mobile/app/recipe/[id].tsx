@@ -4,7 +4,8 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { ChevronLeft, Clock, Heart, Minus, Plus, Share2, Users } from 'lucide-react-native';
+import { ChevronLeft, Clock, Flame, Heart, Hourglass, Minus, Plus, Share2, Users } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { BottomSheet } from '../../src/components/ui/BottomSheet';
@@ -16,7 +17,8 @@ import { TabBar } from '../../src/components/ui/TabBar';
 import { TrangDangTai, TrangLoi } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { DanhSachCongThuc } from '../../src/components/recipe/DanhSachCongThuc';
-import { dinhDangNgay } from '../../src/lib/utils/dinh-dang';
+import { dinhDangNgay, formatVn, parseVn } from '../../src/lib/utils/dinh-dang';
+import { MAU_SAC } from '../../src/constants/cau-hinh';
 import { layUrlAnh } from '../../src/lib/utils/anh';
 import { danhGiaCongThuc } from '../../src/lib/api/recipes';
 import { themMonVaoKeHoach } from '../../src/lib/api/mealPlans';
@@ -41,40 +43,40 @@ const BUOI_AN = [
   { giaTri: 'SNACK', nhan: 'Phụ' },
 ] as const;
 
-// Hàng nguyên liệu kiểu SVG: ảnh/tên + nút − số lượng +
-const HangNguyenLieu: FC<{
-  ten: string;
-  soLuong: number;
-  khiDoi: (so: number) => void;
-}> = ({ ten, soLuong, khiDoi }) => (
-  <View className="flex-row items-center justify-between border-b border-neutral-100 py-3">
-    <View className="h-10 w-10 items-center justify-center rounded-xl bg-cream">
-      <Text className="text-lg font-bold text-accent">{ten.trim().charAt(0).toUpperCase()}</Text>
-    </View>
-    <BodyText className="flex-1 px-3" soDongToiDa={2}>
-      {ten}
-    </BodyText>
-    <View className="flex-row items-center gap-2">
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Bớt ${ten}`}
-        onPress={() => khiDoi(Math.max(0, soLuong - 1))}
-        className="h-7 w-7 items-center justify-center rounded-full border border-neutral-300"
-      >
-        <Minus size={14} color="#0A2533" />
-      </Pressable>
-      <Text className="w-6 text-center text-base font-semibold text-primary">{soLuong}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Thêm ${ten}`}
-        onPress={() => khiDoi(soLuong + 1)}
-        className="h-7 w-7 items-center justify-center rounded-full bg-primary"
-      >
-        <Plus size={14} color="#fff" />
-      </Pressable>
-    </View>
+// BR-UI: Thẻ thông tin đồng bộ web chi tiết — 4 ô Chuẩn bị / Nấu chín / Khẩu phần / Năng lượng
+const TheThongTin: FC<{ nhan: string; giaTri: string; Icon: LucideIcon }> = ({ nhan, giaTri, Icon }) => (
+  <View className="flex-1 items-center rounded-2xl bg-mist px-1 py-3">
+    <Icon size={18} color={MAU_SAC.TEAL} />
+    <Text className="mt-1.5 text-center text-[15px] font-bold text-primary" numberOfLines={1}>
+      {giaTri}
+    </Text>
+    <CaptionText>{nhan}</CaptionText>
   </View>
 );
+
+// BR-04: Scaled Quantity = Original Quantity × (Khẩu phần chọn / Khẩu phần gốc)
+const HangNguyenLieu: FC<{
+  ten: string;
+  dinhLuong: string;
+  donVi: string;
+  tiLe: number;
+}> = ({ ten, dinhLuong, donVi, tiLe }) => {
+  const goc = parseVn(dinhLuong) || 0;
+  const daQuyDoi = goc > 0 ? formatVn(Math.round(goc * tiLe * 10) / 10) : dinhLuong;
+  return (
+    <View className="flex-row items-center justify-between border-b border-neutral-100 py-3">
+      <View className="h-10 w-10 items-center justify-center rounded-xl bg-cream">
+        <Text className="text-lg font-bold text-accent">{ten.trim().charAt(0).toUpperCase()}</Text>
+      </View>
+      <BodyText className="flex-1 px-3" soDongToiDa={2}>
+        {ten}
+      </BodyText>
+      <Text className="text-right text-sm font-semibold tabular-nums text-primary">
+        {daQuyDoi} {donVi}
+      </Text>
+    </View>
+  );
+};
 
 export default function ManHinhChiTietCongThuc() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -92,7 +94,8 @@ export default function ManHinhChiTietCongThuc() {
   const [binhLuan, setBinhLuan] = useState('');
   const taoBinhLuan = useTaoBinhLuan(maCongThuc);
   const xoaCongThuc = useXoaCongThuc();
-  const [soLuongNguyenLieu, setSoLuongNguyenLieu] = useState<Record<string, number>>({});
+  // BR-04: Khẩu phần người xem chọn để quy đổi định lượng (mặc định = khẩu phần gốc)
+  const [khauPhanChon, setKhauPhanChon] = useState<number | null>(null);
 
   const [themVaoKeHoach, setThemVaoKeHoach] = useState(false);
   const [keHoachChon, setKeHoachChon] = useState('');
@@ -125,6 +128,8 @@ export default function ManHinhChiTietCongThuc() {
     );
 
   const laTacGia = nguoiDung?.id === data.tacGia.id;
+  const khauPhanHienTai = khauPhanChon ?? data.khauPhan;
+  const tiLeQuyDoi = data.khauPhan > 0 ? khauPhanHienTai / data.khauPhan : 1;
 
   const thanhPhanNguyenLieu = (
     <View>
@@ -135,12 +140,37 @@ export default function ManHinhChiTietCongThuc() {
           <Text className="text-sm font-semibold text-white">Thêm hết vào giỏ</Text>
         </Pressable>
       </View>
+      <View className="mt-3 flex-row items-center justify-between rounded-2xl bg-mist px-4 py-3">
+        <CaptionText className="font-medium">Khẩu phần quy đổi</CaptionText>
+        <View className="flex-row items-center gap-2.5">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Giảm khẩu phần"
+            onPress={() => setKhauPhanChon(Math.max(1, khauPhanHienTai - 1))}
+            className="h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-white"
+          >
+            <Minus size={15} color={MAU_SAC.MUC} />
+          </Pressable>
+          <Text className="min-w-16 text-center text-base font-bold tabular-nums text-primary">
+            {formatVn(khauPhanHienTai)} người
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tăng khẩu phần"
+            onPress={() => setKhauPhanChon(Math.min(20, khauPhanHienTai + 1))}
+            className="h-8 w-8 items-center justify-center rounded-full bg-primary"
+          >
+            <Plus size={15} color="#fff" />
+          </Pressable>
+        </View>
+      </View>
       {data.nguyenLieu.map((nl, i) => (
         <HangNguyenLieu
           key={i}
           ten={nl.ten}
-          soLuong={soLuongNguyenLieu[nl.ten] ?? 1}
-          khiDoi={(so) => setSoLuongNguyenLieu((t) => ({ ...t, [nl.ten]: so }))}
+          dinhLuong={nl.dinhLuong}
+          donVi={nl.donVi}
+          tiLe={tiLeQuyDoi}
         />
       ))}
     </View>
@@ -150,14 +180,23 @@ export default function ManHinhChiTietCongThuc() {
     <View>
       {data.cacBuoc.map((buoc) => (
         <View key={buoc.thuTu} className="mt-3 flex-row gap-3">
-          <View className="h-7 w-7 items-center justify-center rounded-full bg-primary">
-            <Text className="text-sm font-bold text-white">{buoc.thuTu}</Text>
+          <View className="h-7 w-7 items-center justify-center rounded-full bg-accent-light">
+            <Text className="text-sm font-bold text-primary">{buoc.thuTu}</Text>
           </View>
-          <BodyText className="flex-1">{buoc.noiDung}</BodyText>
+          <View className="flex-1">
+            <BodyText>{buoc.noiDung}</BodyText>
+            {buoc.anhBuoc ? (
+              <Image
+                source={{ uri: layUrlAnh(buoc.anhBuoc) }}
+                style={{ width: '100%', height: 160, borderRadius: 12, marginTop: 8 }}
+                contentFit="cover"
+              />
+            ) : null}
+          </View>
         </View>
       ))}
       {data.dinhDuong ? (
-        <View className="mt-6 rounded-2xl bg-[#F1F5F5] p-4">
+        <View className="mt-6 rounded-2xl bg-mist p-4">
           <BodyText dam>Dinh dưỡng</BodyText>
           <View className="mt-2 flex-row justify-between">
             <CaptionText>Calo</CaptionText>
@@ -226,21 +265,19 @@ export default function ManHinhChiTietCongThuc() {
             </View>
           </View>
 
-          <View className="mt-3 flex-row gap-4">
-            <View className="flex-row items-center gap-1">
-              <Clock size={14} color="#97A2B0" />
-              <NumberDisplay value={data.thoiGianNauPhut} unit="phút" className="text-sm" />
-            </View>
-            {data.thoiGianChuanBiPhut ? (
-              <View className="flex-row items-center gap-1">
-                <CaptionText>Chuẩn bị</CaptionText>
-                <NumberDisplay value={data.thoiGianChuanBiPhut} unit="phút" className="text-sm" />
-              </View>
-            ) : null}
-            <View className="flex-row items-center gap-1">
-              <Users size={14} color="#97A2B0" />
-              <NumberDisplay value={data.khauPhan} unit="người" className="text-sm" />
-            </View>
+          <View className="mt-4 flex-row gap-2">
+            <TheThongTin
+              nhan="Chuẩn bị"
+              giaTri={data.thoiGianChuanBiPhut ? `${formatVn(data.thoiGianChuanBiPhut)} phút` : '—'}
+              Icon={Hourglass}
+            />
+            <TheThongTin nhan="Nấu chín" giaTri={`${formatVn(data.thoiGianNauPhut)} phút`} Icon={Clock} />
+            <TheThongTin nhan="Khẩu phần" giaTri={`${formatVn(khauPhanHienTai)} người`} Icon={Users} />
+            <TheThongTin
+              nhan="Năng lượng"
+              giaTri={data.dinhDuong ? `${formatVn(data.dinhDuong.calo)} kcal` : '—'}
+              Icon={Flame}
+            />
           </View>
 
           {data.moTa ? <BodyText className="mt-3 text-neutral-600" soDongToiDa={3}>{data.moTa}</BodyText> : null}

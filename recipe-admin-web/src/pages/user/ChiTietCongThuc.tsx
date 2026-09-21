@@ -14,10 +14,12 @@ import {
   layBinhLuanUser,
   layChiTietCongThucUser,
   layCongThucTuongTuUser,
+  layDanhSachYeuThichUser,
   taoBinhLuanUser,
   themYeuThichUser,
   xoaYeuThichUser,
 } from '../../api/congThuc';
+import { useAuthStore } from '../../stores/authStore';
 
 const CAC_TAB = ['Nguyên liệu chuẩn bị', 'Các bước thực hiện'] as const;
 const CAC_BUA = ['Bữa Sáng', 'Bữa Trưa', 'Bữa Tối'] as const;
@@ -26,8 +28,8 @@ const CAC_BUA = ['Bữa Sáng', 'Bữa Trưa', 'Bữa Tối'] as const;
 export function ChiTietCongThuc() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const nguoiDung = useAuthStore((s) => s.nguoiDung);
   const [tab, setTab] = useState<(typeof CAC_TAB)[number]>(CAC_TAB[0]);
-  const [yeuThich, setYeuThich] = useState(false);
   const [khauPhanChon, setKhauPhanChon] = useState<number | null>(null);
   const [daChuanBi, setDaChuanBi] = useState<Record<string, boolean>>({});
   const [buoiChon, setBuoiChon] = useState(1);
@@ -50,13 +52,21 @@ export function ChiTietCongThuc() {
     enabled: !!id,
   });
 
+  // BR-SOC: Trạng thái lưu thật từ /favorites (API chưa trả cờ nên tra danh sách đã lưu)
+  const dsLuu = useQuery({
+    queryKey: ['user', 'favorites', 'ids'],
+    queryFn: () => layDanhSachYeuThichUser(0, 100),
+    enabled: !!nguoiDung,
+  });
+  const yeuThich = (dsLuu.data?.noiDung ?? []).some((ct) => ct.id === id);
+
   const chuyenTim = useMutation({
     mutationFn: () => (yeuThich ? xoaYeuThichUser(id ?? '') : themYeuThichUser(id ?? '')),
     onSuccess: () => {
-      setYeuThich((cu) => !cu);
       queryClient.invalidateQueries({ queryKey: ['user', 'favorites'] });
     },
-    onError: () => alert('[SOC-01] Cần đăng nhập để yêu thích'),
+    onError: () =>
+      alert(nguoiDung ? '[SOC-01] Không lưu được, thử lại sau' : '[SOC-01] Cần đăng nhập để yêu thích'),
   });
   const guiDiem = useMutation({
     mutationFn: () => danhGiaCongThucUser(id ?? '', diem),
@@ -104,15 +114,12 @@ export function ChiTietCongThuc() {
       <p className="pt-4 text-left text-xs text-slate-500">
         <Link to="/" className="hover:underline">Trang chủ</Link>
         {' / '}
-        <Link to="/tim-kiem" className="hover:underline">Món mặn gia đình</Link>
+        <Link to="/tim-kiem" className="hover:underline">Tìm kiếm</Link>
         {' / '}
         <span className="font-semibold text-ink">{ct.ten}</span>
       </p>
 
-      <p className="mt-4 inline-block rounded-full bg-accent-light px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-deepteal">
-        Món mặn truyền thống
-      </p>
-      <h1 className="mt-2 font-serif text-4xl font-black tracking-tight text-ink md:text-5xl">{ct.ten}</h1>
+      <h1 className="mt-4 font-serif text-4xl font-black tracking-tight text-ink md:text-5xl">{ct.ten}</h1>
       {ct.moTa ? <p className="mt-2 max-w-2xl text-left text-sm text-slate-500">{ct.moTa}</p> : null}
 
       <div className="mt-3 flex flex-wrap items-center gap-3">

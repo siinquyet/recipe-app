@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { TaoDanhSachDiChoDto } from './dto/shopping-list.dto';
 
@@ -146,7 +147,7 @@ export class ShoppingListsService {
             id: string;
             internalIngredientId: string | null;
             originalText: string;
-            quantity: any;
+            quantity: Prisma.Decimal;
             unit: string;
             isChecked: boolean;
             sortOrder: number;
