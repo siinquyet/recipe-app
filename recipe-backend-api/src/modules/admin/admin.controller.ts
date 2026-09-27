@@ -13,7 +13,9 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
+import { AnalyticsService } from './analytics.service';
 import { ModeratorActionDto, UserStatusDto } from './dto/admin-action.dto';
+import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { AdminUserQueryDto } from './dto/admin-query.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -26,7 +28,23 @@ import { AuditLog } from '../audit/audit-log.decorator';
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class AdminController {
-  constructor(private readonly service: AdminService) {}
+  constructor(
+    private readonly service: AdminService,
+    private readonly analytics: AnalyticsService,
+  ) {}
+
+  @Get('analytics/dashboard')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Dashboard analytics (FR-ADM-05, chỉ ADMIN)',
+    description:
+      'Trả totalUsers, activeUsers (người dùng có tương tác trong khoảng), publishedRecipes, ' +
+      'topRatedRecipes (BR-05: chỉ món có >= 5 đánh giá), usersGrowth, recipesGrowth, engagement. ' +
+      'Tham số days chỉ nhận 7 / 30 / 90 (mặc định 7). Ngày được tính theo giờ Việt Nam (GMT+7).',
+  })
+  analyticsDashboard(@Query() query: AnalyticsQueryDto) {
+    return this.analytics.dashboard(query.days);
+  }
 
   @Get('stats')
   @Roles(UserRole.ADMIN)
