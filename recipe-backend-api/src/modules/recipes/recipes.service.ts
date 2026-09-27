@@ -33,6 +33,9 @@ export class RecipesService {
       createdAt: true,
       updatedAt: true,
     };
+    // Spec recipes/README.md "GET /recipes (List - KHÔNG CÓ ID)": danh sách công khai
+    // cố tình KHÔNG trả id để chống dò/enum UUID sang endpoint chi tiết.
+    // Chỉ ADMIN (đã đăng nhập) mới thấy id + author để quản trị.
     if (viewerRole === Role.ADMIN) {
       select.id = true;
       select.author = { select: { displayName: true, email: true } };
@@ -86,7 +89,7 @@ export class RecipesService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, viewer?: { id?: string; role?: string }) {
     const recipe = await this.prisma.recipe.findUnique({
       where: { id },
       include: {
@@ -99,6 +102,13 @@ export class RecipesService {
       },
     });
     if (!recipe || recipe.deletedAt) {
+      throw new NotFoundException('[REC-06] Công thức không tồn tại');
+    }
+    // BR-02: chỉ APPROVED mới công khai. ADMIN xem được mọi trạng thái để kiểm duyệt,
+    // tác giả xem được mọi trạng thái của chính mình (để sửa / xem lý do bị reject).
+    const isAdmin = viewer?.role === Role.ADMIN;
+    const isAuthor = !!viewer?.id && recipe.authorId === viewer.id;
+    if (!isAdmin && !isAuthor && recipe.status !== 'APPROVED') {
       throw new NotFoundException('[REC-06] Công thức không tồn tại');
     }
     return recipe;

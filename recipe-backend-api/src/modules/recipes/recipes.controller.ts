@@ -43,9 +43,9 @@ export class RecipesController {
   @UseGuards(OptionalJwtAuthGuard)
   @UseInterceptors(ActivityInterceptor)
   @TrackActivity('VIEW', 'RECIPE')
-  @ApiOperation({ summary: 'Chi tiết công thức' })
-  findOne(@Param('id') id: string, @CurrentUser() user?: { id: string }) {
-    return this.service.findOne(id);
+  @ApiOperation({ summary: 'Chi tiết công thức (BR-02: chỉ APPROVED mới công khai)' })
+  findOne(@Param('id') id: string, @CurrentUser() user?: { id: string; role: string }) {
+    return this.service.findOne(id, user);
   }
 
   @Post()
