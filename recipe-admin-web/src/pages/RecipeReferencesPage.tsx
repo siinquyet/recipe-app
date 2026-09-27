@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { apiClient } from '../api/client';
+import { formatVn } from '@shared/number';
 
 interface RecipeReference {
   id: string;
@@ -22,7 +23,7 @@ interface RefPage {
 }
 
 async function fetchRefs(page: number = 0): Promise<RefPage> {
-  const res = await axios.get(`/api/v1/recipe-references?page=${page}&size=20`);
+  const res = await apiClient.get(`/recipe-references?page=${page}&size=20`);
   return res.data;
 }
 
@@ -58,7 +59,7 @@ export default function RecipeReferencesPage() {
             ) : (
               data?.content.map((ref, i) => (
                 <tr key={ref.id} className="hover:bg-gray-50">
-                  <td className="text-left px-4 py-3 text-sm">{i + 1}</td>
+                  <td className="text-left px-4 py-3 text-sm">{formatVn(i + 1)}</td>
                   <td className="text-left px-4 py-3 text-sm font-medium max-w-[200px] truncate">{ref.title}</td>
                   <td className="text-left px-4 py-3 text-sm">{ref.source}</td>
                   <td className="text-right px-4 py-3 text-sm">{ref.servings}</td>
@@ -79,7 +80,7 @@ export default function RecipeReferencesPage() {
 
       {data && data.totalElements > 0 && (
         <div className="mt-4 text-sm text-gray-500">
-          Tổng: {data.totalElements} references
+          Tổng: {formatVn(data.totalElements)} references
         </div>
       )}
     </div>

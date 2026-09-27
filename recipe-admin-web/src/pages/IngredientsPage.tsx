@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { apiClient } from '../api/client';
+import { formatVn } from '@shared/number';
 
 interface Ingredient {
   id: string;
@@ -17,7 +18,7 @@ interface IngredientPage {
 }
 
 async function fetchIngredients(page: number = 0): Promise<IngredientPage> {
-  const res = await axios.get(`/api/v1/ingredients?page=${page}&size=20`);
+  const res = await apiClient.get(`/ingredients?page=${page}&size=20`);
   return res.data;
 }
 
@@ -54,7 +55,7 @@ export default function IngredientsPage() {
             ) : (
               data?.content.map((item, i) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="text-left px-4 py-3 text-sm">{i + 1}</td>
+                  <td className="text-left px-4 py-3 text-sm">{formatVn(i + 1)}</td>
                   <td className="text-left px-4 py-3 text-sm font-medium">{item.canonicalName}</td>
                   <td className="text-left px-4 py-3 text-sm">{item.category || '--'}</td>
                   <td className="text-left px-4 py-3 text-sm">{item.unitCategory}</td>
@@ -68,7 +69,7 @@ export default function IngredientsPage() {
 
       {data && data.totalElements > 0 && (
         <div className="mt-4 text-sm text-gray-500">
-          Tổng: {data.totalElements} nguyên liệu
+          Tổng: {formatVn(data.totalElements)} nguyên liệu
         </div>
       )}
     </div>

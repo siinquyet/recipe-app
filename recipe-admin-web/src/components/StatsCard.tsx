@@ -1,5 +1,3 @@
-import clsx from 'clsx';
-
 interface StatsCardProps {
   title: string;
   value: string | number;
