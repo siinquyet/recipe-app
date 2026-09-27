@@ -11,6 +11,7 @@ import { FoodCompatibilityModule } from './modules/food-compatibility/food-compa
 import { ActivityModule } from './modules/activity/activity.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { MealPlansModule } from './modules/meal-plans/meal-plans.module';
+import { ShoppingListsModule } from './modules/shopping-lists/shopping-lists.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MealPlansModule } from './modules/meal-plans/meal-plans.module';
     ActivityModule,
     AuditModule,
     MealPlansModule,
+    ShoppingListsModule,
   ],
 })
 export class AppModule {}
