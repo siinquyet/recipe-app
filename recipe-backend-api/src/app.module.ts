@@ -12,6 +12,7 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { MealPlansModule } from './modules/meal-plans/meal-plans.module';
 import { ShoppingListsModule } from './modules/shopping-lists/shopping-lists.module';
+import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ShoppingListsModule } from './modules/shopping-lists/shopping-lists.mod
     AuditModule,
     MealPlansModule,
     ShoppingListsModule,
+    RecommendationsModule,
   ],
 })
 export class AppModule {}

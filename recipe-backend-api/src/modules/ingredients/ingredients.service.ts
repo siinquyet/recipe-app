@@ -103,7 +103,28 @@ export class IngredientsService {
   }
 
   async removeIngredient(id: string) {
-    await this.findOneIngredient(id);
+    const ingredient = await this.findOneIngredient(id);
+
+    // Phải chặn trước khi xoá, nếu không:
+    //  - IngredientMapping (FK RESTRICT) -> Prisma P2003 -> HTTP 500
+    //  - RecipeIngredient / ShoppingListItem (FK SET NULL) -> xoá âm thầm,
+    //    mất liên kết nguyên liệu của hàng chục dòng mà không có cảnh báo
+    const [recipeUsages, shoppingUsages, mappings] = await Promise.all([
+      this.prisma.recipeIngredient.count({ where: { internalIngredientId: id } }),
+      this.prisma.shoppingListItem.count({ where: { internalIngredientId: id } }),
+      this.prisma.ingredientMapping.count({ where: { internalIngredientId: id } }),
+    ]);
+
+    if (recipeUsages || shoppingUsages || mappings) {
+      const parts: string[] = [];
+      if (recipeUsages) parts.push(`${recipeUsages} dòng nguyên liệu trong công thức`);
+      if (shoppingUsages) parts.push(`${shoppingUsages} mục trong danh sách mua`);
+      if (mappings) parts.push(`${mappings} mapping tên ngoại`);
+      throw new ConflictException(
+        `[ING-04] Không thể xoá nguyên liệu "${ingredient.canonicalName}" vì đang được sử dụng: ${parts.join(', ')}`,
+      );
+    }
+
     return this.prisma.internalIngredient.delete({ where: { id } });
   }
 

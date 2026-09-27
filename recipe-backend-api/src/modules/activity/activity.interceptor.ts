@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { concatMap } from 'rxjs/operators';
 import { ACTIVITY_METADATA_KEY, TrackActivityOptions } from './track-activity.decorator';
 import { ActivityService } from './activity.service';
 
@@ -58,9 +58,14 @@ export class ActivityInterceptor implements NestInterceptor {
     const user = req?.user;
 
     return next.handle().pipe(
-      tap(async (res: any) => {
+      // Phải CHỜ ghi xong UserActivity trước khi trả response.
+      // Nếu fire-and-forget (tap), request kế tiếp của client (ví dụ
+      // GET /recommendations ngay sau khi mở 1 món) có thể đọc DB trước khi
+      // INSERT kịp chạy -> BR-RECO-01 đếm thiếu tương tác.
+      // ActivityService.log() đã tự nuốt lỗi ([LOG-01]) nên chờ ở đây là an toàn.
+      concatMap(async (res: any) => {
         try {
-          if (!user || !user.id) return;
+          if (!user || !user.id) return res;
           const paramName = meta.entityIdParam ?? 'id';
           let entityId = req?.params?.[paramName] || req?.params?.id || (isObject(res) ? res.id : undefined);
           if (!entityId && isObject(res) && isObject(res.data)) {
@@ -89,8 +94,9 @@ export class ActivityInterceptor implements NestInterceptor {
             metadata,
           });
         } catch {
-          // noop
+          // noop - [LOG-01] theo NFR
         }
+        return res;
       }),
     );
   }
