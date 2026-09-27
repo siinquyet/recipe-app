@@ -70,6 +70,7 @@ enum UserActivityType {
   COMMENT
   SHARE
   CREATE_RECIPE
+  PLAN_ITEM
   GENERATE_SHOPPING
 }
 

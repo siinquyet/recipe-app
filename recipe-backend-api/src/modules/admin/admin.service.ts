@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Prisma, RecipeStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ModeratorActionDto, UserStatusDto } from './dto/admin-action.dto';
+import { AdminUserQueryDto } from './dto/admin-query.dto';
 
 @Injectable()
 export class AdminService {
@@ -50,7 +51,7 @@ export class AdminService {
     };
   }
 
-  async findAllUsers(query: { page?: number; size?: number; search?: string }) {
+  async findAllUsers(query: AdminUserQueryDto) {
     const page = query.page ?? 0;
     const size = query.size ?? 20;
 

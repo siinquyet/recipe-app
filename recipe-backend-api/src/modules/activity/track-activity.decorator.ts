@@ -1,7 +1,7 @@
 import { SetMetadata } from '@nestjs/common';
 
-export type ActivityType = 'VIEW' | 'FAVORITE' | 'RATE' | 'COMMENT' | 'SHARE' | 'CREATE_RECIPE' | 'GENERATE_SHOPPING';
-export type EntityType = 'RECIPE' | 'RECIPE_REFERENCE' | 'SHOPPING_LIST';
+export type ActivityType = 'VIEW' | 'FAVORITE' | 'RATE' | 'COMMENT' | 'SHARE' | 'CREATE_RECIPE' | 'PLAN_ITEM' | 'GENERATE_SHOPPING';
+export type EntityType = 'RECIPE' | 'RECIPE_REFERENCE' | 'MEAL_PLAN' | 'SHOPPING_LIST';
 
 export interface TrackActivityOptions {
   entityType: EntityType;

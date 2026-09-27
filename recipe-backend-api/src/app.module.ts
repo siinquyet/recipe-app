@@ -10,6 +10,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { FoodCompatibilityModule } from './modules/food-compatibility/food-compatibility.module';
 import { ActivityModule } from './modules/activity/activity.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { MealPlansModule } from './modules/meal-plans/meal-plans.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuditModule } from './modules/audit/audit.module';
     FoodCompatibilityModule,
     ActivityModule,
     AuditModule,
+    MealPlansModule,
   ],
 })
 export class AppModule {}
