@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNotEmpty, IsInt, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateInternalIngredientDto {
@@ -58,9 +59,18 @@ export class IngredientQueryDto {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional({ description: 'Trang (0-based)', default: 0 })
   @IsOptional()
-  page?: number;
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  page?: number = 0;
 
+  @ApiPropertyOptional({ description: 'Số item/trang (tối đa 50)', default: 20 })
   @IsOptional()
-  size?: number;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  size?: number = 20;
 }

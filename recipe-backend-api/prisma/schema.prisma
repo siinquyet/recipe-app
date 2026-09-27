@@ -93,7 +93,7 @@ model User {
   email         String    @unique
   passwordHash  String
   displayName   String
-  avatarUrl     String?
+  avatarUrl     String?   @db.VarChar(500)
   role          Role      @default(USER)
   status        String    @default("ACTIVE") // ACTIVE, BANNED
   createdAt     DateTime  @default(now())
@@ -126,7 +126,7 @@ model Category {
   id          String    @id @default(uuid())
   name        String    @unique
   slug        String    @unique
-  description String?
+  description String?    @db.Text
   parentId    String?
   parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryHierarchy")
@@ -145,9 +145,9 @@ model Tag {
 
 model Recipe {
   id              String        @id @default(uuid())
-  title           String
-  description     String?
-  thumbnailUrl    String?
+  title           String        @db.VarChar(200)
+  description     String?       @db.Text
+  thumbnailUrl    String?       @db.VarChar(500)
   cookTimeMinutes Int
   prepTimeMinutes Int?
   servings        Int
@@ -155,8 +155,8 @@ model Recipe {
   author          User          @relation(fields: [authorId], references: [id])
   status          RecipeStatus  @default(DRAFT)
   source          RecipeSource  @default(LOCAL)
-  externalId      String?       // Spoonacular ID nếu source = SPOONACULAR
-  rejectionReason String?
+  externalId      String?       @db.VarChar(100) // Spoonacular ID nếu source = SPOONACULAR
+  rejectionReason String?       @db.Text
   categoryId      String?
   category        Category?     @relation(fields: [categoryId], references: [id])
   tags            Tag[]
@@ -183,9 +183,9 @@ model Recipe {
 model RecipeReference {
   id            String           @id @default(uuid())
   source        RecipeSource     @default(SPOONACULAR)
-  externalId    String
-  title         String
-  imageUrl      String?
+  externalId    String        @db.VarChar(100)
+  title         String         @db.VarChar(255)
+  imageUrl      String?        @db.VarChar(500)
   servings      Int
   status        ReferenceStatus  @default(ACTIVE)
   spoonacularScore Float?
@@ -210,10 +210,10 @@ model RecipeReference {
 model InternalIngredient {
   id             String   @id @default(uuid())
   canonicalName  String   @unique // tên chuẩn: "thịt bò"
-  normalizedName String   // tên đã chuẩn hóa: "thit bo"
+  normalizedName String   @db.VarChar(191) // tên đã chuẩn hóa: "thit bo"
   category       String?  // meat, vegetable, spice, dairy, grain, etc.
   unitCategory   UnitCategory @default(COUNT)
-  defaultUnit    String   @default("g")
+  defaultUnit    String   @default("g") @db.VarChar(20)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   
@@ -226,7 +226,7 @@ model IngredientMapping {
   id                   String   @id @default(uuid())
   internalIngredientId String
   internalIngredient   InternalIngredient @relation(fields: [internalIngredientId], references: [id])
-  externalName         String   // tên từ Spoonacular: "beef, ground"
+  externalName         String   @db.VarChar(255) // tên từ Spoonacular: "beef, ground"
   source               RecipeSource @default(SPOONACULAR)
   status               IngredientMappingStatus @default(MAPPED)
   confidence           Float    @default(1.0) // 0-1
@@ -243,9 +243,9 @@ model RecipeIngredient {
   recipe               Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   internalIngredientId String?
   internalIngredient   InternalIngredient? @relation(fields: [internalIngredientId], references: [id])
-  originalText         String   // văn bản gốc: "500g thịt bò băm"
+  originalText         String   @db.Text // văn bản gốc: "500g thịt bò băm"
   quantity             Decimal  @db.Decimal(10, 3) // 500.000
-  unit                 String   // "g"
+  unit                 String   @db.VarChar(20) // "g"
   sortOrder            Int      // STT 1,2,3...
   createdAt            DateTime @default(now())
   
@@ -259,8 +259,8 @@ model RecipeStep {
   recipeId  String
   recipe    Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   stepOrder Int
-  content   String
-  imageUrl  String?
+  content   String  @db.Text
+  imageUrl  String? @db.VarChar(500)
   createdAt DateTime @default(now())
   
   @@index([recipeId])
@@ -321,7 +321,7 @@ model Comment {
   recipe              Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   recipeReferenceId   String?
   recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
-  content             String
+  content             String  @db.Text
   parentId            String? // reply
   parent              Comment? @relation("CommentReplies", fields: [parentId], references: [id])
   replies             Comment[] @relation("CommentReplies")
@@ -345,9 +345,9 @@ model Report {
   recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
   commentId           String?
   comment             Comment? @relation(fields: [commentId], references: [id])
-  reason              String
+  reason              String  @db.Text
   status              String  @default("PENDING") // PENDING, RESOLVED, REJECTED
-  adminNote           String?
+  adminNote           String? @db.Text
   createdAt           DateTime @default(now())
   resolvedAt          DateTime?
   
@@ -361,7 +361,7 @@ model MealPlan {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
+  name      String   @db.VarChar(200)
   startDate DateTime
   endDate   DateTime
   isActive  Boolean  @default(true)
@@ -396,7 +396,7 @@ model ShoppingList {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
+  name      String   @db.VarChar(200)
   sourceType String  // RECIPE, MEAL_PLAN, MANUAL
   sourceId  String?  // recipeId or mealPlanId
   status    ShoppingListStatus @default(ACTIVE)
@@ -414,9 +414,9 @@ model ShoppingListItem {
   shoppingList           ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
   internalIngredientId   String?
   internalIngredient     InternalIngredient? @relation(fields: [internalIngredientId], references: [id])
-  originalText           String   // văn bản gốc từ recipe
+  originalText           String   @db.Text // văn bản gốc từ recipe
   quantity               Decimal  @db.Decimal(10, 3)
-  unit                   String
+  unit                   String   @db.VarChar(20)
   isChecked              Boolean  @default(false)
   sortOrder              Int
   createdAt              DateTime @default(now())
@@ -449,8 +449,8 @@ model AuditLog {
   entityId  String
   oldData   Json?
   newData   Json?
-  ipAddress String?
-  userAgent String?
+  ipAddress String? @db.VarChar(100)
+  userAgent String? @db.Text
   createdAt DateTime @default(now())
   
   @@index([userId, createdAt])

@@ -8,6 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { FoodCompatibilityModule } from './modules/food-compatibility/food-compatibility.module';
+import { ActivityModule } from './modules/activity/activity.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { FoodCompatibilityModule } from './modules/food-compatibility/food-compa
     RecipesModule,
     AdminModule,
     FoodCompatibilityModule,
+    ActivityModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
