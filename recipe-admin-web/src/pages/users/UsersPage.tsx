@@ -110,16 +110,16 @@ export default function UsersPage() {
 
   const columns: Column<AdminUser>[] = [
     {
-      key: 'displayName',
-      header: 'Tên hiển thị',
-      sortable: false,
-      render: (r) => <span className="font-medium">{r.displayName || '—'}</span>,
-    },
-    {
       key: 'email',
       header: 'Email',
       sortable: false,
       render: (r) => <span className="text-gray-600">{r.email || '—'}</span>,
+    },
+    {
+      key: 'displayName',
+      header: 'Tên',
+      sortable: false,
+      render: (r) => <span className="font-medium">{r.displayName || '—'}</span>,
     },
     {
       key: 'role',
@@ -135,7 +135,7 @@ export default function UsersPage() {
     },
     {
       key: 'recipes',
-      header: 'Công thức',
+      header: 'Số công thức',
       numeric: true,
       sortable: false,
       render: (r) => <NumberDisplay value={r._count.recipes} />,

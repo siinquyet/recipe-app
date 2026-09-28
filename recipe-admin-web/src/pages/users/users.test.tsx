@@ -235,18 +235,18 @@ describe('UsersPage', () => {
     expect(requestedUrls()[0]).toBe('/admin/users?page=0&size=10');
   });
 
-  it('cot dung thu tu plan: ten, email, vai tro, trang thai, so cong thuc, ngay tao, thao tac', async () => {
+  it('cot dung thu tu plan: email, ten, vai tro, trang thai, so cong thuc, ngay tao, thao tac', async () => {
     serveList([user()]);
     renderWithProviders(<UsersPage />);
     await waitFor(() => expect(screen.getByText('Nguyễn Văn A')).toBeInTheDocument());
     const heads = screen.getAllByRole('columnheader').map((h) => h.textContent?.trim() ?? '');
     expect(heads).toEqual([
       'STT',
-      'Tên hiển thị',
       'Email',
+      'Tên',
       'Vai trò',
       'Trạng thái',
-      'Công thức',
+      'Số công thức',
       'Ngày tạo',
       'Thao tác',
     ]);
