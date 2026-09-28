@@ -18,12 +18,16 @@ apiClient.interceptors.request.use((config) => {
 
 // Lấy access token mới từ refresh token khi hết hạn
 async function tryRefresh(): Promise<boolean> {
-  const { refreshToken, setAuth } = useAuthStore.getState();
+  const { refreshToken, setAuth, user } = useAuthStore.getState();
   if (!refreshToken) return false;
   try {
     const res = await axios.post('/api/v1/auth/refresh', { refreshToken });
-    const { accessToken, refreshToken: newRefresh } = res.data.tokens;
-    setAuth({ accessToken, refreshToken: newRefresh }, useAuthStore.getState().user!);
+    // Backend tra PHAY `{ accessToken, refreshToken, expiresIn }` - KHONG phai
+    // `{ tokens: {... } }` nhu POST /auth/login. Doc sai hinh dang o day se lam
+    // tryRefresh() nem loi moi lan, nen 401 luon ket thuc bang dang xuat o at.
+    const { accessToken, refreshToken: newRefresh } = res.data;
+    if (!accessToken || !newRefresh || !user) return false;
+    setAuth({ accessToken, refreshToken: newRefresh }, user);
     return true;
   } catch {
     return false;

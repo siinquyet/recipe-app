@@ -66,8 +66,13 @@ export class AdminService {
         skip: page * size,
         take: size,
         orderBy: { createdAt: 'desc' },
-        // Không trả id (UUID) trong list/public endpoints -> FE tự tính STT
+        // Bắt buộc có `id`: FE cần UUID để gọi PATCH /admin/users/:id/status
+        // (khóa / mở khóa tài khoản). Quy tắc "không hiển thị ID" chỉ áp dụng
+        // cho giao diện - bảng dùng STT 1,2,3 - KHÔNG có nghĩa là API giấu id.
+        // Thiếu `id` khiến key của React thành null và nút thao tác gọi
+        // `/admin/users/undefined/status`.
         select: {
+          id: true,
           email: true,
           displayName: true,
           avatarUrl: true,
