@@ -4,7 +4,7 @@ import AllRecipesPage from './pages/recipes/AllRecipesPage';
 import PendingRecipesPage from './pages/recipes/PendingRecipesPage';
 import IngredientsPage from './pages/IngredientsPage';
 import RecipeReferencesPage from './pages/RecipeReferencesPage';
-import UsersPage from './pages/UsersPage';
+import UsersPage from './pages/users/UsersPage';
 import FoodCheckPage from './pages/FoodCheckPage';
 import LoginPage from './pages/auth/LoginPage';
 import AdminLayout from './layout/AdminLayout';
