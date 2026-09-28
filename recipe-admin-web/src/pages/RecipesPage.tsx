@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { formatVn } from '@shared/number';
+import { StatusBadge } from '../components/ui/StatusBadge';
 
 interface Recipe {
   id: string;
@@ -95,21 +96,5 @@ export default function RecipesPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    DRAFT: 'bg-gray-100 text-gray-700',
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    APPROVED: 'bg-green-100 text-green-700',
-    REJECTED: 'bg-red-100 text-red-700',
-    HIDDEN: 'bg-gray-100 text-gray-500',
-  };
-
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
-      {status}
-    </span>
   );
 }

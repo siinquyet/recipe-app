@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { formatVn } from '@shared/number';
+import { StatusBadge } from '../components/ui/StatusBadge';
 
 interface User {
   id: string;
@@ -131,18 +132,6 @@ function RoleBadge({ role }: { role: string }) {
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[role] || 'bg-gray-100 text-gray-700'}`}>
       {role}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    ACTIVE: 'bg-green-100 text-green-700',
-    BANNED: 'bg-red-100 text-red-700',
-  };
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
-      {status}
     </span>
   );
 }

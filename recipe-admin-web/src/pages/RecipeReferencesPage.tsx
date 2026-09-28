@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { formatVn } from '@shared/number';
+import { StatusBadge } from '../components/ui/StatusBadge';
 
 interface RecipeReference {
   id: string;
@@ -84,17 +85,5 @@ export default function RecipeReferencesPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    ACTIVE: 'bg-green-100 text-green-700',
-    UNAVAILABLE: 'bg-red-100 text-red-700',
-  };
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
-      {status}
-    </span>
   );
 }
