@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import DashboardPage from './pages/DashboardPage';
+import DashboardPage from './pages/analytics/DashboardPage';
 import AllRecipesPage from './pages/recipes/AllRecipesPage';
 import PendingRecipesPage from './pages/recipes/PendingRecipesPage';
 import IngredientsPage from './pages/IngredientsPage';
