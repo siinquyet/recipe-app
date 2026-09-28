@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
-import RecipesPage from './pages/RecipesPage';
+import AllRecipesPage from './pages/recipes/AllRecipesPage';
+import PendingRecipesPage from './pages/recipes/PendingRecipesPage';
 import IngredientsPage from './pages/IngredientsPage';
 import RecipeReferencesPage from './pages/RecipeReferencesPage';
-import PendingRecipesPage from './pages/PendingRecipesPage';
 import UsersPage from './pages/UsersPage';
 import FoodCheckPage from './pages/FoodCheckPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -22,7 +22,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<AdminLayout />}>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/recipes" element={<RecipesPage />} />
+        <Route path="/recipes" element={<AllRecipesPage />} />
         <Route path="/recipes/pending" element={<PendingRecipesPage />} />
         <Route path="/food-check" element={<FoodCheckPage />} />
         <Route path="/ingredients" element={<IngredientsPage />} />
