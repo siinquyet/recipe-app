@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, QuenMatKhauDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, QuenMatKhauDto, DoiMatKhauDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 
 @Controller('auth')
@@ -25,6 +25,12 @@ export class AuthController {
     @Post('forgot-password')
     quenMatKhau(@Body() body: QuenMatKhauDto) {
         return this.authService.quenMatKhau(body.email);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('change-password')
+    doiMatKhau(@Body() body: DoiMatKhauDto, @Req() req: { user: { id: string } }) {
+        return this.authService.doiMatKhau(req.user.id, body.matKhauCu, body.matKhauMoi);
     }
 
     @UseGuards(JwtAuthGuard)

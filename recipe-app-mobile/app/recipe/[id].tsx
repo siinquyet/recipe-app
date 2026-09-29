@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { FC } from 'react';
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { ChevronLeft, Clock, Flame, Heart, Hourglass, Minus, Plus, Share2, Users } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
@@ -17,6 +17,8 @@ import { TabBar } from '../../src/components/ui/TabBar';
 import { TrangDangTai, TrangLoi } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { DanhSachCongThuc } from '../../src/components/recipe/DanhSachCongThuc';
+import { ChonBuoiAn, DaiNgay, TangGiamKhauPhan } from '../../src/components/meal/BoChonMon';
+import { buoiGoiYTheoGio, congNgay, homNay } from '../../src/lib/utils/lich-tuan';
 import { dinhDangNgay, formatVn, parseVn } from '../../src/lib/utils/dinh-dang';
 import { MAU_SAC } from '../../src/constants/cau-hinh';
 import { layUrlAnh } from '../../src/lib/utils/anh';
@@ -25,23 +27,18 @@ import { themMonVaoKeHoach } from '../../src/lib/api/mealPlans';
 import { khoaTruyVan } from '../../src/lib/queryClient';
 import { useAuthStore } from '../../src/stores/authStore';
 import {
+  useBinhLuan,
   useChiTietCongThuc,
   useChuyenDoiYeuThich,
   useCongThucTuongTu,
+  useDanhSachYeuThich,
   useTaoBinhLuan,
   useXoaCongThuc,
 } from '../../src/hooks/useRecipes';
-import { useDanhSachKeHoachAn } from '../../src/hooks/useMealShopping';
+import { useDanhSachKeHoachAn, useTaoTuCongThuc } from '../../src/hooks/useMealShopping';
 
 // SVG gốc: 2 tab Ingredients / Instructions (không có tab Nutrition riêng)
 const CAC_TAB = ['Nguyên liệu', 'Hướng dẫn'] as const;
-
-const BUOI_AN = [
-  { giaTri: 'BREAKFAST', nhan: 'Sáng' },
-  { giaTri: 'LUNCH', nhan: 'Trưa' },
-  { giaTri: 'DINNER', nhan: 'Tối' },
-  { giaTri: 'SNACK', nhan: 'Phụ' },
-] as const;
 
 // BR-UI: Thẻ thông tin đồng bộ web chi tiết — 4 ô Chuẩn bị / Nấu chín / Khẩu phần / Năng lượng
 const TheThongTin: FC<{ nhan: string; giaTri: string; Icon: LucideIcon }> = ({ nhan, giaTri, Icon }) => (
@@ -87,29 +84,50 @@ export default function ManHinhChiTietCongThuc() {
 
   const { data, isLoading, isError, refetch } = useChiTietCongThuc(maCongThuc);
   const tuongTu = useCongThucTuongTu(maCongThuc);
-  const [dangYeuThich, setDangYeuThich] = useState(false);
+  const dsBinhLuan = useBinhLuan(maCongThuc);
+  // BR-SOC: Trạng thái yêu thích đồng bộ server (suy từ danh sách đã lưu)
+  const dsYeuThich = useDanhSachYeuThich(0, 100);
+  const dangYeuThich = useMemo(
+    () => (dsYeuThich.data?.noiDung ?? []).some((ct) => ct.id === maCongThuc),
+    [dsYeuThich.data, maCongThuc],
+  );
   const chuyenYeuThich = useChuyenDoiYeuThich(maCongThuc, dangYeuThich);
   const [diem, setDiem] = useState(5);
   const guiDanhGia = useMutation({ mutationFn: (d: number) => danhGiaCongThuc(maCongThuc, d) });
   const [binhLuan, setBinhLuan] = useState('');
   const taoBinhLuan = useTaoBinhLuan(maCongThuc);
   const xoaCongThuc = useXoaCongThuc();
+  // BR-SHOP: Thêm hết nguyên liệu vào giỏ (server gộp + scale theo khẩu phần đang chọn)
+  const taoGioDiCho = useTaoTuCongThuc();
+  // BR-UI: Chia sẻ công thức qua Share sheet của hệ điều hành
+  const chiaSe = () => {
+    if (!data) return;
+    Share.share({ message: `${data.ten}${data.moTa ? ` — ${data.moTa}` : ''}` }).catch(() => {});
+  };
   // BR-04: Khẩu phần người xem chọn để quy đổi định lượng (mặc định = khẩu phần gốc)
   const [khauPhanChon, setKhauPhanChon] = useState<number | null>(null);
 
   const [themVaoKeHoach, setThemVaoKeHoach] = useState(false);
   const [keHoachChon, setKeHoachChon] = useState('');
-  const [ngayAn, setNgayAn] = useState('');
-  const [buoiAn, setBuoiAn] = useState('LUNCH');
-  const [khauPhanAn, setKhauPhanAn] = useState('2');
+  const [ngayAn, setNgayAn] = useState(() => homNay());
+  const [buoiAn, setBuoiAn] = useState(() => buoiGoiYTheoGio());
+  const [khauPhanAn, setKhauPhanAn] = useState(2);
+  const [loiLuuMon, setLoiLuuMon] = useState('');
   const danhSachKeHoach = useDanhSachKeHoachAn();
+  // BR-MEAL: Mở sheet là chọn sẵn kế hoạch đầu để khỏi bấm thêm 1 nhịp
+  useEffect(() => {
+    if (themVaoKeHoach && !keHoachChon) {
+      const dau = danhSachKeHoach.data?.noiDung[0]?.id;
+      if (dau) setKeHoachChon(dau);
+    }
+  }, [themVaoKeHoach, danhSachKeHoach.data, keHoachChon]);
   const luuMonVaoKeHoach = useMutation({
     mutationFn: () =>
       themMonVaoKeHoach(keHoachChon, {
         congThucId: maCongThuc,
         ngay: ngayAn.trim(),
         buoiAn,
-        khauPhan: parseInt(khauPhanAn, 10) || 1,
+        khauPhan: khauPhanAn,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: khoaTruyVan.keHoachAn.chiTiet(keHoachChon) });
@@ -135,9 +153,15 @@ export default function ManHinhChiTietCongThuc() {
     <View>
       <View className="flex-row items-center justify-between">
         <CaptionText className="font-medium">{data.nguyenLieu.length} món</CaptionText>
-        <Pressable accessibilityRole="button" className="flex-row items-center gap-1.5 rounded-xl bg-primary px-4 py-2">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => taoGioDiCho.mutate({ congThucId: maCongThuc, khauPhan: khauPhanHienTai })}
+          className="flex-row items-center gap-1.5 rounded-xl bg-primary px-4 py-2"
+        >
           <Plus size={14} color="#fff" />
-          <Text className="text-sm font-semibold text-white">Thêm hết vào giỏ</Text>
+          <Text className="text-sm font-semibold text-white">
+            {taoGioDiCho.isPending ? 'Đang thêm...' : 'Thêm hết vào giỏ'}
+          </Text>
         </Pressable>
       </View>
       <View className="mt-3 flex-row items-center justify-between rounded-2xl bg-mist px-4 py-3">
@@ -227,7 +251,7 @@ export default function ManHinhChiTietCongThuc() {
             <Image source={{ uri: layUrlAnh(data.anhThumbnail) }} style={{ width: '100%', height: 260 }} contentFit="cover" />
           ) : (
             <View className="h-40 w-full items-center justify-center bg-cream">
-              <Text className="text-5xl font-bold text-accent">{data.ten.trim().charAt(0).toUpperCase()}</Text>
+              <Text className="font-serif text-5xl font-black text-accent-dark">{data.ten.trim().charAt(0).toUpperCase()}</Text>
             </View>
           )}
           <View className="absolute left-4 top-4 flex-row gap-2">
@@ -241,13 +265,13 @@ export default function ManHinhChiTietCongThuc() {
             </Pressable>
           </View>
           <View className="absolute right-4 top-4 flex-row gap-2">
-            <Pressable accessibilityRole="button" accessibilityLabel="Chia sẻ" className="h-9 w-9 items-center justify-center rounded-full bg-white/90">
+            <Pressable accessibilityRole="button" accessibilityLabel="Chia sẻ" onPress={chiaSe} className="h-9 w-9 items-center justify-center rounded-full bg-white/90">
               <Share2 size={18} color="#0A2533" />
             </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Yêu thích"
-              onPress={() => chuyenYeuThich.mutate(undefined, { onSuccess: () => setDangYeuThich((v) => !v) })}
+              onPress={() => chuyenYeuThich.mutate(undefined)}
               className="h-9 w-9 items-center justify-center rounded-full bg-white/90"
             >
               <Heart size={18} color={dangYeuThich ? '#CA4844' : '#0A2533'} fill={dangYeuThich ? '#CA4844' : 'transparent'} />
@@ -256,7 +280,7 @@ export default function ManHinhChiTietCongThuc() {
         </View>
 
         <View className="px-4 pt-4">
-          <TitleText className="text-2xl">{data.ten}</TitleText>
+          <TitleText className="text-3xl" soDongToiDa={3}>{data.ten}</TitleText>
           <View className="mt-3 flex-row items-center gap-3">
             <Avatar nguon={data.tacGia.anhDaiDien} ten={data.tacGia.tenHienThi} kichThuoc={40} />
             <View className="flex-1">
@@ -323,6 +347,22 @@ export default function ManHinhChiTietCongThuc() {
               className="px-5"
             />
           </View>
+          {(dsBinhLuan.data?.noiDung.length ?? 0) > 0 ? (
+            <View className="mt-3 gap-3">
+              {dsBinhLuan.data?.noiDung.map((bl) => (
+                <View key={bl.id} className="rounded-2xl bg-mist p-3">
+                  <View className="flex-row items-center justify-between">
+                    <BodyText dam>{bl.tacGia.tenHienThi}</BodyText>
+                    <CaptionText>{dinhDangNgay(bl.thoiGianTao)}</CaptionText>
+                  </View>
+                  <BodyText className="mt-1">{bl.noiDung}</BodyText>
+                  {bl.soLuongPhanHoi > 0 ? (
+                    <CaptionText className="mt-1">{bl.soLuongPhanHoi} phản hồi</CaptionText>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           {(tuongTu.data?.noiDung.length ?? 0) > 0 ? (
             <View className="mt-6">
@@ -344,15 +384,15 @@ export default function ManHinhChiTietCongThuc() {
           tieuDe={dangYeuThich ? 'Đã thích' : 'Yêu thích'}
           bienThe={dangYeuThich ? 'chinh' : 'vien'}
           dangTai={chuyenYeuThich.isPending}
-          khiBam={() => chuyenYeuThich.mutate(undefined, { onSuccess: () => setDangYeuThich((v) => !v) })}
+          khiBam={() => chuyenYeuThich.mutate(undefined)}
           className="flex-1 py-2"
         />
         <NutBam tieuDe="+ Kế hoạch" bienThe="chinh" khiBam={() => setThemVaoKeHoach(true)} className="flex-1 py-2" />
       </View>
 
-      <BottomSheet hienThi={themVaoKeHoach} tieuDe="Thêm vào kế hoạch ăn" khiDong={() => setThemVaoKeHoach(false)}>
+      <BottomSheet hienThi={themVaoKeHoach} tieuDe="Thêm vào kế hoạch ăn" khiDong={() => { setThemVaoKeHoach(false); setLoiLuuMon(''); }}>
         <ScrollView>
-          <CaptionText className="mt-2">Chọn kế hoạch</CaptionText>
+          <CaptionText className="mt-2 font-semibold">Chọn kế hoạch</CaptionText>
           <View className="mt-2 gap-2">
             {(danhSachKeHoach.data?.noiDung ?? []).map((kh) => (
               <Pressable
@@ -364,24 +404,58 @@ export default function ManHinhChiTietCongThuc() {
               </Pressable>
             ))}
           </View>
-          <ONhapLieu nhan="Ngày ăn (YYYY-MM-DD)" giaTri={ngayAn} khiDoi={setNgayAn} goiY="2026-09-12" className="mt-3" />
-          <View className="mt-3 flex-row gap-2">
-            {BUOI_AN.map((buoi) => (
+          <View className="mt-3">
+            <DaiNgay ngayChon={ngayAn} khiChon={setNgayAn} />
+          </View>
+          <View className="mt-2 flex-row gap-2">
+            {[
+              { nhan: 'Trưa nay', ngay: homNay(), buoi: 'LUNCH' },
+              { nhan: 'Tối nay', ngay: homNay(), buoi: 'DINNER' },
+              { nhan: 'Trưa mai', ngay: congNgay(homNay(), 1), buoi: 'LUNCH' },
+            ].map((goiY) => (
               <Pressable
-                key={buoi.giaTri}
-                onPress={() => setBuoiAn(buoi.giaTri)}
-                className={`flex-1 items-center rounded-lg border py-2 ${buoiAn === buoi.giaTri ? 'border-primary bg-accent-light' : 'border-neutral-300'}`}
+                key={goiY.nhan}
+                accessibilityRole="button"
+                onPress={() => {
+                  setNgayAn(goiY.ngay);
+                  setBuoiAn(goiY.buoi);
+                }}
+                className={`rounded-full px-3 py-1.5 ${
+                  ngayAn === goiY.ngay && buoiAn === goiY.buoi ? 'bg-primary' : 'bg-neutral-200'
+                }`}
               >
-                <Text className="text-xs text-neutral-900">{buoi.nhan}</Text>
+                <Text
+                  className={`text-xs ${
+                    ngayAn === goiY.ngay && buoiAn === goiY.buoi ? 'font-semibold text-white' : 'text-neutral-700'
+                  }`}
+                >
+                  {goiY.nhan}
+                </Text>
               </Pressable>
             ))}
           </View>
-          <ONhapLieu nhan="Khẩu phần" giaTri={khauPhanAn} khiDoi={setKhauPhanAn} banPhim="numeric" className="mt-3" />
+          <View className="mt-3">
+            <ChonBuoiAn buoiChon={buoiAn} khiChon={setBuoiAn} />
+          </View>
+          <View className="mt-3">
+            <TangGiamKhauPhan khauPhan={khauPhanAn} khiDoi={setKhauPhanAn} />
+          </View>
+          {loiLuuMon ? <CaptionText className="mt-2 text-red-500">{loiLuuMon}</CaptionText> : null}
+          {luuMonVaoKeHoach.isError ? (
+            <CaptionText className="mt-2 text-red-500">Không lưu được, thử lại sau</CaptionText>
+          ) : null}
           <NutBam
             tieuDe="Lưu vào kế hoạch"
             dangTai={luuMonVaoKeHoach.isPending}
             voHieuHoa={!keHoachChon || !ngayAn.trim()}
-            khiBam={() => luuMonVaoKeHoach.mutate()}
+            khiBam={() => {
+              if (!keHoachChon) {
+                setLoiLuuMon('Hãy chọn một kế hoạch (hoặc tạo mới ở màn Kế hoạch)');
+                return;
+              }
+              setLoiLuuMon('');
+              luuMonVaoKeHoach.mutate();
+            }}
             className="mt-4 mb-2"
           />
         </ScrollView>

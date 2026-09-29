@@ -54,3 +54,47 @@ export async function taoDiChoTuKeHoach(mealPlanId: string): Promise<DanhSachDiC
   if (!body.success) throw nemLoi(body);
   return body.data;
 }
+
+// BR-SHOP: Tạo danh sách thủ công
+export async function taoDanhSachDiCho(ten: string): Promise<DanhSachDiCho> {
+  const res = await userApiClient.post('/shopping-lists', { ten, loaiNguon: 'MANUAL' });
+  const body = res.data as ApiEnvelope<DanhSachDiCho>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
+// BR-SHOP: Xóa (archive) danh sách
+export async function xoaDanhSachDiCho(id: string): Promise<void> {
+  await userApiClient.delete(`/shopping-lists/${id}`);
+}
+
+// BR-SHOP: Thêm món thủ công vào danh sách
+export async function themMonDiCho(
+  listId: string,
+  payload: { tenGoc: string; dinhLuong: number; donVi: string },
+): Promise<DanhSachDiCho> {
+  const res = await userApiClient.post(`/shopping-lists/${listId}/items`, payload);
+  const body = res.data as ApiEnvelope<DanhSachDiCho>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
+// BR-SHOP: Sửa tên/lượng/đơn vị/tick món
+export async function suaMonDiCho(
+  listId: string,
+  itemId: string,
+  payload: { tenGoc?: string; dinhLuong?: number; donVi?: string; daChon?: boolean },
+): Promise<DanhSachDiCho> {
+  const res = await userApiClient.patch(`/shopping-lists/${listId}/items/${itemId}`, payload);
+  const body = res.data as ApiEnvelope<DanhSachDiCho>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
+// BR-SHOP: Xóa món khỏi danh sách
+export async function xoaMonDiCho(listId: string, itemId: string): Promise<DanhSachDiCho> {
+  const res = await userApiClient.delete(`/shopping-lists/${listId}/items/${itemId}`);
+  const body = res.data as ApiEnvelope<DanhSachDiCho>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}

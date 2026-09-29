@@ -2,9 +2,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon, UserIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { NutBam } from '../../components/ui/NutBam';
 import { ONhapLieu } from '../../components/ui/ONhapLieu';
-import { TitleText } from '../../components/ui/VanBan';
+import { KhungXacThuc } from '../../components/auth/KhungXacThuc';
 import { useAuthStore } from '../../stores/authStore';
 
 // BR-AUTH: Mật khẩu theo backend (AUTH-05): hoa + thường + số, tối thiểu 6 ký tự
@@ -34,39 +35,70 @@ export function DangKy() {
   };
 
   return (
-    <div className="mx-auto max-w-md bg-white px-6 pb-8 pt-10">
-      <TitleText className="text-3xl">Tạo tài khoản</TitleText>
-      <p className="mt-1 text-left text-sm text-neutral-500">Tham gia cộng đồng nấu ăn cùng nhau</p>
-      <form onSubmit={handleSubmit(onSubmit)}>
+    <KhungXacThuc
+      nhanPill="Tham gia Bếp Nhà"
+      BieuTuongPill={UserPlusIcon}
+      tieuDe="Tạo Tài Khoản"
+      moTa="Tham gia cộng đồng nấu ăn cùng nhau — lưu món tủ, lên kế hoạch tuần, đi chợ thông minh."
+      lienKetDuoi={{ nhan: 'Về trang chủ', den: '/' }}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Controller
           control={control}
           name="tenHienThi"
           render={({ field: { value, onChange }, fieldState: { error } }) => (
-            <ONhapLieu nhan="Tên hiển thị" giaTri={value ?? ''} khiDoi={onChange} goiY="VD: Bếp Nhà" loi={error?.message} className="mt-6" />
+            <ONhapLieu
+              nhan="Tên hiển thị"
+              giaTri={value ?? ''}
+              khiDoi={onChange}
+              goiY="VD: Bếp Nhà"
+              loi={error?.message}
+              bieuTuong={<UserIcon className="h-5 w-5" />}
+            />
           )}
         />
         <Controller
           control={control}
           name="email"
           render={({ field: { value, onChange }, fieldState: { error } }) => (
-            <ONhapLieu nhan="Email" giaTri={value ?? ''} khiDoi={onChange} goiY="ban@example.com" loi={error?.message} className="mt-4" />
+            <ONhapLieu
+              nhan="Địa chỉ Email"
+              giaTri={value ?? ''}
+              khiDoi={onChange}
+              goiY="ban@example.com"
+              loi={error?.message}
+              bieuTuong={<EnvelopeIcon className="h-5 w-5" />}
+            />
           )}
         />
         <Controller
           control={control}
           name="matKhau"
           render={({ field: { value, onChange }, fieldState: { error } }) => (
-            <ONhapLieu nhan="Mật khẩu" giaTri={value ?? ''} khiDoi={onChange} loai="password" loi={error?.message} className="mt-4" />
+            <ONhapLieu
+              nhan="Mật khẩu"
+              giaTri={value ?? ''}
+              khiDoi={onChange}
+              loai="password"
+              goiY="Hoa + thường + số, tối thiểu 6 ký tự"
+              loi={error?.message}
+              bieuTuong={<LockClosedIcon className="h-5 w-5" />}
+            />
           )}
         />
-        <NutBam tieuDe="Đăng ký" loai="submit" className="mt-6 w-full" />
+        <NutBam
+          tieuDe="Đăng ký"
+          loai="submit"
+          className="w-full py-4"
+          bieuTuong={<ArrowRightIcon className="h-5 w-5" />}
+        />
       </form>
-      <p className="mt-4 text-left text-sm text-neutral-500">
+      <p className="mt-4 text-center text-sm text-neutral-500">
         Đã có tài khoản?{' '}
-        <Link to="/dang-nhap" className="font-semibold text-accent-dark">
+        <Link to="/dang-nhap" className="font-semibold text-deepteal">
           Đăng nhập
         </Link>
       </p>
-    </div>
+    </KhungXacThuc>
   );
 }

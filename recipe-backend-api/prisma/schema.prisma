@@ -25,7 +25,7 @@ enum RecipeStatus {
 
 enum RecipeSource {
   LOCAL
-  SPOONACULAR
+  EXTERNAL
 }
 
 enum ReferenceStatus {
@@ -155,7 +155,7 @@ model Recipe {
   author          User          @relation(fields: [authorId], references: [id])
   status          RecipeStatus  @default(DRAFT)
   source          RecipeSource  @default(LOCAL)
-  externalId      String?       // Spoonacular ID nếu source = SPOONACULAR
+  externalId      String?       // ID ngoài nếu source = EXTERNAL
   rejectionReason String?
   categoryId      String?
   category        Category?     @relation(fields: [categoryId], references: [id])
@@ -182,13 +182,13 @@ model Recipe {
 
 model RecipeReference {
   id            String           @id @default(uuid())
-  source        RecipeSource     @default(SPOONACULAR)
+  source        RecipeSource     @default(EXTERNAL)
   externalId    String
   title         String
   imageUrl      String?
   servings      Int
   status        ReferenceStatus  @default(ACTIVE)
-  spoonacularScore Float?
+  externalScore Float?
   healthScore   Float?
   aggregateLikes Int?
   lastSyncedAt  DateTime?
@@ -226,8 +226,8 @@ model IngredientMapping {
   id                   String   @id @default(uuid())
   internalIngredientId String
   internalIngredient   InternalIngredient @relation(fields: [internalIngredientId], references: [id])
-  externalName         String   // tên từ Spoonacular: "beef, ground"
-  source               RecipeSource @default(SPOONACULAR)
+  externalName         String   // tên từ nguồn ngoài: "beef, ground"
+  source               RecipeSource @default(EXTERNAL)
   status               IngredientMappingStatus @default(MAPPED)
   confidence           Float    @default(1.0) // 0-1
   createdAt            DateTime @default(now())
@@ -286,7 +286,7 @@ model Favorite {
   user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipeId            String? // Local recipe
   recipe              Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  recipeReferenceId   String? // Spoonacular recipe
+  recipeReferenceId   String? // món tham chiếu ngoài
   recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
   createdAt           DateTime @default(now())
   
@@ -304,6 +304,7 @@ model Rating {
   recipeReferenceId   String?
   recipeReference     RecipeReference? @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
   score               Int     // 1-5
+  binhLuan            String?   // nhận xét kèm điểm (BR-SOC)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   
@@ -461,7 +462,7 @@ model ExternalRecipeMetrics {
   id              String   @id @default(uuid())
   recipeReferenceId String @unique
   recipeReference RecipeReference @relation(fields: [recipeReferenceId], references: [id], onDelete: Cascade)
-  spoonacularScore Float?
+  externalScore Float?
   healthScore     Float?
   aggregateLikes  Int?
   lastSyncedAt    DateTime @default(now())

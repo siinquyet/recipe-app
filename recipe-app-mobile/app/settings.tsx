@@ -24,7 +24,7 @@ export default function ManHinhCaiDat() {
           <TitleText className="text-xl">Cài đặt</TitleText>
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white px-4 shadow-sm">
+        <View className="mt-4 rounded-3xl bg-white px-4 shadow-sm">
           <View className="flex-row items-center gap-3 py-4">
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-accent-light">
               <Moon size={18} color="#0A2533" />
@@ -61,7 +61,7 @@ export default function ManHinhCaiDat() {
           </View>
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white px-4 shadow-sm">
+        <View className="mt-4 rounded-3xl bg-white px-4 shadow-sm">
           <View className="flex-row items-center gap-3 py-4">
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-accent-light">
               <CalendarDays size={18} color="#0A2533" />
@@ -100,7 +100,7 @@ export default function ManHinhCaiDat() {
           </View>
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white px-4 shadow-sm">
+        <View className="mt-4 rounded-3xl bg-white px-4 shadow-sm">
           <View className="flex-row items-center gap-3 border-b border-neutral-100 py-4">
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-accent-light">
               <Bell size={18} color="#0A2533" />
@@ -121,7 +121,7 @@ export default function ManHinhCaiDat() {
           />
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white px-4 shadow-sm">
+        <View className="mt-4 rounded-3xl bg-white px-4 shadow-sm">
           <View className="flex-row items-center gap-3 py-4">
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-accent-light">
               <Palette size={18} color="#0A2533" />

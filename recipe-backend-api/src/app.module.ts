@@ -1,6 +1,9 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { CommonModule } from './common/common.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BaoCaoModule } from './modules/bao-cao/bao-cao.module';
+import { DanhMucModule } from './modules/danh-muc/danh-muc.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { MealPlansModule } from './modules/meal-plans/meal-plans.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
@@ -24,7 +27,10 @@ export class HealthController {
 @Module({
     imports: [
         CommonModule,
+        AdminModule,
         AuthModule,
+        BaoCaoModule,
+        DanhMucModule,
         RecipesModule,
         MealPlansModule,
         FavoritesModule,

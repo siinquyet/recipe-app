@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 
 type BienTheNut = 'chinh' | 'phu' | 'vien' | 'mo';
 
@@ -10,6 +10,7 @@ interface NutBamProps {
   dangTai?: boolean;
   className?: string;
   loai?: 'button' | 'submit';
+  bieuTuong?: ReactNode;
 }
 
 const MAU_NEN: Record<BienTheNut, string> = {
@@ -35,6 +36,7 @@ export const NutBam: FC<NutBamProps> = ({
   dangTai = false,
   className = '',
   loai = 'button',
+  bieuTuong,
 }) => {
   const tat = voHieuHoa || dangTai;
   return (
@@ -49,7 +51,10 @@ export const NutBam: FC<NutBamProps> = ({
       {dangTai ? (
         <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
       ) : (
-        <span className={`text-base font-semibold ${MAU_CHU[bienThe]}`}>{tieuDe}</span>
+        <span className={`flex items-center gap-2 text-base font-semibold ${MAU_CHU[bienThe]}`}>
+          {tieuDe}
+          {bieuTuong}
+        </span>
       )}
     </button>
   );

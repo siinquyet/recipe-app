@@ -3,6 +3,10 @@ import { UserLayout } from '../layouts/UserLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { RequireAdmin, RequireAuth } from '../layouts/RequireAuth';
 import { RecipeList } from '../pages/RecipeList';
+import { BangDieuKhien } from '../pages/admin/BangDieuKhien';
+import { ChoDuyet } from '../pages/admin/ChoDuyet';
+import { DangNhapAdmin } from '../pages/admin/DangNhapAdmin';
+import { NguoiDung } from '../pages/admin/NguoiDung';
 import { TrangChu } from '../pages/user/TrangChu';
 import { TimKiem } from '../pages/user/TimKiem';
 import { ChiTietCongThuc } from '../pages/user/ChiTietCongThuc';
@@ -32,14 +36,15 @@ export const router = createBrowserRouter([
       { path: '/dieu-khoan', element: <DieuKhoan /> },
       { path: '/bao-mat', element: <BaoMat /> },
       { path: '/lien-he', element: <LienHe /> },
-      { path: '/ke-hoach', element: <KeHoach /> },
-      { path: '/di-cho', element: <DiCho /> },
       { path: '/ho-so', element: <HoSo /> },
       // BR-AUTH: Hồ sơ gộp Cài đặt theo design (1 màn) — giữ route cũ để không gãy link
       { path: '/cai-dat', element: <Navigate to="/ho-so" replace /> },
       {
         element: <RequireAuth />,
         children: [
+          // BR-MEAL/BR-SHOP: Dữ liệu riêng từng tài khoản — bắt đăng nhập
+          { path: '/ke-hoach', element: <KeHoach /> },
+          { path: '/di-cho', element: <DiCho /> },
           { path: '/yeu-thich', element: <YeuThich /> },
           { path: '/cong-thuc-cua-toi', element: <CongThucCuaToi /> },
           { path: '/cong-thuc/moi', element: <TaoCongThuc /> },
@@ -51,9 +56,15 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: <AdminLayout />,
     children: [
+      { path: 'dang-nhap', element: <DangNhapAdmin /> },
       {
         element: <RequireAdmin />,
-        children: [{ index: true, element: <RecipeList /> }],
+        children: [
+          { index: true, element: <BangDieuKhien /> },
+          { path: 'cho-duyet', element: <ChoDuyet /> },
+          { path: 'cong-thuc', element: <RecipeList /> },
+          { path: 'nguoi-dung', element: <NguoiDung /> },
+        ],
       },
     ],
   },

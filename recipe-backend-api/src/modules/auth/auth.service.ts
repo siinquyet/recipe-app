@@ -118,6 +118,27 @@ export class AuthService {
         return { daGui: true };
     }
 
+    async doiMatKhau(userId: string, matKhauCu: string, matKhauMoi: string) {
+        // BR-AUTH: Đổi mật khẩu — xác thực mật khẩu cũ trước khi cho đặt mới
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new UnauthorizedException({
+                code: 'AUTH-02',
+                message: '[AUTH-02] Người dùng không tồn tại',
+            });
+        }
+        const dungCu = await bcrypt.compare(matKhauCu, user.passwordHash);
+        if (!dungCu) {
+            throw new BadRequestException({
+                code: 'AUTH-06',
+                message: '[AUTH-06] Mật khẩu cũ không đúng',
+            });
+        }
+        const passwordHash = await bcrypt.hash(matKhauMoi, BCRYPT_COST);
+        await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+        return { thanhCong: true };
+    }
+
     private async taoTokens(userId: string, email: string): Promise<AuthTokens> {
         const payload: JwtPayload = { sub: userId, email };
 

@@ -11,6 +11,9 @@ module.exports = {
       // BR-UI: Tokens đồng bộ với web Bếp Nhà (DESIGN.md): mực Ink, teal, nền Mist
       colors: {
         mist: '#F1F5F5',
+        surface: '#F7F9FF',
+        ink: '#0A2533',
+        deepteal: '#13696D',
         muted: '#97A2B0',
         star: '#FFC107',
         primary: {
@@ -28,6 +31,10 @@ module.exports = {
         warning: '#F9A825',
         danger: '#C62828',
         info: '#1976D2',
+      },
+      // BR-UI: Serif editorial (Georgia/iOS, serif/Android) cho tiêu đề giống web
+      fontFamily: {
+        serif: ['Georgia', 'serif'],
       },
     },
   },

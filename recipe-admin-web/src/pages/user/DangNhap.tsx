@@ -2,10 +2,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, EnvelopeIcon, KeyIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { NutBam } from '../../components/ui/NutBam';
 import { ONhapLieu } from '../../components/ui/ONhapLieu';
-import { TitleText } from '../../components/ui/VanBan';
+import { KhungXacThuc } from '../../components/auth/KhungXacThuc';
 import { useAuthStore } from '../../stores/authStore';
 
 const schema = z.object({
@@ -15,7 +15,7 @@ const schema = z.object({
 
 type Form = z.infer<typeof schema>;
 
-// BR-AUTH: Đăng nhập y mobile — logo kem, RHF+Zod, social báo chưa hỗ trợ
+// BR-AUTH: Đăng nhập khung Editorial — logo, pill, RHF+Zod, social báo chưa hỗ trợ
 export function DangNhap() {
   const navigate = useNavigate();
   const dangNhap = useAuthStore((s) => s.dangNhap);
@@ -31,24 +31,25 @@ export function DangNhap() {
   };
 
   return (
-    <div className="mx-auto max-w-md bg-white px-6 pb-8 pt-10">
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-cream">
-        <BookOpenIcon className="h-10 w-10 text-primary" />
-      </div>
-      <TitleText className="mt-8 text-3xl">Chào mừng trở lại</TitleText>
-      <p className="mt-1 text-left text-sm text-neutral-500">Đăng nhập để khám phá công thức ngon</p>
-      <form onSubmit={handleSubmit(onSubmit)}>
+    <KhungXacThuc
+      nhanPill="Chào mừng trở lại"
+      BieuTuongPill={KeyIcon}
+      tieuDe="Đăng Nhập"
+      moTa="Đăng nhập để khám phá hàng ngàn công thức ngon và lưu lại món tủ của bạn."
+      lienKetDuoi={{ nhan: 'Về trang chủ', den: '/' }}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Controller
           control={control}
           name="email"
           render={({ field: { value, onChange }, fieldState: { error } }) => (
             <ONhapLieu
-              nhan="Email"
+              nhan="Địa chỉ Email"
               giaTri={value ?? ''}
               khiDoi={onChange}
               goiY="ban@example.com"
               loi={error?.message}
-              className="mt-6"
+              bieuTuong={<EnvelopeIcon className="h-5 w-5" />}
             />
           )}
         />
@@ -61,28 +62,39 @@ export function DangNhap() {
               giaTri={value ?? ''}
               khiDoi={onChange}
               loai="password"
+              goiY="Nhập mật khẩu của bạn"
               loi={error?.message}
-              className="mt-4"
+              bieuTuong={<LockClosedIcon className="h-5 w-5" />}
             />
           )}
         />
-        <NutBam tieuDe="Đăng nhập" loai="submit" className="mt-6 w-full" />
+        <p className="text-right text-sm">
+          <Link to="/quen-mat-khau" className="font-semibold text-deepteal">
+            Quên mật khẩu?
+          </Link>
+        </p>
+        <NutBam
+          tieuDe="Đăng nhập"
+          loai="submit"
+          className="w-full py-4"
+          bieuTuong={<ArrowRightIcon className="h-5 w-5" />}
+        />
       </form>
-      <p className="mt-3 text-right text-sm">
-        <Link to="/quen-mat-khau" className="font-semibold text-deepteal">
-          Quên mật khẩu?
-        </Link>
-      </p>
+      <div className="mt-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-neutral-200" />
+        <span className="text-xs text-neutral-500">hoặc tiếp tục với</span>
+        <div className="h-px flex-1 bg-neutral-200" />
+      </div>
       <div className="mt-4 flex gap-2">
         <NutBam tieuDe="Google" bienThe="phu" className="flex-1" khiBam={() => alert('Đăng nhập Google chưa hỗ trợ')} />
         <NutBam tieuDe="Apple" bienThe="phu" className="flex-1" khiBam={() => alert('Đăng nhập Apple chưa hỗ trợ')} />
       </div>
-      <p className="mt-4 text-left text-sm text-neutral-500">
+      <p className="mt-4 text-center text-sm text-neutral-500">
         Chưa có tài khoản?{' '}
-        <Link to="/dang-ky" className="font-semibold text-accent-dark">
+        <Link to="/dang-ky" className="font-semibold text-deepteal">
           Đăng ký
         </Link>
       </p>
-    </div>
+    </KhungXacThuc>
   );
 }

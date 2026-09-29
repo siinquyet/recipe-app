@@ -1,6 +1,6 @@
-import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ShoppingListsService } from './shopping-lists.service';
-import { TaoDanhSachDiChoDto, CapNhatTrangThaiMonDto, TaoTuKeHoachAnDto } from './dto/shopping-list.dto';
+import { TaoDanhSachDiChoDto, MonMoiDto, SuaMonDiChoDto, TaoTuCongThucDto, TaoTuKeHoachAnDto } from './dto/shopping-list.dto';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -32,18 +32,47 @@ export class ShoppingListsController {
         return this.shoppingListsService.taoTuKeHoachAn(req.user.id, body.mealPlanId);
     }
 
+    @Post('generate-from-recipe')
+    taoTuCongThuc(@Body() body: TaoTuCongThucDto, @Req() req: { user: { id: string } }) {
+        return this.shoppingListsService.taoTuCongThuc(req.user.id, body.congThucId, body.khauPhan);
+    }
+
     @Get(':id')
     layChiTiet(@Param('id') id: string, @Req() req: { user: { id: string } }) {
         return this.shoppingListsService.layChiTiet(id, req.user.id);
     }
 
-    @Patch(':id/items/:itemId')
-    capNhatTrangThaiMon(
+    @Delete(':id')
+    xoa(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+        return this.shoppingListsService.xoa(id, req.user.id);
+    }
+
+    @Post(':id/items')
+    themMon(
         @Param('id') id: string,
-        @Param('itemId') itemId: string,
-        @Body() body: CapNhatTrangThaiMonDto,
+        @Body() dto: MonMoiDto,
         @Req() req: { user: { id: string } },
     ) {
-        return this.shoppingListsService.capNhatTrangThaiMon(id, itemId, req.user.id, body.daChon);
+        return this.shoppingListsService.themMon(id, req.user.id, dto);
+    }
+
+    @Patch(':id/items/:itemId')
+    suaMon(
+        @Param('id') id: string,
+        @Param('itemId') itemId: string,
+        @Body() dto: SuaMonDiChoDto,
+        @Req() req: { user: { id: string } },
+    ) {
+        // BR-SHOP: Một endpoint sửa món (tick mua + tên + lượng + đơn vị)
+        return this.shoppingListsService.suaMon(id, itemId, req.user.id, dto);
+    }
+
+    @Delete(':id/items/:itemId')
+    xoaMon(
+        @Param('id') id: string,
+        @Param('itemId') itemId: string,
+        @Req() req: { user: { id: string } },
+    ) {
+        return this.shoppingListsService.xoaMon(id, itemId, req.user.id);
     }
 }

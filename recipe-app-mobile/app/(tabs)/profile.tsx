@@ -79,7 +79,7 @@ export default function ManHinhHoSo() {
           ) : isError || !data ? (
             <TrangLoi loi="Không tải được hồ sơ" khiThuLai={() => refetch()} />
           ) : (
-            <View className="mt-4 flex-row items-center gap-4 rounded-2xl bg-white p-5 shadow-sm">
+            <View className="mt-4 flex-row items-center gap-4 rounded-3xl bg-white p-5 shadow-sm">
               <Avatar nguon={data.anhDaiDien} ten={data.tenHienThi} kichThuoc={72} />
               <View className="flex-1">
                 <TitleText className="text-lg">{data.tenHienThi}</TitleText>
@@ -92,7 +92,7 @@ export default function ManHinhHoSo() {
         </View>
 
         <View className="mt-4 px-4">
-          <View className="rounded-2xl bg-white px-4 shadow-sm">
+          <View className="rounded-3xl bg-white px-4 shadow-sm">
             {MUC_NHANH.map((muc) => (
               <HangHoSo key={muc.nhan} muc={muc} khiBam={() => router.push(muc.den as never)} />
             ))}
@@ -100,7 +100,7 @@ export default function ManHinhHoSo() {
         </View>
 
         <View className="mt-4 px-4 pb-8">
-          <View className="rounded-2xl bg-white px-4 shadow-sm">
+          <View className="rounded-3xl bg-white px-4 shadow-sm">
             <HangHoSo muc={MUC_TAI_KHOAN[0]} khiBam={() => router.push('/settings')} />
             <Pressable
               accessibilityRole="button"

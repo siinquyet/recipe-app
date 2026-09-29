@@ -65,3 +65,23 @@ export async function themMonVaoKeHoach(
     apiClient.post(`meal-plans/${keHoachId}/items`, { json: payload }).json<ApiResponse<unknown>>(),
   );
 }
+
+export interface CapNhatMonTrongKeHoachPayload {
+  khauPhan?: number;
+}
+
+// BR-MEAL: Đổi khẩu phần món trong kế hoạch
+export async function capNhatMonTrongKeHoach(
+  keHoachId: string,
+  monId: string,
+  payload: CapNhatMonTrongKeHoachPayload,
+): Promise<unknown> {
+  return goiApi(
+    apiClient.patch(`meal-plans/${keHoachId}/items/${monId}`, { json: payload }).json<ApiResponse<unknown>>(),
+  );
+}
+
+// BR-MEAL: Xóa món khỏi kế hoạch
+export async function xoaMonKhoiKeHoach(keHoachId: string, monId: string): Promise<void> {
+  await goiApi(apiClient.delete(`meal-plans/${keHoachId}/items/${monId}`).json<ApiResponse<unknown>>());
+}

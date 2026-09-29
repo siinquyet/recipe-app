@@ -1,5 +1,5 @@
 {
-  "name": "Cook",
+  "name": "cook",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -24,5 +24,33 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-scope": "^7.2.2",
+    "eslint-visitor-keys": "^3.4.3",
+    "prettier-linter-helpers": "^1.0.1",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/siinquyet/recipe-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/siinquyet/recipe-app/issues"
+  },
+  "homepage": "https://github.com/siinquyet/recipe-app#readme"
 }

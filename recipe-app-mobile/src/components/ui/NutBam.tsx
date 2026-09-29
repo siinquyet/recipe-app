@@ -1,5 +1,5 @@
-import type { FC } from 'react';
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import type { FC, ReactNode } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 type BienTheNut = 'chinh' | 'phu' | 'vien' | 'mo';
 
@@ -10,6 +10,7 @@ interface NutBamProps {
   voHieuHoa?: boolean;
   dangTai?: boolean;
   className?: string;
+  bieuTuong?: ReactNode;
 }
 
 const MAU_NEN: Record<BienTheNut, string> = {
@@ -33,6 +34,7 @@ export const NutBam: FC<NutBamProps> = ({
   voHieuHoa = false,
   dangTai = false,
   className = '',
+  bieuTuong,
 }) => {
   const tat = voHieuHoa || dangTai;
   return (
@@ -47,7 +49,10 @@ export const NutBam: FC<NutBamProps> = ({
       {dangTai ? (
         <ActivityIndicator color={bienThe === 'chinh' ? '#fff' : '#0A2533'} />
       ) : (
-        <Text className={`text-base font-semibold ${MAU_CHU[bienThe]}`}>{tieuDe}</Text>
+        <View className="flex-row items-center gap-2">
+          <Text className={`text-base font-semibold ${MAU_CHU[bienThe]}`}>{tieuDe}</Text>
+          {bieuTuong}
+        </View>
       )}
     </Pressable>
   );

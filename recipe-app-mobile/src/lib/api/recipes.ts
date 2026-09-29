@@ -117,6 +117,14 @@ export async function xoaCongThuc(id: string): Promise<void> {
   await goiApi(apiClient.delete(`recipes/${id}`).json<ApiResponse<unknown>>());
 }
 
+// BR-UREC: Gửi duyệt bài nháp/bị từ chối lên hàng chờ PENDING
+export async function guiDuyetCongThuc(id: string): Promise<CongThuc> {
+  const duLieu = await goiApi(
+    apiClient.post(`recipes/${id}/submit-review`).json<ApiResponse<CongThuc>>(),
+  );
+  return congThucSchema.parse(duLieu);
+}
+
 // BR-SOC: Yêu thích / đánh giá / bình luận
 export async function themYeuThich(id: string): Promise<void> {
   await goiApi(apiClient.post(`recipes/${id}/favorite`).json<ApiResponse<unknown>>());

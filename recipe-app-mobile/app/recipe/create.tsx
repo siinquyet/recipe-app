@@ -6,7 +6,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { launchImageLibraryAsync } from 'expo-image-picker';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Minus, Plus } from 'lucide-react-native';
 import { NutBam } from '../../src/components/ui/NutBam';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TrangDangTai } from '../../src/components/ui/TrangThai';
@@ -28,6 +28,45 @@ const GIA_TRI_BAN_DAU: TaoCongThucForm = {
   nguyenLieu: [{ ten: '', dinhLuong: 0, donVi: 'g' }],
   cacBuoc: [{ noiDung: '' }],
 };
+
+// BR-UREC: Đơn vị thường dùng bấm 1 chạm thay vì gõ tay
+const DON_VI_NHANH = ['g', 'kg', 'ml', 'lít', 'muỗng canh', 'muỗng cà phê', 'quả', 'củ', 'gói'] as const;
+
+// BR-UREC: Tăng giảm số bằng nút — khỏi gõ bàn phím số
+function SoTangGiam({ nhan, giaTri, khiDoi, toiThieu = 1, toiDa = 300 }: {
+  nhan: string;
+  giaTri: number;
+  khiDoi: (giaTri: number) => void;
+  toiThieu?: number;
+  toiDa?: number;
+}) {
+  return (
+    <View className="flex-1">
+      <BodyText dam>{nhan}</BodyText>
+      <View className="mt-1 flex-row items-center gap-2">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Giảm ${nhan}`}
+          onPress={() => khiDoi(Math.max(toiThieu, giaTri - 1))}
+          className="h-11 w-11 items-center justify-center rounded-xl border border-neutral-300 bg-white"
+        >
+          <Minus size={16} color="#0A2533" />
+        </Pressable>
+        <Text className="min-w-14 flex-1 text-center text-base font-bold tabular-nums text-primary">
+          {giaTri}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Tăng ${nhan}`}
+          onPress={() => khiDoi(Math.min(toiDa, giaTri + 1))}
+          className="h-11 w-11 items-center justify-center rounded-xl bg-primary"
+        >
+          <Plus size={16} color="#fff" />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export default function ManHinhTaoCongThuc() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -150,25 +189,26 @@ export default function ManHinhTaoCongThuc() {
           )}
         </View>
         <View className="mt-3 flex-row gap-3">
-          <View className="flex-1">
-            <Controller
-              control={control}
-              name="thoiGianNauPhut"
-              render={({ field: { value, onChange } }) => (
-                <ONhapLieu nhan="Nấu (phút) *" giaTri={String(value)} khiDoi={(v) => onChange(parseInt(v, 10) || 0)} banPhim="numeric" loi={errors.thoiGianNauPhut?.message} />
-              )}
-            />
-          </View>
-          <View className="flex-1">
-            <Controller
-              control={control}
-              name="khauPhan"
-              render={({ field: { value, onChange } }) => (
-                <ONhapLieu nhan="Khẩu phần *" giaTri={String(value)} khiDoi={(v) => onChange(parseInt(v, 10) || 0)} banPhim="numeric" loi={errors.khauPhan?.message} />
-              )}
-            />
-          </View>
+          <Controller
+            control={control}
+            name="thoiGianNauPhut"
+            render={({ field: { value, onChange } }) => (
+              <SoTangGiam nhan="Nấu (phút) *" giaTri={value} khiDoi={onChange} toiThieu={1} toiDa={300} />
+            )}
+          />
+          <Controller
+            control={control}
+            name="khauPhan"
+            render={({ field: { value, onChange } }) => (
+              <SoTangGiam nhan="Khẩu phần *" giaTri={value} khiDoi={onChange} toiThieu={1} toiDa={20} />
+            )}
+          />
         </View>
+        {errors.thoiGianNauPhut?.message ?? errors.khauPhan?.message ? (
+          <CaptionText className="mt-1 text-red-600">
+            {errors.thoiGianNauPhut?.message ?? errors.khauPhan?.message}
+          </CaptionText>
+        ) : null}
 
         <View className="mt-5 flex-row items-center justify-between">
           <BodyText dam>Nguyên liệu *</BodyText>
@@ -203,6 +243,26 @@ export default function ManHinhTaoCongThuc() {
                 />
               </View>
             </View>
+            <Controller
+              control={control}
+              name={`nguyenLieu.${i}.donVi`}
+              render={({ field: { value, onChange } }) => (
+                <View className="mt-2 flex-row flex-wrap gap-1.5">
+                  {DON_VI_NHANH.map((dv) => (
+                    <Pressable
+                      key={dv}
+                      accessibilityRole="button"
+                      onPress={() => onChange(dv)}
+                      className={`rounded-full px-2.5 py-1 ${value === dv ? 'bg-primary' : 'bg-white'}`}
+                    >
+                      <Text className={`text-xs ${value === dv ? 'font-semibold text-white' : 'text-neutral-600'}`}>
+                        {dv}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            />
             {dsNguyenLieu.fields.length > 1 ? (
               <NutBam tieuDe="Xóa" bienThe="mo" khiBam={() => dsNguyenLieu.remove(i)} className="mt-1 self-end px-2 py-1" />
             ) : null}

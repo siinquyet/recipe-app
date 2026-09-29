@@ -50,6 +50,7 @@ export const congThucSchema = z.object({
   thoiGianNauPhut: z.number(),
   thoiGianChuanBiPhut: z.number().nullable(),
   khauPhan: z.number(),
+  trangThai: z.string(),
   tacGia: nguoiDungSchema,
   nguyenLieu: z.array(nguyenLieuSchema),
   cacBuoc: z.array(buocNauAnSchema),

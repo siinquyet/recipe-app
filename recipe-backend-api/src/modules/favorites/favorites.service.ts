@@ -6,8 +6,9 @@ export class FavoritesService {
     constructor(private readonly prisma: PrismaService) {}
 
     async themYeuThich(userId: string, recipeId: string) {
+        // BR-SOC: Chỉ thích được bài đã duyệt công khai
         const recipe = await this.prisma.recipe.findFirst({
-            where: { id: recipeId, deletedAt: null },
+            where: { id: recipeId, deletedAt: null, status: 'APPROVED' },
             select: { id: true },
         });
         if (!recipe) {
@@ -40,16 +41,18 @@ export class FavoritesService {
 
     // BR-SOC: Danh sách công thức đã yêu thích của người dùng, mới nhất trước
     async layDanhSachYeuThich(userId: string, trang: number, kichThuoc: number) {
+        // BR-UREC: Bài bị ẩn/từ chối rớt khỏi danh sách yêu thích công khai
+        const locBai = { deletedAt: null, status: 'APPROVED' } as const;
         const [items, tongSoPhanTu] = await Promise.all([
             this.prisma.favorite.findMany({
-                where: { user: { id: userId }, recipe: { deletedAt: null } },
+                where: { user: { id: userId }, recipe: { ...locBai } },
                 skip: trang * kichThuoc,
                 take: kichThuoc,
                 orderBy: { createdAt: 'desc' },
                 include: { recipe: { include: { author: true } } },
             }),
             this.prisma.favorite.count({
-                where: { user: { id: userId }, recipe: { deletedAt: null } },
+                where: { user: { id: userId }, recipe: { ...locBai } },
             }),
         ]);
 
@@ -75,6 +78,7 @@ export class FavoritesService {
             cookTimeMinutes: number;
             prepTimeMinutes: number | null;
             servings: number;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
         },
@@ -95,6 +99,7 @@ export class FavoritesService {
             thoiGianNauPhut: recipe.cookTimeMinutes,
             thoiGianChuanBiPhut: recipe.prepTimeMinutes,
             khauPhan: recipe.servings,
+            trangThai: recipe.status,
             tacGia: {
                 id: author.id,
                 email: author.email,

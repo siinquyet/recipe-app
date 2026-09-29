@@ -34,11 +34,12 @@ async function main() {
 
     const passwordHash = await bcrypt.hash(MAT_KHAU_DEMO, 12);
 
-    // BR-AUTH: 3 tài khoản mẫu — demo là tài khoản test chính
+    // BR-ADM: 3 tài khoản mẫu + 1 quản trị — demo là tài khoản test chính
     const taiKhoans = [
         { email: 'demo@gmail.com', displayName: 'Minh Anh', role: 'USER' as const },
         { email: 'thanh.tran@gmail.com', displayName: 'Trần Thanh', role: 'USER' as const },
         { email: 'huong.pham@gmail.com', displayName: 'Phạm Hương', role: 'USER' as const },
+        { email: 'admin@gmail.com', displayName: 'Quản Trị', role: 'ADMIN' as const },
     ];
     const users: Record<string, { id: string }> = {};
     for (const tk of taiKhoans) {

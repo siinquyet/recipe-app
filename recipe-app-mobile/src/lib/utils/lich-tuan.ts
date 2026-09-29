@@ -21,6 +21,44 @@ export const CAC_BUOI_AN = [
 
 const SO_NGAY_TOI_DA = 31;
 
+// BR-UI: Thứ tiếng Việt cho lịch tuần (Date chỉ cho số thứ)
+const TEN_THU = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'] as const;
+
+export function tenThuTiengViet(ngayYyyyMmDd: string): string {
+  const d = new Date(`${ngayYyyyMmDd}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return TEN_THU[d.getDay()];
+}
+
+// BR-MEAL: Nhãn thứ ngắn cho dải chọn ngày (CN, T2...T7)
+export function nhanThuNgan(ngayYyyyMmDd: string): string {
+  const d = new Date(`${ngayYyyyMmDd}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  const thu = d.getDay();
+  return thu === 0 ? 'CN' : `T${thu + 1}`;
+}
+
+// BR-MEAL: Cộng n ngày vào YYYY-MM-DD, giữ định dạng
+export function congNgay(ngayYyyyMmDd: string, soNgay: number): string {
+  const d = new Date(`${ngayYyyyMmDd}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return ngayYyyyMmDd;
+  d.setDate(d.getDate() + soNgay);
+  return sangYyyyMmDd(d);
+}
+
+// BR-MEAL: Hôm nay theo YYYY-MM-DD (múi giờ máy)
+export function homNay(): string {
+  return sangYyyyMmDd(new Date());
+}
+
+// BR-MEAL: Gợi ý buổi theo giờ hiện tại để khỏi chọn tay
+export function buoiGoiYTheoGio(gio = new Date().getHours()): string {
+  if (gio < 10) return 'BREAKFAST';
+  if (gio < 15) return 'LUNCH';
+  if (gio < 21) return 'DINNER';
+  return 'BREAKFAST';
+}
+
 function sangYyyyMmDd(ngay: Date): string {
   const mm = String(ngay.getMonth() + 1).padStart(2, '0');
   const dd = String(ngay.getDate()).padStart(2, '0');

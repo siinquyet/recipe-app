@@ -8,7 +8,17 @@ import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../components/ui/TrangThai';
 import { CaptionText } from '../../components/ui/VanBan';
 import { layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
-import { layChiTietKeHoachAn, layDanhSachKeHoachAn } from '../../api/keHoachAn';
+import {
+  capNhatKeHoachAn,
+  capNhatMonTrongKeHoach,
+  layChiTietKeHoachAn,
+  layDanhSachKeHoachAn,
+  taoKeHoachAn,
+  themMonVaoKeHoach,
+  xoaKeHoachAn,
+  xoaMonKhoiKeHoach,
+} from '../../api/keHoachAn';
+import { layDanhSachCongThucUser } from '../../api/congThuc';
 import { taoDiChoTuKeHoach } from '../../api/diCho';
 
 const TEN_BUOI: Record<string, string> = {
@@ -18,13 +28,41 @@ const TEN_BUOI: Record<string, string> = {
   SNACK: 'Ăn nhẹ',
 };
 
+const CAC_BUOI = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] as const;
+
 // BR-UI: Thứ tiếng Việt (date-fns mặc định tiếng Anh nên tự map)
 const TEN_THU = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'] as const;
 
-// BR-MEAL: Lịch tuần từ kế hoạch thật; thêm món báo rõ backend chưa hỗ trợ
+function kiemTraKhoangNgay(ten: string, batDau: string, ketThuc: string): string {
+  if (!ten.trim()) return 'Vui lòng nhập tên kế hoạch';
+  if (!batDau.trim() || !ketThuc.trim()) return 'Vui lòng nhập đủ từ ngày và đến ngày';
+  const tu = new Date(`${batDau.trim()}T00:00:00`);
+  const den = new Date(`${ketThuc.trim()}T00:00:00`);
+  if (Number.isNaN(tu.getTime()) || Number.isNaN(den.getTime())) return 'Ngày không hợp lệ (YYYY-MM-DD)';
+  if (tu > den) return 'Ngày bắt đầu phải trước ngày kết thúc';
+  return '';
+}
+
+// BR-MEAL: CRUD kế hoạch + thêm/sửa/xóa món trong tuần
 export function KeHoach() {
   const queryClient = useQueryClient();
   const [keHoachChon, setKeHoachChon] = useState('');
+  const [dangTao, setDangTao] = useState(false);
+  const [ten, setTen] = useState('');
+  const [tuNgay, setTuNgay] = useState('');
+  const [denNgay, setDenNgay] = useState('');
+  const [loiTao, setLoiTao] = useState('');
+  const [dangSua, setDangSua] = useState(false);
+  const [suaTen, setSuaTen] = useState('');
+  const [suaTuNgay, setSuaTuNgay] = useState('');
+  const [suaDenNgay, setSuaDenNgay] = useState('');
+  const [loiSua, setLoiSua] = useState('');
+  // BR-MEAL: Thêm món — tìm công thức rồi chọn ngày + buổi + khẩu phần
+  const [themNgay, setThemNgay] = useState('');
+  const [tuKhoaMon, setTuKhoaMon] = useState('');
+  const [congThucChon, setCongThucChon] = useState('');
+  const [buoiChon, setBuoiChon] = useState<string>('LUNCH');
+  const [khauPhanMoi, setKhauPhanMoi] = useState(2);
 
   const danhSach = useQuery({
     queryKey: ['user', 'meal-plans'],
@@ -35,6 +73,67 @@ export function KeHoach() {
     queryKey: ['user', 'meal-plan', keHoachId],
     queryFn: () => layChiTietKeHoachAn(keHoachId),
     enabled: !!keHoachId,
+  });
+  const goiYMon = useQuery({
+    queryKey: ['user', 'recipes', 'goi-y-mon', tuKhoaMon],
+    queryFn: () => layDanhSachCongThucUser({ trang: 0, kichThuoc: 5, tuKhoa: tuKhoaMon || undefined }),
+    enabled: themNgay.length > 0,
+  });
+  const lamMoi = () => {
+    queryClient.invalidateQueries({ queryKey: ['user', 'meal-plans'] });
+    queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan'] });
+  };
+  const taoMoi = useMutation({
+    mutationFn: () => taoKeHoachAn({ ten: ten.trim(), ngayBatDau: tuNgay.trim(), ngayKetThuc: denNgay.trim() }),
+    onSuccess: (moi) => {
+      setTen('');
+      setTuNgay('');
+      setDenNgay('');
+      setDangTao(false);
+      setKeHoachChon(moi.id);
+      lamMoi();
+    },
+    onError: () => alert('[MEAL-01] Không tạo được, thử lại'),
+  });
+  const capNhat = useMutation({
+    mutationFn: () =>
+      capNhatKeHoachAn(keHoachId, { ten: suaTen.trim(), ngayBatDau: suaTuNgay.trim(), ngayKetThuc: suaDenNgay.trim() }),
+    onSuccess: () => {
+      setDangSua(false);
+      lamMoi();
+    },
+    onError: () => alert('[MEAL-01] Không sửa được, thử lại'),
+  });
+  const xoa = useMutation({
+    mutationFn: () => xoaKeHoachAn(keHoachId),
+    onSuccess: () => {
+      setKeHoachChon('');
+      lamMoi();
+    },
+    onError: () => alert('[MEAL-01] Không xóa được, thử lại'),
+  });
+  const themMon = useMutation({
+    mutationFn: () =>
+      themMonVaoKeHoach(keHoachId, { congThucId: congThucChon, ngay: themNgay, buoiAn: buoiChon, khauPhan: khauPhanMoi }),
+    onSuccess: () => {
+      setThemNgay('');
+      setCongThucChon('');
+      setTuKhoaMon('');
+      setKhauPhanMoi(2);
+      queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan', keHoachId] });
+    },
+    onError: () => alert('[MEAL-01] Không thêm được, thử lại'),
+  });
+  const suaKhauPhan = useMutation({
+    mutationFn: ({ monId, khauPhan }: { monId: string; khauPhan: number }) =>
+      capNhatMonTrongKeHoach(keHoachId, monId, khauPhan),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan', keHoachId] }),
+    onError: () => alert('[MEAL-01] Không sửa được, thử lại'),
+  });
+  const xoaMon = useMutation({
+    mutationFn: (monId: string) => xoaMonKhoiKeHoach(keHoachId, monId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan', keHoachId] }),
+    onError: () => alert('[MEAL-01] Không xóa được, thử lại'),
   });
   const sinhDiCho = useMutation({
     mutationFn: () => taoDiChoTuKeHoach(keHoachId),
@@ -61,6 +160,35 @@ export function KeHoach() {
   const tongMon = chiTiet.data?.cacMon.length ?? 0;
   const tongKhauPhan = (chiTiet.data?.cacMon ?? []).reduce((s, m) => s + m.khauPhan, 0);
 
+  const luuMoi = () => {
+    const loi = kiemTraKhoangNgay(ten, tuNgay, denNgay);
+    if (loi) {
+      setLoiTao(loi);
+      return;
+    }
+    setLoiTao('');
+    taoMoi.mutate();
+  };
+
+  const batDauSua = () => {
+    if (!chiTiet.data) return;
+    setSuaTen(chiTiet.data.ten);
+    setSuaTuNgay(chiTiet.data.ngayBatDau);
+    setSuaDenNgay(chiTiet.data.ngayKetThuc);
+    setLoiSua('');
+    setDangSua(true);
+  };
+
+  const luuSua = () => {
+    const loi = kiemTraKhoangNgay(suaTen, suaTuNgay, suaDenNgay);
+    if (loi) {
+      setLoiSua(loi);
+      return;
+    }
+    setLoiSua('');
+    capNhat.mutate();
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 pb-10">
       <p className="pt-6 text-[11px] font-bold uppercase tracking-[0.3em] text-deepteal">
@@ -83,9 +211,37 @@ export function KeHoach() {
               </option>
             ))}
           </select>
+          <NutBam tieuDe={dangTao ? 'Hủy' : '+ Mới'} bienThe="vien" khiBam={() => setDangTao((v) => !v)} />
           <NutBam tieuDe="Tạo danh sách đi chợ" khiBam={() => keHoachId && sinhDiCho.mutate()} dangTai={sinhDiCho.isPending} />
         </div>
       </div>
+
+      {dangTao ? (
+        <div className="mt-4 max-w-xl rounded-2xl bg-white p-4 shadow-sm">
+          <input
+            value={ten}
+            onChange={(e) => setTen(e.target.value)}
+            placeholder="Tên kế hoạch (VD: Tuần 1)"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
+          />
+          <div className="mt-2 flex gap-2">
+            <input
+              value={tuNgay}
+              onChange={(e) => setTuNgay(e.target.value)}
+              placeholder="Từ ngày (YYYY-MM-DD)"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
+            />
+            <input
+              value={denNgay}
+              onChange={(e) => setDenNgay(e.target.value)}
+              placeholder="Đến ngày (YYYY-MM-DD)"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
+            />
+          </div>
+          {loiTao ? <p className="mt-1 text-left text-sm text-red-600">{loiTao}</p> : null}
+          <NutBam tieuDe="Lưu kế hoạch" dangTai={taoMoi.isPending} khiBam={luuMoi} className="mt-3" />
+        </div>
+      ) : null}
 
       {danhSach.isLoading || chiTiet.isLoading ? (
         <TrangDangTai />
@@ -112,11 +268,45 @@ export function KeHoach() {
             ))}
           </div>
 
+          <div className="mt-4 flex justify-end gap-2">
+            {dangSua ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 shadow-sm">
+                <input
+                  value={suaTen}
+                  onChange={(e) => setSuaTen(e.target.value)}
+                  placeholder="Tên kế hoạch"
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
+                />
+                <input
+                  value={suaTuNgay}
+                  onChange={(e) => setSuaTuNgay(e.target.value)}
+                  placeholder="Từ ngày"
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
+                />
+                <input
+                  value={suaDenNgay}
+                  onChange={(e) => setSuaDenNgay(e.target.value)}
+                  placeholder="Đến ngày"
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
+                />
+                <NutBam tieuDe="Lưu" dangTai={capNhat.isPending} khiBam={luuSua} className="px-5" />
+                <NutBam tieuDe="Hủy" bienThe="mo" khiBam={() => setDangSua(false)} />
+                {loiSua ? <p className="w-full text-left text-sm text-red-600">{loiSua}</p> : null}
+              </div>
+            ) : (
+              <>
+                <NutBam tieuDe="Sửa kế hoạch" bienThe="vien" khiBam={batDauSua} />
+                <NutBam tieuDe="Xóa kế hoạch" bienThe="mo" dangTai={xoa.isPending} khiBam={() => xoa.mutate()} />
+              </>
+            )}
+          </div>
+
           <h2 className="mt-8 font-serif text-2xl font-black text-ink">Lịch trình bữa ăn trong tuần</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
             {ngayTrongTuan.map((ngay) => {
               const iso = format(ngay, 'yyyy-MM-dd');
               const mon = monTheoNgay(iso);
+              const dangThem = themNgay === iso;
               return (
                 <div key={iso} className="rounded-2xl bg-white p-3 shadow-sm">
                   <p className="text-center text-xs text-muted">{format(ngay, 'dd/MM')}</p>
@@ -124,7 +314,7 @@ export function KeHoach() {
                     {TEN_THU[ngay.getDay()]}
                   </p>
                   <div className="mt-2 flex flex-col gap-2">
-                    {mon.length === 0 ? (
+                    {mon.length === 0 && !dangThem ? (
                       <CaptionText canLe="giua">Trống</CaptionText>
                     ) : (
                       mon.map((m) => (
@@ -142,16 +332,123 @@ export function KeHoach() {
                           {m.congThuc?.anhThumbnail ? (
                             <img src={layUrlAnhWeb(m.congThuc.anhThumbnail)} alt="" className="mt-1 h-14 w-full rounded-lg object-cover" loading="lazy" />
                           ) : null}
+                          <div className="mt-1 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                aria-label="Giảm khẩu phần"
+                                onClick={() => suaKhauPhan.mutate({ monId: m.id, khauPhan: Math.max(1, m.khauPhan - 1) })}
+                                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-xs font-bold"
+                              >
+                                −
+                              </button>
+                              <NumberDisplay value={m.khauPhan} unit="ng" className="text-xs" />
+                              <button
+                                type="button"
+                                aria-label="Tăng khẩu phần"
+                                onClick={() => suaKhauPhan.mutate({ monId: m.id, khauPhan: Math.min(20, m.khauPhan + 1) })}
+                                className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
+                              >
+                                +
+                              </button>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => xoaMon.mutate(m.id)}
+                              className="text-xs font-medium text-red-600"
+                            >
+                              Xóa
+                            </button>
+                          </div>
                         </div>
                       ))
                     )}
-                    <button
-                      type="button"
-                      onClick={() => alert('[MEAL-01] Backend chưa hỗ trợ thêm món vào kế hoạch')}
-                      className="flex items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 py-2 text-xs font-semibold text-muted"
-                    >
-                      <PlusIcon className="h-3.5 w-3.5" /> Thêm món
-                    </button>
+                    {dangThem ? (
+                      <div className="rounded-xl border border-accent bg-white p-2">
+                        <input
+                          value={tuKhoaMon}
+                          onChange={(e) => setTuKhoaMon(e.target.value)}
+                          placeholder="Tìm món..."
+                          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none"
+                        />
+                        {(goiYMon.data?.noiDung ?? []).map((ct) => (
+                          <button
+                            key={ct.id}
+                            type="button"
+                            onClick={() => setCongThucChon(ct.id)}
+                            className={`mt-1 w-full truncate rounded-lg px-2 py-1.5 text-left text-xs ${
+                              congThucChon === ct.id ? 'bg-accent-light font-semibold' : 'hover:bg-mist'
+                            }`}
+                          >
+                            {ct.ten}
+                          </button>
+                        ))}
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {CAC_BUOI.map((b) => (
+                            <button
+                              key={b}
+                              type="button"
+                              onClick={() => setBuoiChon(b)}
+                              className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                                buoiChon === b ? 'bg-ink text-white' : 'bg-mist text-slate-500'
+                              }`}
+                            >
+                              {TEN_BUOI[b]}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1">
+                          <span className="text-[11px] text-slate-500">Khẩu phần:</span>
+                          <button
+                            type="button"
+                            onClick={() => setKhauPhanMoi((v) => Math.max(1, v - 1))}
+                            className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-xs font-bold"
+                          >
+                            −
+                          </button>
+                          <NumberDisplay value={khauPhanMoi} unit="ng" className="text-xs" />
+                          <button
+                            type="button"
+                            onClick={() => setKhauPhanMoi((v) => Math.min(20, v + 1))}
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="mt-1 flex gap-1">
+                          <button
+                            type="button"
+                            disabled={!congThucChon || themMon.isPending}
+                            onClick={() => themMon.mutate()}
+                            className="flex-1 rounded-lg bg-ink px-2 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                          >
+                            Thêm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setThemNgay('');
+                              setCongThucChon('');
+                            }}
+                            className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs"
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setThemNgay(iso);
+                          setCongThucChon('');
+                          setTuKhoaMon('');
+                        }}
+                        className="flex items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 py-2 text-xs font-semibold text-muted"
+                      >
+                        <PlusIcon className="h-3.5 w-3.5" /> Thêm món
+                      </button>
+                    )}
                   </div>
                 </div>
               );

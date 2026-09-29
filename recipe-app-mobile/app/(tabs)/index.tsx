@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import {
   ArrowRight,
-  BadgeCheck,
   BookMarked,
   ChefHat,
   CookingPot,
@@ -16,7 +15,6 @@ import {
   ShoppingCart,
   Sun,
   Timer,
-  Users,
 } from 'lucide-react-native';
 import { TheCongThuc } from '../../src/components/recipe/TheCongThuc';
 import { chuyenThanhDuLieuThe } from '../../src/components/recipe/DanhSachCongThuc';
@@ -30,10 +28,19 @@ import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan
 import { MAU_SAC } from '../../src/constants/cau-hinh';
 import { useAuthStore } from '../../src/stores/authStore';
 import { layUrlAnh } from '../../src/lib/utils/anh';
-import { useDanhSachCongThuc, useDanhSachYeuThich } from '../../src/hooks/useRecipes';
+import { useDanhSachCongThuc, useChuyenDoiYeuThich, useDanhSachYeuThich } from '../../src/hooks/useRecipes';
 
 // Category theo SVG gốc: theo bữa ăn
 const NHOM_MON = ['Tất cả', 'Sáng', 'Trưa', 'Tối', 'Đồ ăn nhẹ'] as const;
+
+// BR-UI: Nhóm món lọc theo từ khóa tên món (backend chưa có trường buổi ăn riêng)
+const TU_KHOA_NHOM: Record<(typeof NHOM_MON)[number], string | undefined> = {
+  'Tất cả': undefined,
+  Sáng: 'sáng',
+  Trưa: 'trưa',
+  Tối: 'tối',
+  'Đồ ăn nhẹ': 'nhẹ',
+};
 
 // BR-UI: Từ khóa nhanh đồng bộ web Bếp Nhà — bấm để sang màn tìm kiếm kèm từ khóa
 const TU_KHOA_NHANH = ['Thịt kho tàu', 'Canh cua mồng tơi', 'Bún thang', 'Gà om nấm'] as const;
@@ -50,20 +57,23 @@ const HinhAnh: FC<{ ct: CongThuc }> = ({ ct }) =>
   ct.anhThumbnail ? (
     <Image source={{ uri: layUrlAnh(ct.anhThumbnail) }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
   ) : (
-    <View className="h-full w-full items-center justify-center bg-cream">
-      <Text className="text-3xl font-bold text-accent">{ct.ten.trim().charAt(0).toUpperCase()}</Text>
-    </View>
+    <View className="h-full w-full bg-mist" />
   );
 
 // Card phổ biến kiểu SVG: ảnh + nút tim + tên + Calories • Time
-const ThePhoBien: FC<{ ct: CongThuc; khiBam: () => void }> = ({ ct, khiBam }) => (
+const ThePhoBien: FC<{ ct: CongThuc; khiBam: () => void; daThich: boolean; khiThich: () => void }> = ({
+  ct,
+  khiBam,
+  daThich,
+  khiThich,
+}) => (
   <View className="relative w-56">
-    <Pressable accessibilityRole="button" onPress={khiBam} className="overflow-hidden rounded-2xl bg-white shadow-sm">
+    <Pressable accessibilityRole="button" onPress={khiBam} className="overflow-hidden rounded-3xl bg-white shadow-sm">
       <View className="relative h-36 w-full">
         <HinhAnh ct={ct} />
       </View>
       <View className="p-3">
-        <Text className="text-left text-[15px] font-semibold text-primary" numberOfLines={2}>
+        <Text className="text-left font-serif text-[15px] font-bold text-primary" numberOfLines={2}>
           {ct.ten}
         </Text>
         <View className="mt-2 flex-row items-center gap-3">
@@ -82,69 +92,41 @@ const ThePhoBien: FC<{ ct: CongThuc; khiBam: () => void }> = ({ ct, khiBam }) =>
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Yêu thích"
+      onPress={khiThich}
       className="absolute right-2.5 top-2.5 z-10 h-8 w-8 items-center justify-center rounded-full bg-white/90"
     >
-      <Heart size={16} color={MAU_SAC.MUC} />
+      <Heart size={16} color={daThich ? '#CA4844' : MAU_SAC.MUC} fill={daThich ? '#CA4844' : 'transparent'} />
     </Pressable>
   </View>
 );
 
-// BR-UI: Spotlight "Món Bếp Nhà chọn hôm nay" — bản mobile của hero web trang chủ
-const TheNoiBatHomNay: FC<{ ct: CongThuc; khiBam: () => void }> = ({ ct, khiBam }) => (
-  <View className="overflow-hidden rounded-3xl bg-white shadow-sm">
-    <View className="h-52 w-full">
-      <HinhAnh ct={ct} />
-    </View>
-    <View className="p-4">
-      <View className="flex-row items-center gap-1.5">
-        <BadgeCheck size={15} color={MAU_SAC.TEAL} />
-        <CaptionText className="font-semibold uppercase text-accent-dark">Món Bếp Nhà chọn hôm nay</CaptionText>
-      </View>
-      <TitleText className="mt-1.5 text-xl" soDongToiDa={2}>
-        {ct.ten}
-      </TitleText>
-      {ct.moTa ? (
-        <BodyText className="mt-1 text-sm text-neutral-600" soDongToiDa={2}>
-          {ct.moTa}
-        </BodyText>
-      ) : null}
-      <View className="mt-3 flex-row items-center gap-3">
-        <View className="flex-row items-center gap-1">
-          <Timer size={14} color={MAU_SAC.MUTED} />
-          <NumberDisplay value={ct.thoiGianNauPhut} unit="phút" className="text-sm" />
-        </View>
-        <View className="h-3 w-px bg-neutral-300" />
-        <View className="flex-row items-center gap-1">
-          <Flame size={14} color={MAU_SAC.MUTED} />
-          <CaptionText>{ct.dinhDuong ? `${ct.dinhDuong.calo} kcal` : '— kcal'}</CaptionText>
-        </View>
-        <View className="h-3 w-px bg-neutral-300" />
-        <View className="flex-row items-center gap-1">
-          <Users size={14} color={MAU_SAC.MUTED} />
-          <NumberDisplay value={ct.khauPhan} unit="người" className="text-sm" />
-        </View>
-      </View>
-      <NutBam tieuDe="Xem công thức" khiBam={khiBam} className="mt-4" />
-    </View>
-  </View>
-);
+// BR-SOC: Mỗi thẻ phổ biến tự quản lý toggle tim, đồng bộ server qua hook
+const ThePhoBienCoTim: FC<{ ct: CongThuc; daThich: boolean; khiBam: () => void }> = ({ ct, daThich, khiBam }) => {
+  const chuyenThich = useChuyenDoiYeuThich(ct.id, daThich);
+  return <ThePhoBien ct={ct} khiBam={khiBam} daThich={daThich} khiThich={() => chuyenThich.mutate(undefined)} />;
+};
 
 export default function ManHinhTrangChu() {
   const router = useRouter();
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
   const [nhomChon, setNhomChon] = useState(0);
+  const tuKhoaNhom = TU_KHOA_NHOM[NHOM_MON[nhomChon]];
 
-  const noiBat = useDanhSachCongThuc({ page: 0, size: 5 });
-  const phoBien = useDanhSachCongThuc({ page: 0, size: 6, sort: 'rating:desc' });
-  const yeuThich = useDanhSachYeuThich(0, 1);
+  const noiBat = useDanhSachCongThuc({ page: 0, size: 5, ...(tuKhoaNhom ? { search: tuKhoaNhom } : {}) });
+  const phoBien = useDanhSachCongThuc({
+    page: 0,
+    size: 6,
+    sort: 'rating:desc',
+    ...(tuKhoaNhom ? { search: tuKhoaNhom } : {}),
+  });
+  const yeuThich = useDanhSachYeuThich(0, 100);
   const cuaToi = useDanhSachCongThuc({
     page: 0,
     size: 1,
     ...(nguoiDung?.id ? { tacGiaId: nguoiDung.id } : {}),
   });
 
-  // BR-UI: Spotlight lấy món đầu danh sách nổi bật, rail bên dưới hiển thị phần còn lại
-  const monSpotlight = noiBat.data?.noiDung[0];
+  // BR-UI: Rail hiển thị phần còn lại sau món đầu danh sách nổi bật
   const danhSachRail = (noiBat.data?.noiDung ?? []).slice(1);
 
   const denTimKiem = (tuKhoa?: string) =>
@@ -174,15 +156,25 @@ export default function ManHinhTrangChu() {
         </View>
 
         <View className="mt-4 px-4">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Tìm kiếm món ăn"
-            onPress={() => denTimKiem()}
-            className="flex-row items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-3"
-          >
+          <View className="flex-row items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2">
             <Search size={18} color={MAU_SAC.MUTED} />
-            <Text className="flex-1 text-left text-base text-neutral-400">Tìm món ăn, nguyên liệu...</Text>
-          </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tìm kiếm món ăn"
+              onPress={() => denTimKiem()}
+              className="flex-1 py-1.5"
+            >
+              <Text className="text-left text-base text-neutral-400">Tìm món ăn, nguyên liệu...</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tìm kiếm"
+              onPress={() => denTimKiem()}
+              className="rounded-xl bg-primary px-4 py-2"
+            >
+              <Text className="text-sm font-semibold text-white">Tìm kiếm</Text>
+            </Pressable>
+          </View>
           <View className="mt-2.5 flex-row flex-wrap items-center gap-2">
             <CaptionText>Tìm nhanh:</CaptionText>
             {TU_KHOA_NHANH.map((tu) => (
@@ -190,9 +182,9 @@ export default function ManHinhTrangChu() {
                 key={tu}
                 accessibilityRole="button"
                 onPress={() => denTimKiem(tu)}
-                className="rounded-full bg-white px-3 py-1.5"
+                className="rounded-full bg-white px-3 py-1.5 shadow-sm"
               >
-                <Text className="text-left text-xs text-neutral-700">{tu}</Text>
+                <Text className="text-left text-xs font-semibold text-deepteal">{tu}</Text>
               </Pressable>
             ))}
           </View>
@@ -203,7 +195,7 @@ export default function ManHinhTrangChu() {
             <Pressable
               accessibilityRole="button"
               onPress={() => router.push('/favorites')}
-              className="flex-1 flex-row items-center gap-3 rounded-2xl bg-white p-4 shadow-sm"
+              className="flex-1 flex-row items-center gap-3 rounded-3xl bg-white p-4 shadow-sm"
             >
               <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent-light">
                 <BookMarked size={19} color={MAU_SAC.MUC} />
@@ -216,7 +208,7 @@ export default function ManHinhTrangChu() {
             <Pressable
               accessibilityRole="button"
               onPress={() => router.push('/my-recipes')}
-              className="flex-1 flex-row items-center gap-3 rounded-2xl bg-white p-4 shadow-sm"
+              className="flex-1 flex-row items-center gap-3 rounded-3xl bg-white p-4 shadow-sm"
             >
               <View className="h-10 w-10 items-center justify-center rounded-xl bg-cream">
                 <ChefHat size={19} color={MAU_SAC.MUC} />
@@ -226,12 +218,6 @@ export default function ManHinhTrangChu() {
                 <CaptionText>Của tôi</CaptionText>
               </View>
             </Pressable>
-          </View>
-        ) : null}
-
-        {monSpotlight ? (
-          <View className="mt-5 px-4">
-            <TheNoiBatHomNay ct={monSpotlight} khiBam={() => router.push(`/recipe/${monSpotlight.id}`)} />
           </View>
         ) : null}
 
@@ -282,7 +268,12 @@ export default function ManHinhTrangChu() {
             ) : (
               <View className="flex-row gap-3 pb-1">
                 {(phoBien.data?.noiDung ?? []).map((ct) => (
-                  <ThePhoBien key={ct.id} ct={ct} khiBam={() => router.push(`/recipe/${ct.id}`)} />
+                  <ThePhoBienCoTim
+                    key={ct.id}
+                    ct={ct}
+                    daThich={(yeuThich.data?.noiDung ?? []).some((luu) => luu.id === ct.id)}
+                    khiBam={() => router.push(`/recipe/${ct.id}`)}
+                  />
                 ))}
               </View>
             )}

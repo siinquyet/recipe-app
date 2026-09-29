@@ -54,6 +54,7 @@ export interface CongThuc {
   thoiGianNauPhut: number;
   thoiGianChuanBiPhut: number | null;
   khauPhan: number;
+  trangThai: string;
   tacGia: NguoiDung;
   nguyenLieu: NguyenLieuCongThuc[];
   cacBuoc: BuocNauAn[];

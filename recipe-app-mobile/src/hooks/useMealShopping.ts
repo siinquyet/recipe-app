@@ -10,8 +10,8 @@ import {
   xoaMonKhoiKeHoach,
 } from '../lib/api/mealPlans';
 import type { CapNhatMonTrongKeHoachPayload, TaoKeHoachAnPayload, ThemMonVaoKeHoachPayload } from '../lib/api/mealPlans';
-import { layChiTietDanhSachDiCho, layDanhSachDiCho, taoDanhSachDiCho } from '../lib/api/shoppingLists';
-import type { CapNhatDanhSachDiChoPayload, TaoDanhSachDiChoPayload } from '../lib/api/shoppingLists';
+import { layChiTietDanhSachDiCho, layDanhSachDiCho, suaMonDiCho, taoDanhSachDiCho, themMonDiCho, xoaMonDiCho } from '../lib/api/shoppingLists';
+import type { CapNhatDanhSachDiChoPayload, MonDiChoMoi, SuaMonDiChoPayload, TaoDanhSachDiChoPayload } from '../lib/api/shoppingLists';
 import { capNhatDanhSachDiCho, capNhatTrangThaiMon, taoTuCongThuc, taoTuKeHoachAn, xoaDanhSachDiCho } from '../lib/api/shoppingLists';
 import type { DanhSachDiCho } from '../types/api';
 import { khoaTruyVan } from '../lib/queryClient';
@@ -153,6 +153,42 @@ export function useXoaDanhSachDiCho() {
   });
 }
 
+// BR-SHOP: Thêm món thủ công vào danh sách
+export function useThemMonDiCho(listId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: MonDiChoMoi) => themMonDiCho(listId, payload),
+    onSuccess: (duLieu) => {
+      queryClient.setQueryData(khoaTruyVan.danhSachDiCho.chiTiet(listId), duLieu);
+      queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] });
+    },
+  });
+}
+
+// BR-SHOP: Sửa tên/lượng/đơn vị món
+export function useSuaMonDiCho(listId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, payload }: { itemId: string; payload: SuaMonDiChoPayload }) =>
+      suaMonDiCho(listId, itemId, payload),
+    onSuccess: (duLieu) => {
+      queryClient.setQueryData(khoaTruyVan.danhSachDiCho.chiTiet(listId), duLieu);
+      queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] });
+    },
+  });
+}
+
+// BR-SHOP: Xóa món khỏi danh sách
+export function useXoaMonDiCho(listId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemId: string) => xoaMonDiCho(listId, itemId),
+    onSuccess: (duLieu) => {
+      queryClient.setQueryData(khoaTruyVan.danhSachDiCho.chiTiet(listId), duLieu);
+      queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] });
+    },
+  });
+}
 // BR-SHOP: Toggle đã mua với optimistic update để UI phản hồi ngay
 export function useChuyenTrangThaiMon(listId: string) {
   const queryClient = useQueryClient();

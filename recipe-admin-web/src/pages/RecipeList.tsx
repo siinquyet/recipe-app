@@ -1,35 +1,27 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { apiClient } from '../api/client';
 import { formatVn } from '@cook/shared';
-
-interface CongThucRow {
-  id: string;
-  ten: string;
-  thoiGianNauPhut: number;
-  khauPhan: number;
-  ngayTao: string;
-}
-
-interface TrangCongThuc {
-  noiDung: CongThucRow[];
-  tongSoPhanTu: number;
-  tongSoTrang: number;
-}
+import { anBai, hienBai, layTatCaBai } from '../api/admin';
 
 const KICH_THUOC = 20;
+const CAC_TRANG_THAI = ['', 'DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'HIDDEN'] as const;
 
-// BR-ADM: Danh sách công thức cho admin duyệt — STT tự tính, không hiện ID
+// BR-ADM: Tất cả công thức — lọc trạng thái, ẩn/hiện 1 chạm, STT tự tính
 export function RecipeList() {
   const [trang, setTrang] = useState(0);
+  const [trangThai, setTrangThai] = useState<string>('');
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['admin', 'recipes', trang],
-    queryFn: async (): Promise<TrangCongThuc> => {
-      const res = await apiClient.get('/recipes', { params: { page: trang, size: KICH_THUOC } });
-      return res.data.data as TrangCongThuc;
-    },
+    queryKey: ['admin', 'recipes', trang, trangThai],
+    queryFn: () => layTatCaBai(trang, KICH_THUOC, trangThai || undefined),
   });
+  const lamMoi = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'recipes'] });
+    queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+  };
+  const an = useMutation({ mutationFn: anBai, onSuccess: lamMoi });
+  const hien = useMutation({ mutationFn: hienBai, onSuccess: lamMoi });
 
   if (isLoading) return <p className="p-4">Đang tải...</p>;
   if (isError || !data)
@@ -43,26 +35,70 @@ export function RecipeList() {
     );
 
   return (
-    <div className="p-4">
+    <div>
       <h1 className="text-left text-2xl font-bold">Công thức ({formatVn(data.tongSoPhanTu)})</h1>
-      <table className="mt-4 w-full border-collapse">
+      <div className="mt-3 flex flex-wrap gap-2">
+        {CAC_TRANG_THAI.map((tt) => (
+          <button
+            key={tt}
+            type="button"
+            onClick={() => {
+              setTrangThai(tt);
+              setTrang(0);
+            }}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
+              trangThai === tt ? 'bg-ink text-white' : 'bg-white text-slate-600'
+            }`}
+          >
+            {tt === '' ? 'Tất cả' : tt}
+          </button>
+        ))}
+      </div>
+      <table className="mt-4 w-full border-collapse bg-white">
         <thead>
           <tr className="bg-gray-100">
             <th className="border p-2 text-left">STT</th>
             <th className="border p-2 text-left">Tên món</th>
             <th className="border p-2 text-right">Nấu (phút)</th>
             <th className="border p-2 text-right">Khẩu phần</th>
+            <th className="border p-2 text-left">Trạng thái</th>
             <th className="border p-2 text-left">Ngày tạo</th>
+            <th className="border p-2 text-left">Ẩn/Hiện</th>
           </tr>
         </thead>
         <tbody>
           {data.noiDung.map((ct, i) => (
             <tr key={ct.id} className="border-t">
               <td className="number-vn border p-2">{trang * KICH_THUOC + i + 1}</td>
-              <td className="border p-2 text-left">{ct.ten}</td>
+              <td className="border p-2 text-left">
+                <p className="font-semibold">{ct.ten}</p>
+                <p className="text-sm text-slate-500">{ct.tacGia.tenHienThi}</p>
+              </td>
               <td className="number-vn border p-2">{formatVn(ct.thoiGianNauPhut)}</td>
               <td className="number-vn border p-2">{formatVn(ct.khauPhan)}</td>
+              <td className="border p-2 text-left">{ct.trangThai}</td>
               <td className="border p-2 text-left">{format(new Date(ct.ngayTao), 'dd/MM/yyyy')}</td>
+              <td className="border p-2">
+                {ct.trangThai === 'HIDDEN' ? (
+                  <button
+                    type="button"
+                    disabled={hien.isPending}
+                    onClick={() => hien.mutate(ct.id)}
+                    className="rounded bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Hiện
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={an.isPending}
+                    onClick={() => an.mutate(ct.id)}
+                    className="rounded border px-3 py-1.5 text-sm font-semibold text-slate-600 disabled:opacity-50"
+                  >
+                    Ẩn
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

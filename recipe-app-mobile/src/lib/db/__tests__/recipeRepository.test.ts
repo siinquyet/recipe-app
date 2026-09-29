@@ -18,6 +18,7 @@ function taoCongThucMau(vuot?: Partial<CongThuc>): CongThuc {
     thoiGianNauPhut: 120,
     thoiGianChuanBiPhut: 30,
     khauPhan: 4,
+    trangThai: 'APPROVED',
     tacGia: {
       id: 'u-1',
       email: 'a@b.c',

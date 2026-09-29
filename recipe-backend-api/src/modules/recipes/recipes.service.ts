@@ -1,12 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { Prisma, RecipeStatus } from '@prisma/client';
+import { CapNhatCongThucDto, TaoCongThucDto } from './dto/recipe.dto';
 
 interface ListParams {
     trang: number;
     kichThuoc: number;
     tuKhoa?: string;
     tacGiaId?: string;
+    nguoiXemId?: string;
 }
 
 @Injectable()
@@ -16,19 +18,24 @@ export class RecipesService {
     async layTuongTu(id: string) {
         const recipe = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
-            select: { categoryId: true },
+            select: { categoryId: true, tags: { select: { id: true } } },
         });
 
         if (!recipe) {
             return { noiDung: [], tongSoPhanTu: 0, tongSoTrang: 0 };
         }
 
+        // BR-UREC: Ưu tiên cùng danh mục, mở rộng sang món chung tag khi thiếu
+        const tagIds = recipe.tags.map((t) => t.id);
         const items = await this.prisma.recipe.findMany({
             where: {
                 deletedAt: null,
                 status: RecipeStatus.APPROVED,
-                categoryId: recipe.categoryId,
                 id: { not: id },
+                OR: [
+                    { categoryId: recipe.categoryId },
+                    ...(tagIds.length > 0 ? [{ tags: { some: { id: { in: tagIds } } } } ] : []),
+                ],
             },
             take: 6,
             orderBy: { createdAt: 'desc' },
@@ -43,10 +50,11 @@ export class RecipesService {
     }
 
     async layDanhSach(params: ListParams) {
-        // BR-UREC: Lọc công thức của tôi khi có tacGiaId, vẫn chỉ lấy bài APPROVED
+        // BR-UREC: Chủ bài xem được nháp của mình; người khác chỉ thấy APPROVED
+        const laChinhChu = params.tacGiaId !== undefined && params.tacGiaId === params.nguoiXemId;
         const where = {
             deletedAt: null,
-            status: RecipeStatus.APPROVED,
+            ...(laChinhChu ? {} : { status: RecipeStatus.APPROVED }),
             ...(params.tacGiaId ? { authorId: params.tacGiaId } : {}),
             ...(params.tuKhoa
                 ? {
@@ -77,7 +85,194 @@ export class RecipesService {
         };
     }
 
-    async layChiTiet(id: string) {
+    async layTheoNguyenLieu(nguyenLieu: string, kichThuoc: number) {
+        // BR-UREC: Tách chuỗi phẩy, món phải chứa ĐỦ mọi nguyên liệu trong văn bản gốc
+        const ds = nguyenLieu
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .slice(0, 10);
+        if (ds.length === 0) {
+            return { noiDung: [], tongSoPhanTu: 0, tongSoTrang: 0 };
+        }
+        const where = {
+            deletedAt: null,
+            status: RecipeStatus.APPROVED,
+            AND: ds.map((ten) => ({ ingredients: { some: { originalText: { contains: ten } } } })),
+        };
+        const [items, tongSoPhanTu] = await Promise.all([
+            this.prisma.recipe.findMany({
+                where,
+                take: kichThuoc,
+                orderBy: { createdAt: 'desc' },
+                include: { author: true },
+            }),
+            this.prisma.recipe.count({ where }),
+        ]);
+        return {
+            noiDung: items.map((r) => this.toCongThuc(r, r.author)),
+            tongSoPhanTu,
+            tongSoTrang: Math.ceil(tongSoPhanTu / kichThuoc),
+        };
+    }
+
+    async taoMoi(userId: string, dto: TaoCongThucDto) {
+        // BR-UREC: Bài mới ở trạng thái DRAFT, chờ duyệt mới hiện công khai
+        // BR-UREC: Validate danh mục tồn tại, lưu dinh dưỡng + tags gửi kèm
+        if (dto.danhMucId) {
+            const danhMuc = await this.prisma.category.findUnique({
+                where: { id: dto.danhMucId },
+                select: { id: true },
+            });
+            if (!danhMuc) {
+                throw new BadRequestException({
+                    code: 'REC-07',
+                    message: '[REC-07] Danh mục không tồn tại',
+                });
+            }
+        }
+        const recipe = await this.prisma.recipe.create({
+            data: {
+                title: dto.ten,
+                description: dto.moTa,
+                thumbnailUrl: dto.anhThumbnail,
+                cookTimeMinutes: dto.thoiGianNauPhut,
+                prepTimeMinutes: dto.thoiGianChuanBiPhut,
+                servings: dto.khauPhan,
+                authorId: userId,
+                status: RecipeStatus.DRAFT,
+                categoryId: dto.danhMucId,
+                tags: dto.tagIds ? { connect: dto.tagIds.map((id) => ({ id })) } : undefined,
+                nutrition: dto.dinhDuong
+                    ? {
+                          create: {
+                              calories: dto.dinhDuong.calo,
+                              protein: dto.dinhDuong.protein,
+                              carbs: dto.dinhDuong.carb,
+                              fat: dto.dinhDuong.chatBeo,
+                          },
+                      }
+                    : undefined,
+                ingredients: {
+                    create: dto.nguyenLieu.map((nl, i) => ({
+                        originalText: nl.ten,
+                        quantity: nl.dinhLuong,
+                        unit: nl.donVi,
+                        sortOrder: i + 1,
+                    })),
+                },
+                steps: {
+                    create: dto.cacBuoc.map((b, i) => ({
+                        stepOrder: i + 1,
+                        content: b.noiDung,
+                    })),
+                },
+            },
+            include: {
+                author: true,
+                ingredients: { orderBy: { sortOrder: 'asc' } },
+                steps: { orderBy: { stepOrder: 'asc' } },
+                nutrition: true,
+            },
+        });
+        return this.toCongThuc(recipe, recipe.author, {
+            ingredients: recipe.ingredients,
+            steps: recipe.steps,
+            nutrition: recipe.nutrition,
+        });
+    }
+
+    async capNhat(id: string, userId: string, dto: CapNhatCongThucDto) {
+        const cu = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, authorId: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        if (cu.authorId !== userId) {
+            throw new ForbiddenException({ code: 'REC-05', message: '[REC-05] Chỉ tác giả được sửa công thức' });
+        }
+        // BR-UREC: Thay nguyên liệu/bước bằng bộ mới khi có gửi kèm
+        // BR-UREC: Sửa bài đã duyệt phải duyệt lại — rớt về PENDING
+        await this.prisma.$transaction(async (tx) => {
+            await tx.recipe.update({
+                where: { id },
+                data: {
+                    ...(dto.ten !== undefined ? { title: dto.ten } : {}),
+                    ...(dto.moTa !== undefined ? { description: dto.moTa } : {}),
+                    ...(dto.anhThumbnail !== undefined ? { thumbnailUrl: dto.anhThumbnail } : {}),
+                    ...(dto.thoiGianNauPhut !== undefined ? { cookTimeMinutes: dto.thoiGianNauPhut } : {}),
+                    ...(dto.thoiGianChuanBiPhut !== undefined ? { prepTimeMinutes: dto.thoiGianChuanBiPhut } : {}),
+                    ...(dto.khauPhan !== undefined ? { servings: dto.khauPhan } : {}),
+                    status: RecipeStatus.PENDING,
+                    rejectionReason: null,
+                },
+            });
+            if (dto.nguyenLieu) {
+                await tx.recipeIngredient.deleteMany({ where: { recipeId: id } });
+                await tx.recipeIngredient.createMany({
+                    data: dto.nguyenLieu.map((nl, i) => ({
+                        recipeId: id,
+                        originalText: nl.ten,
+                        quantity: nl.dinhLuong,
+                        unit: nl.donVi,
+                        sortOrder: i + 1,
+                    })),
+                });
+            }
+            if (dto.cacBuoc) {
+                await tx.recipeStep.deleteMany({ where: { recipeId: id } });
+                await tx.recipeStep.createMany({
+                    data: dto.cacBuoc.map((b, i) => ({ recipeId: id, stepOrder: i + 1, content: b.noiDung })),
+                });
+            }
+        });
+        return this.layChiTiet(id, userId);
+    }
+
+    async xoa(id: string, userId: string) {
+        const cu = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, authorId: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        if (cu.authorId !== userId) {
+            throw new ForbiddenException({ code: 'REC-05', message: '[REC-05] Chỉ tác giả được xóa công thức' });
+        }
+        // BR-UREC: Xóa mềm để giữ bình luận, đánh giá và lịch sử liên quan
+        await this.prisma.recipe.update({ where: { id }, data: { deletedAt: new Date() } });
+        return { thanhCong: true };
+    }
+
+    async guiDuyet(id: string, userId: string) {
+        const cu = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, authorId: true, status: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        if (cu.authorId !== userId) {
+            throw new ForbiddenException({ code: 'REC-05', message: '[REC-05] Chỉ tác giả được gửi duyệt' });
+        }
+        if (cu.status !== 'DRAFT' && cu.status !== 'REJECTED' && cu.status !== 'APPROVED') {
+            throw new BadRequestException({
+                code: 'REC-06',
+                message: '[REC-06] Chỉ gửi duyệt được bài nháp, bị từ chối hoặc đã duyệt',
+            });
+        }
+        // BR-UREC: Gửi duyệt chuyển về PENDING và xóa lý do từ chối cũ
+        await this.prisma.recipe.update({
+            where: { id },
+            data: { status: 'PENDING', rejectionReason: null },
+        });
+        return this.layChiTiet(id, userId);
+    }
+
+    async layChiTiet(id: string, nguoiXemId?: string) {
         const recipe = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
             include: {
@@ -93,6 +288,22 @@ export class RecipesService {
                 code: 'REC-04',
                 message: '[REC-04] Không tìm thấy công thức',
             });
+        }
+
+        // BR-UREC: Bài chưa duyệt chỉ chủ bài và admin được xem
+        if (recipe.status !== 'APPROVED' && recipe.authorId !== nguoiXemId) {
+            const coQuyen = nguoiXemId
+                ? await this.prisma.user.findFirst({
+                      where: { id: nguoiXemId, role: 'ADMIN', status: 'ACTIVE' },
+                      select: { id: true },
+                  })
+                : null;
+            if (!coQuyen) {
+                throw new NotFoundException({
+                    code: 'REC-04',
+                    message: '[REC-04] Không tìm thấy công thức',
+                });
+            }
         }
 
         return this.toCongThuc(recipe, recipe.author, {
@@ -111,6 +322,7 @@ export class RecipesService {
             cookTimeMinutes: number;
             prepTimeMinutes: number | null;
             servings: number;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
         },
@@ -136,6 +348,7 @@ export class RecipesService {
             thoiGianNauPhut: recipe.cookTimeMinutes,
             thoiGianChuanBiPhut: recipe.prepTimeMinutes,
             khauPhan: recipe.servings,
+            trangThai: recipe.status,
             tacGia: {
                 id: author.id,
                 email: author.email,

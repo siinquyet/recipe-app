@@ -12,7 +12,7 @@ const TRANG_ONBOARDING = [
   {
     bieuTuong: BookOpen,
     tieuDe: 'Khám phá công thức',
-    moTa: 'Hàng ngàn món ăn từ cộng đồng và Spoonacular, dễ tìm theo nguyên liệu bạn có.',
+    moTa: 'Hàng ngàn món ăn từ cộng đồng và nguồn tham chiếu bên ngoài, dễ tìm theo nguyên liệu bạn có.',
   },
   {
     bieuTuong: CalendarDays,

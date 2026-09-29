@@ -26,11 +26,12 @@ interface TheCongThucProps {
   className?: string;
 }
 
+// BR-UI: Khung chờ kem + chữ cái accent y web, không dùng xám trơ
 const HinhAnhMon: FC<{ uri: string | null; ten: string }> = ({ uri, ten }) => {
   if (!uri) {
     return (
-      <View className="h-full w-full items-center justify-center bg-neutral-200">
-        <Text className="text-2xl font-bold text-neutral-400">{ten.trim().charAt(0).toUpperCase()}</Text>
+      <View className="h-full w-full items-center justify-center bg-cream">
+        <Text className="text-2xl font-bold text-accent-dark">{ten.trim().charAt(0).toUpperCase()}</Text>
       </View>
     );
   }
@@ -47,11 +48,11 @@ const NhanDanhGia: FC<{ diem: number }> = ({ diem }) => (
 const ThongTinNgan: FC<{ duLieu: DuLieuTheCongThuc }> = ({ duLieu }) => (
   <View className="flex-row items-center gap-3">
     <View className="flex-row items-center gap-1">
-      <Clock size={14} color="#737373" />
+      <Clock size={14} color="#97A2B0" />
       <NumberDisplay value={duLieu.thoiGianNau} unit="p" className="text-xs" />
     </View>
     <View className="flex-row items-center gap-1">
-      <Users size={14} color="#737373" />
+      <Users size={14} color="#97A2B0" />
       <NumberDisplay value={duLieu.khauPhan} unit="người" className="text-xs" />
     </View>
   </View>
@@ -70,7 +71,7 @@ const TheCompact: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ du
   <Pressable
     accessibilityRole="button"
     onPress={khiBam}
-    className="w-56 overflow-hidden rounded-2xl bg-white shadow-sm"
+    className="w-56 overflow-hidden rounded-3xl bg-white shadow-sm"
   >
     <View className="relative h-32 w-full">
       <HinhAnhMon uri={duLieu.hinhAnh} ten={duLieu.tenMon} />
@@ -81,7 +82,7 @@ const TheCompact: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ du
       ) : null}
     </View>
     <View className="p-3">
-      <Text className="text-left text-[15px] font-semibold text-neutral-900" numberOfLines={2}>
+      <Text className="text-left font-serif text-[15px] font-bold text-primary" numberOfLines={2}>
         {duLieu.tenMon}
       </Text>
       <View className="mt-2">
@@ -95,14 +96,14 @@ const TheLarge: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLi
   <Pressable
     accessibilityRole="button"
     onPress={khiBam}
-    className="mx-4 my-2 h-28 flex-row overflow-hidden rounded-2xl bg-white shadow-sm"
+    className="mx-4 my-2 h-28 flex-row overflow-hidden rounded-3xl bg-white shadow-sm"
   >
     <View className="h-full w-28">
       <HinhAnhMon uri={duLieu.hinhAnh} ten={duLieu.tenMon} />
     </View>
     <View className="flex-1 justify-between p-3">
       <View>
-        <Text className="text-left text-base font-semibold text-neutral-900" numberOfLines={2}>
+        <Text className="text-left font-serif text-base font-bold text-primary" numberOfLines={2}>
           {duLieu.tenMon}
         </Text>
         <View className="mt-1">
@@ -118,7 +119,7 @@ const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLie
   <Pressable
     accessibilityRole="button"
     onPress={khiBam}
-    className="overflow-hidden rounded-2xl bg-white shadow-sm"
+    className="overflow-hidden rounded-3xl bg-white shadow-sm"
   >
     <View className="relative h-36 w-full">
       <HinhAnhMon uri={duLieu.hinhAnh} ten={duLieu.tenMon} />
@@ -129,7 +130,7 @@ const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLie
       ) : null}
     </View>
     <View className="p-2.5">
-      <Text className="text-left text-sm font-semibold text-neutral-900" numberOfLines={2}>
+      <Text className="text-left font-serif text-sm font-bold text-primary" numberOfLines={2}>
         {duLieu.tenMon}
       </Text>
       <View className="mt-1.5">

@@ -22,6 +22,7 @@ function taoCongThuc(id: string, ten: string): CongThuc {
     thoiGianNauPhut: 30,
     thoiGianChuanBiPhut: null,
     khauPhan: 2,
+    trangThai: 'APPROVED',
     tacGia: {
       id: 'u-1',
       email: 'a@b.c',
