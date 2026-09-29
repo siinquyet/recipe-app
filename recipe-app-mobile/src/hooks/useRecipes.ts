@@ -1,6 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   capNhatCongThuc,
+  guiDuyetCongThuc,
+  layBinhLuan,
   layChiTietCongThuc,
   layCongThucTuongTu,
   layDanhSachCongThuc,
@@ -65,6 +67,18 @@ export function useXoaCongThuc() {
   });
 }
 
+// BR-UREC: Gửi duyệt để bài vào hàng chờ admin
+export function useGuiDuyet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => guiDuyetCongThuc(id),
+    onSuccess: (_duLieu, id) => {
+      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
+      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'danh-sach'] });
+    },
+  });
+}
+
 export function useChuyenDoiYeuThich(id: string, dangYeuThich: boolean) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -80,7 +94,20 @@ export function useTaoBinhLuan(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (noiDung: string) => taoBinhLuan(id, noiDung),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
+      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', id] });
+    },
+  });
+}
+
+// BR-SOC: Danh sách bình luận thật của công thức (thay mock)
+export function useBinhLuan(id: string, page = 0, size = 20) {
+  return useQuery({
+    queryKey: ['cong-thuc', 'binh-luan', id, page, size],
+    queryFn: () => layBinhLuan(id, page, size),
+    enabled: id.length > 0,
+    placeholderData: keepPreviousData,
   });
 }
 

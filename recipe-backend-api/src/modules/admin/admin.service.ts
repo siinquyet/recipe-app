@@ -1,0 +1,241 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, RecipeStatus } from '@prisma/client';
+import { PrismaService } from '../../common/prisma.service';
+import { TuChoiBaiDto } from './dto/admin.dto';
+
+const TRANG_THAI_HOP_LE: RecipeStatus[] = ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'HIDDEN'];
+
+@Injectable()
+export class AdminService {
+    constructor(private readonly prisma: PrismaService) {}
+
+    async layNguoiDung(trang: number, kichThuoc: number, tuKhoa?: string, trangThai?: string) {
+        // BR-ADM: Tìm theo email/tên, lọc ACTIVE/BANNED, kèm số bài đã đăng
+        const where: Prisma.UserWhereInput = {
+            ...(tuKhoa
+                ? { OR: [{ email: { contains: tuKhoa } }, { displayName: { contains: tuKhoa } }] }
+                : {}),
+            ...(trangThai ? { status: trangThai } : {}),
+        };
+        const [items, tongSoPhanTu] = await Promise.all([
+            this.prisma.user.findMany({
+                where,
+                skip: trang * kichThuoc,
+                take: kichThuoc,
+                orderBy: { createdAt: 'desc' },
+                include: { _count: { select: { recipes: true } } },
+            }),
+            this.prisma.user.count({ where }),
+        ]);
+        return {
+            noiDung: items.map((u) => ({
+                id: u.id,
+                email: u.email,
+                tenHienThi: u.displayName,
+                anhDaiDien: u.avatarUrl,
+                vaiTro: u.role,
+                trangThai: u.status,
+                soBaiViet: u._count.recipes,
+                ngayTao: u.createdAt.toISOString(),
+            })),
+            tongSoPhanTu,
+            tongSoTrang: Math.ceil(tongSoPhanTu / kichThuoc),
+        };
+    }
+
+    async khoaNguoiDung(adminId: string, id: string) {
+        await this.doiTrangThaiNguoiDung(adminId, id, 'BANNED', 'BAN_USER');
+        return { thanhCong: true };
+    }
+
+    async moKhoaNguoiDung(adminId: string, id: string) {
+        await this.doiTrangThaiNguoiDung(adminId, id, 'ACTIVE', 'ACTIVATE_USER');
+        return { thanhCong: true };
+    }
+
+    private async doiTrangThaiNguoiDung(adminId: string, id: string, trangThai: string, hanhDong: 'BAN_USER' | 'ACTIVATE_USER') {
+        const cu = await this.prisma.user.findUnique({ where: { id }, select: { id: true, status: true } });
+        if (!cu) {
+            throw new NotFoundException({ code: 'ADM-04', message: '[ADM-04] Không tìm thấy người dùng' });
+        }
+        if (adminId === id) {
+            throw new BadRequestException({ code: 'ADM-05', message: '[ADM-05] Không tự khóa/mở chính mình' });
+        }
+        const moi = await this.prisma.user.update({ where: { id }, data: { status: trangThai } });
+        await this.ghiNhatKy(adminId, hanhDong, 'User', id, { status: cu.status }, { status: moi.status });
+    }
+
+    async doiRole(adminId: string, id: string, role: 'USER' | 'ADMIN') {
+        const cu = await this.prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+        if (!cu) {
+            throw new NotFoundException({ code: 'ADM-04', message: '[ADM-04] Không tìm thấy người dùng' });
+        }
+        if (adminId === id) {
+            throw new BadRequestException({ code: 'ADM-05', message: '[ADM-05] Không tự đổi role chính mình' });
+        }
+        const moi = await this.prisma.user.update({ where: { id }, data: { role } });
+        await this.ghiNhatKy(adminId, 'CHANGE_ROLE', 'User', id, { role: cu.role }, { role: moi.role });
+        return { thanhCong: true };
+    }
+
+    async layBaiChoDuyet(trang: number, kichThuoc: number) {
+        return this.layBaiTheoTrangThai('PENDING', trang, kichThuoc);
+    }
+
+    async layTatCaBai(trang: number, kichThuoc: number, trangThai?: string) {
+        if (trangThai && !TRANG_THAI_HOP_LE.includes(trangThai as RecipeStatus)) {
+            throw new BadRequestException({ code: 'ADM-00', message: '[ADM-00] Trạng thái lọc không hợp lệ' });
+        }
+        return this.layBaiTheoTrangThai(trangThai as RecipeStatus | undefined, trang, kichThuoc);
+    }
+
+    private async layBaiTheoTrangThai(trangThai: RecipeStatus | undefined, trang: number, kichThuoc: number) {
+        // BR-ADM: Hàng chờ duyệt và toàn bộ bài viết — kèm tác giả để xét duyệt
+        const where: Prisma.RecipeWhereInput = {
+            deletedAt: null,
+            ...(trangThai ? { status: trangThai } : {}),
+        };
+        const [items, tongSoPhanTu] = await Promise.all([
+            this.prisma.recipe.findMany({
+                where,
+                skip: trang * kichThuoc,
+                take: kichThuoc,
+                orderBy: { createdAt: 'desc' },
+                include: { author: true },
+            }),
+            this.prisma.recipe.count({ where }),
+        ]);
+        return {
+            noiDung: items.map((r) => ({
+                id: r.id,
+                ten: r.title,
+                moTa: r.description,
+                anhThumbnail: r.thumbnailUrl,
+                thoiGianNauPhut: r.cookTimeMinutes,
+                khauPhan: r.servings,
+                trangThai: r.status,
+                lyDoTuChoi: r.rejectionReason,
+                tacGia: { id: r.author.id, tenHienThi: r.author.displayName, email: r.author.email },
+                ngayTao: r.createdAt.toISOString(),
+            })),
+            tongSoPhanTu,
+            tongSoTrang: Math.ceil(tongSoPhanTu / kichThuoc),
+        };
+    }
+
+    async duyetBai(adminId: string, id: string) {
+        await this.doiTrangThaiBai(adminId, id, 'APPROVED', undefined, 'APPROVE');
+        return { thanhCong: true };
+    }
+
+    async tuChoiBai(adminId: string, id: string, dto: TuChoiBaiDto) {
+        await this.doiTrangThaiBai(adminId, id, 'REJECTED', dto.lyDo, 'REJECT');
+        return { thanhCong: true };
+    }
+
+    async anBai(adminId: string, id: string) {
+        await this.doiTrangThaiBai(adminId, id, 'HIDDEN', undefined, 'HIDE');
+        return { thanhCong: true };
+    }
+
+    async hienBai(adminId: string, id: string) {
+        await this.doiTrangThaiBai(adminId, id, 'APPROVED', undefined, 'UNHIDE');
+        return { thanhCong: true };
+    }
+
+    private async doiTrangThaiBai(
+        adminId: string,
+        id: string,
+        trangThai: RecipeStatus,
+        lyDo: string | undefined,
+        hanhDong: 'APPROVE' | 'REJECT' | 'HIDE' | 'UNHIDE',
+    ) {
+        const cu = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, status: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        const moi = await this.prisma.recipe.update({
+            where: { id },
+            data: { status: trangThai, rejectionReason: lyDo ?? null },
+        });
+        await this.ghiNhatKy(adminId, hanhDong, 'Recipe', id, { status: cu.status }, { status: moi.status });
+    }
+
+    async layDashboard() {
+        // BR-ADM: Số liệu tổng quan cho trang quản trị
+        const [tongNguoiDung, dangHoatDong, choDuyet, daDuyet, topDanhGia, tangNguoiDung, tangBai] =
+            await Promise.all([
+                this.prisma.user.count(),
+                this.prisma.user.count({ where: { status: 'ACTIVE' } }),
+                this.prisma.recipe.count({ where: { deletedAt: null, status: 'PENDING' } }),
+                this.prisma.recipe.count({ where: { deletedAt: null, status: 'APPROVED' } }),
+                this.prisma.recipe.findMany({
+                    where: { deletedAt: null, status: 'APPROVED' },
+                    take: 5,
+                    orderBy: { ratings: { _count: 'desc' } },
+                    select: { id: true, title: true, ratings: { select: { score: true } } },
+                }),
+                this.thongKeTheoNgay('user'),
+                this.thongKeTheoNgay('recipe'),
+            ]);
+        return {
+            tongNguoiDung,
+            dangHoatDong,
+            baiChoDuyet: choDuyet,
+            baiDaDuyet: daDuyet,
+            topDanhGia: topDanhGia.map((r) => ({
+                id: r.id,
+                ten: r.title,
+                diemTrungBinh:
+                    r.ratings.length > 0
+                        ? Math.round((r.ratings.reduce((s, x) => s + x.score, 0) / r.ratings.length) * 10) / 10
+                        : 0,
+                tongDanhGia: r.ratings.length,
+            })),
+            tangTruongNguoiDung: tangNguoiDung,
+            tangTruongCongThuc: tangBai,
+        };
+    }
+
+    private async thongKeTheoNgay(loai: 'user' | 'recipe'): Promise<Array<{ ngay: string; soLuong: number }>> {
+        // BR-ADM: Đếm theo ngày 7 ngày gần nhất để vẽ biểu đồ tăng trưởng
+        const ketQua: Array<{ ngay: string; soLuong: number }> = [];
+        for (let lui = 6; lui >= 0; lui--) {
+            const ngay = new Date();
+            ngay.setHours(0, 0, 0, 0);
+            ngay.setDate(ngay.getDate() - lui);
+            const homSau = new Date(ngay);
+            homSau.setDate(homSau.getDate() + 1);
+            const where = { createdAt: { gte: ngay, lt: homSau } };
+            const soLuong =
+                loai === 'user'
+                    ? await this.prisma.user.count({ where })
+                    : await this.prisma.recipe.count({ where: { ...where, deletedAt: null } });
+            ketQua.push({ ngay: ngay.toISOString().split('T')[0], soLuong });
+        }
+        return ketQua;
+    }
+
+    private async ghiNhatKy(
+        adminId: string,
+        hanhDong: 'BAN_USER' | 'ACTIVATE_USER' | 'CHANGE_ROLE' | 'APPROVE' | 'REJECT' | 'HIDE' | 'UNHIDE',
+        loaiThucThe: string,
+        thucTheId: string,
+        duLieuCu: object,
+        duLieuMoi: object,
+    ) {
+        await this.prisma.auditLog.create({
+            data: {
+                userId: adminId,
+                action: hanhDong,
+                entityType: loaiThucThe,
+                entityId: thucTheId,
+                oldData: duLieuCu as Prisma.InputJsonValue,
+                newData: duLieuMoi as Prisma.InputJsonValue,
+            },
+        });
+    }
+}

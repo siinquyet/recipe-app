@@ -9,6 +9,6 @@ export function RequireAuth() {
 
 export function RequireAdmin() {
   const token = localStorage.getItem('admin_access_token');
-  if (!token) return <p className="p-4 text-left">[ADM-01] Vui lòng đăng nhập quản trị</p>;
+  if (!token) return <Navigate to="/admin/dang-nhap" replace />;
   return <Outlet />;
 }

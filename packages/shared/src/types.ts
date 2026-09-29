@@ -245,18 +245,18 @@ export interface RecipeUpdateRequest {
 }
 
 // ============================================
-// Recipe Reference (Spoonacular) Types
+// Recipe Reference (nguồn ngoài) Types
 // ============================================
 
 export interface RecipeReferenceDetail {
   id: string; // INTERNAL ONLY
-  source: 'SPOONACULAR';
+  source: 'EXTERNAL';
   externalId: string;
   title: string;
   imageUrl?: string;
   servings: number;
   status: 'ACTIVE' | 'UNAVAILABLE';
-  spoonacularScore?: number;
+  externalScore?: number;
   healthScore?: number;
   aggregateLikes?: number;
   lastSyncedAt?: string;
@@ -267,7 +267,7 @@ export interface RecipeReferenceDetail {
 }
 
 export interface ExternalRecipeMetrics {
-  spoonacularScore?: number;
+  externalScore?: number;
   healthScore?: number;
   aggregateLikes?: number;
 }
@@ -310,7 +310,7 @@ export interface IngredientMapping {
   internalIngredientId: string;
   internalIngredient: InternalIngredient;
   externalName: string;
-  source: 'SPOONACULAR';
+  source: 'EXTERNAL';
   status: 'MAPPED' | 'UNMAPPED';
   confidence: number;
 }
@@ -325,7 +325,7 @@ export interface CreateInternalIngredientRequest {
 export interface CreateIngredientMappingRequest {
   internalIngredientId: string;
   externalName: string;
-  source?: 'SPOONACULAR';
+  source?: 'EXTERNAL';
   status?: 'MAPPED' | 'UNMAPPED';
   confidence?: number;
 }

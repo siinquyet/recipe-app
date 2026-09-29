@@ -26,6 +26,7 @@ export interface CongThuc {
   thoiGianNauPhut: number;
   thoiGianChuanBiPhut: number | null;
   khauPhan: number;
+  trangThai: string;
   tacGia: TacGia;
   nguyenLieu: NguyenLieu[];
   cacBuoc: BuocNau[];
@@ -126,6 +127,14 @@ export async function layBinhLuanUser(id: string, trang = 0, kichThuoc = 20) {
 export async function taoBinhLuanUser(id: string, noiDung: string): Promise<BinhLuan> {
   const res = await userApiClient.post(`/recipes/${id}/comments`, { noiDung });
   const body = res.data as ApiEnvelope<BinhLuan>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
+// BR-UREC: Gửi duyệt bài nháp/bị từ chối lên hàng chờ PENDING
+export async function guiDuyetCongThucUser(id: string): Promise<CongThuc> {
+  const res = await userApiClient.post(`/recipes/${id}/submit-review`);
+  const body = res.data as ApiEnvelope<CongThuc>;
   if (!body.success) throw nemLoi(body);
   return body.data;
 }
