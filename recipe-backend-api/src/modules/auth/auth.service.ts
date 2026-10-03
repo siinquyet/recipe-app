@@ -59,6 +59,14 @@ export class AuthService {
             });
         }
 
+        // BR-AUTH: Chặn tài khoản BANNED đăng nhập
+        if (user.status === 'BANNED') {
+            throw new UnauthorizedException({
+                code: 'AUTH-04',
+                message: '[AUTH-04] Tài khoản đã bị khóa',
+            });
+        }
+
         const hopLe = await bcrypt.compare(matKhau, user.passwordHash);
         if (!hopLe) {
             throw new UnauthorizedException({

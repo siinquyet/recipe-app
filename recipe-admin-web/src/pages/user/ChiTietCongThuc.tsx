@@ -10,19 +10,202 @@ import { TrangDangTai, TrangLoi } from '../../components/ui/TrangThai';
 import { CaptionText } from '../../components/ui/VanBan';
 import { TheCongThuc, layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
 import {
+  baoCaoViPham,
   danhGiaCongThucUser,
   layBinhLuanUser,
   layChiTietCongThucUser,
   layCongThucTuongTuUser,
   layDanhSachYeuThichUser,
+  layPhanHoiUser,
+  layTomTatDanhGiaUser,
+  suaBinhLuanUser,
   taoBinhLuanUser,
   themYeuThichUser,
+  xoaBinhLuanUser,
   xoaYeuThichUser,
+  type BinhLuan,
 } from '../../api/congThuc';
+import { themMonVaoKeHoach } from '../../api/keHoachAn';
+import { taoDiChoTuCongThuc } from '../../api/diCho';
+import { xoaBinhLuanAdmin } from '../../api/admin';
 import { useAuthStore } from '../../stores/authStore';
 
 const CAC_TAB = ['Nguyên liệu chuẩn bị', 'Các bước thực hiện'] as const;
-const CAC_BUA = ['Bữa Sáng', 'Bữa Trưa', 'Bữa Tối'] as const;
+const CAC_BUOI = [
+  { ma: 'BREAKFAST', nhan: 'Bữa Sáng' },
+  { ma: 'LUNCH', nhan: 'Bữa Trưa' },
+  { ma: 'DINNER', nhan: 'Bữa Tối' },
+  { ma: 'SNACK', nhan: 'Ăn nhẹ' },
+] as const;
+
+function laAdmin(): boolean {
+  return !!localStorage.getItem('admin_access_token');
+}
+
+// BR-SOC: Một bình luận tương tác được — trả lời, xem phản hồi, sửa/xóa của mình
+function TheBinhLuan({
+  recipeId,
+  bl,
+  laCuaToi,
+  laQuanTri,
+}: {
+  recipeId: string;
+  bl: BinhLuan;
+  laCuaToi: boolean;
+  laQuanTri: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [moReplies, setMoReplies] = useState(false);
+  const [dangTraLoi, setDangTraLoi] = useState(false);
+  const [noiDungTraLoi, setNoiDungTraLoi] = useState('');
+  const [dangSua, setDangSua] = useState(false);
+  const [noiDungSua, setNoiDungSua] = useState(bl.noiDung);
+  const khoaBinhLuan = ['user', 'recipe', recipeId, 'binh-luan'];
+
+  const replies = useQuery({
+    queryKey: [...khoaBinhLuan, 'phan-hoi', moReplies ? bl.id : ''],
+    queryFn: () => layPhanHoiUser(recipeId, bl.id),
+    enabled: moReplies,
+  });
+  const lamMoi = () => {
+    queryClient.invalidateQueries({ queryKey: khoaBinhLuan });
+    queryClient.invalidateQueries({ queryKey: [...khoaBinhLuan, 'phan-hoi', bl.id] });
+  };
+  const traLoi = useMutation({
+    mutationFn: () => taoBinhLuanUser(recipeId, noiDungTraLoi.trim(), bl.id),
+    onSuccess: () => {
+      setNoiDungTraLoi('');
+      setDangTraLoi(false);
+      setMoReplies(true);
+      lamMoi();
+    },
+    onError: () => alert('Cần đăng nhập để trả lời'),
+  });
+  const sua = useMutation({
+    mutationFn: () => suaBinhLuanUser(recipeId, bl.id, noiDungSua.trim()),
+    onSuccess: () => {
+      setDangSua(false);
+      lamMoi();
+    },
+  });
+  const xoa = useMutation({
+    mutationFn: () => xoaBinhLuanUser(recipeId, bl.id),
+    onSuccess: lamMoi,
+  });
+  const xoaAdmin = useMutation({
+    mutationFn: () => xoaBinhLuanAdmin(bl.id),
+    onSuccess: lamMoi,
+    onError: () => alert('[ADM-01] Cần quyền quản trị'),
+  });
+  const baoCao = useMutation({
+    mutationFn: () => baoCaoViPham({ commentId: bl.id, reason: 'INAPPROPRIATE' }),
+    onSuccess: () => alert('Đã gửi báo cáo, cảm ơn bạn!'),
+    onError: () => alert('Cần đăng nhập để báo cáo'),
+  });
+
+  return (
+    <li className="border-t border-slate-100 py-3">
+      <div className="flex gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-light text-sm font-bold text-ink">
+          {bl.tacGia.tenHienThi.trim().charAt(0).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-left text-sm font-semibold text-ink">
+            {bl.tacGia.tenHienThi}{' '}
+            <span className="font-normal text-muted">• {format(new Date(bl.thoiGianTao), 'dd/MM/yyyy')}</span>
+          </p>
+          {dangSua ? (
+            <div className="mt-1 flex gap-2">
+              <input
+                value={noiDungSua}
+                onChange={(e) => setNoiDungSua(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
+              />
+              <NutBam
+                tieuDe="Lưu"
+                dangTai={sua.isPending}
+                voHieuHoa={!noiDungSua.trim()}
+                khiBam={() => sua.mutate()}
+                className="shrink-0"
+              />
+              <NutBam tieuDe="Hủy" bienThe="mo" khiBam={() => setDangSua(false)} className="shrink-0" />
+            </div>
+          ) : (
+            <p className="mt-1 text-left text-sm text-ink">{bl.noiDung}</p>
+          )}
+          <p className="mt-1 flex flex-wrap gap-3 text-xs">
+            <button type="button" onClick={() => setDangTraLoi((v) => !v)} className="font-semibold text-deepteal">
+              Trả lời
+            </button>
+            {bl.soLuongPhanHoi > 0 ? (
+              <button type="button" onClick={() => setMoReplies((v) => !v)} className="text-muted">
+                {moReplies ? 'Ẩn' : 'Xem'} {bl.soLuongPhanHoi} phản hồi
+              </button>
+            ) : null}
+            {laCuaToi ? (
+              <>
+                <button type="button" onClick={() => setDangSua((v) => !v)} className="font-semibold text-deepteal">
+                  Sửa
+                </button>
+                <button
+                  type="button"
+                  disabled={xoa.isPending}
+                  onClick={() => xoa.mutate()}
+                  className="font-semibold text-red-600 disabled:opacity-50"
+                >
+                  Xóa
+                </button>
+              </>
+            ) : null}
+            {laQuanTri && !laCuaToi ? (
+              <button
+                type="button"
+                disabled={xoaAdmin.isPending}
+                onClick={() => xoaAdmin.mutate()}
+                className="font-semibold text-red-600 disabled:opacity-50"
+              >
+                Xóa (quản trị)
+              </button>
+            ) : null}
+            {!laCuaToi ? (
+              <button type="button" onClick={() => baoCao.mutate()} className="text-muted">
+                Báo cáo
+              </button>
+            ) : null}
+          </p>
+          {dangTraLoi ? (
+            <div className="mt-2 flex gap-2">
+              <input
+                value={noiDungTraLoi}
+                onChange={(e) => setNoiDungTraLoi(e.target.value)}
+                placeholder={`Trả lời ${bl.tacGia.tenHienThi}...`}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
+              />
+              <NutBam
+                tieuDe="Gửi"
+                dangTai={traLoi.isPending}
+                voHieuHoa={!noiDungTraLoi.trim()}
+                khiBam={() => traLoi.mutate()}
+                className="shrink-0"
+              />
+            </div>
+          ) : null}
+          {moReplies
+            ? (replies.data?.noiDung ?? []).map((tl) => (
+                <div key={tl.id} className="ml-2 mt-2 border-l-2 border-slate-200 pl-3">
+                  <p className="text-left text-sm font-semibold text-ink">
+                    {tl.tacGia.tenHienThi}{' '}
+                    <span className="font-normal text-muted">• {format(new Date(tl.thoiGianTao), 'dd/MM/yyyy')}</span>
+                  </p>
+                  <p className="mt-0.5 text-left text-sm text-ink">{tl.noiDung}</p>
+                </div>
+              ))
+            : null}
+        </div>
+      </div>
+    </li>
+  );
+}
 
 // BR-REC + BR-SOC: Chi tiết mẫu Stitch — scale khẩu phần client, tim/sao/bình luận API thật
 export function ChiTietCongThuc() {
@@ -32,9 +215,12 @@ export function ChiTietCongThuc() {
   const [tab, setTab] = useState<(typeof CAC_TAB)[number]>(CAC_TAB[0]);
   const [khauPhanChon, setKhauPhanChon] = useState<number | null>(null);
   const [daChuanBi, setDaChuanBi] = useState<Record<string, boolean>>({});
-  const [buoiChon, setBuoiChon] = useState(1);
   const [diem, setDiem] = useState(0);
   const [binhLuan, setBinhLuan] = useState('');
+  // BR-MEAL/BR-SHOP: Thêm vào kế hoạch + đi chợ (chứ không báo chưa hỗ trợ)
+  const [keHoachChon, setKeHoachChon] = useState('');
+  const [ngayAn, setNgayAn] = useState(() => new Date().toISOString().slice(0, 10));
+  const [buoiAn, setBuoiAn] = useState<string>('LUNCH');
 
   const chiTiet = useQuery({
     queryKey: ['user', 'recipe', id],
@@ -50,6 +236,16 @@ export function ChiTietCongThuc() {
     queryKey: ['user', 'recipe', id, 'binh-luan'],
     queryFn: () => layBinhLuanUser(id ?? ''),
     enabled: !!id,
+  });
+  const tomTat = useQuery({
+    queryKey: ['user', 'recipe', id, 'danh-gia'],
+    queryFn: () => layTomTatDanhGiaUser(id ?? ''),
+    enabled: !!id,
+  });
+  const dsKeHoach = useQuery({
+    queryKey: ['user', 'meal-plans'],
+    queryFn: () => import('../../api/keHoachAn').then((m) => m.layDanhSachKeHoachAn(0, 20)),
+    enabled: !!nguoiDung,
   });
 
   // BR-SOC: Trạng thái lưu thật từ /favorites (API chưa trả cờ nên tra danh sách đã lưu)
@@ -70,7 +266,10 @@ export function ChiTietCongThuc() {
   });
   const guiDiem = useMutation({
     mutationFn: () => danhGiaCongThucUser(id ?? '', diem),
-    onSuccess: () => alert('Cảm ơn bạn đã chấm điểm!'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'recipe', id, 'danh-gia'] });
+      alert('Cảm ơn bạn đã chấm điểm!');
+    },
     onError: () => alert('[SOC-02] Cần đăng nhập để đánh giá'),
   });
   const guiBinhLuan = useMutation({
@@ -80,6 +279,24 @@ export function ChiTietCongThuc() {
       queryClient.invalidateQueries({ queryKey: ['user', 'recipe', id, 'binh-luan'] });
     },
     onError: () => alert('[SOC-02] Cần đăng nhập để bình luận'),
+  });
+  const luuVaoKeHoach = useMutation({
+    mutationFn: () => themMonVaoKeHoach(keHoachChon, { congThucId: id ?? '', ngay: ngayAn, buoiAn, khauPhan: khauPhanHien }),
+    onSuccess: () => alert('Đã thêm vào kế hoạch!'),
+    onError: (e) => alert(e instanceof Error ? e.message : '[MEAL-01] Không thêm được'),
+  });
+  const themVaoGio = useMutation({
+    mutationFn: () => taoDiChoTuCongThuc(id ?? '', khauPhanHien),
+    onSuccess: (ds) => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'shopping'] });
+      alert(`Đã tạo "${ds.ten}" — sang Đi chợ để xem!`);
+    },
+    onError: () => alert('[SHOP-01] Cần đăng nhập để tạo danh sách'),
+  });
+  const baoCaoBai = useMutation({
+    mutationFn: () => baoCaoViPham({ recipeId: id, reason: 'INAPPROPRIATE' }),
+    onSuccess: () => alert('Đã gửi báo cáo, cảm ơn bạn!'),
+    onError: () => alert('Cần đăng nhập để báo cáo'),
   });
 
   if (chiTiet.isLoading) return <TrangDangTai />;
@@ -108,6 +325,8 @@ export function ChiTietCongThuc() {
     { nhan: 'Khẩu phần', giaTri: `${khauPhanHien} người` },
     { nhan: 'Năng lượng', giaTri: ct.dinhDuong ? `${ct.dinhDuong.calo} Kcal` : '—' },
   ];
+  const phanBo = tomTat.data?.phanBo ?? {};
+  const tongCham = tomTat.data?.tongSoDanhGia ?? 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-10">
@@ -148,6 +367,15 @@ export function ChiTietCongThuc() {
           >
             Chia sẻ
           </button>
+          {!nguoiDung || nguoiDung.id !== ct.tacGia.id ? (
+            <button
+              type="button"
+              onClick={() => baoCaoBai.mutate()}
+              className="rounded-full px-4 py-2 text-sm text-muted"
+            >
+              Báo cáo
+            </button>
+          ) : null}
         </span>
       </div>
 
@@ -244,31 +472,54 @@ export function ChiTietCongThuc() {
 
         <aside className="h-fit rounded-40px bg-white p-5 shadow-magazine lg:sticky lg:top-24">
           <p className="font-serif text-lg font-bold text-ink">Lên thực đơn bữa cơm</p>
-          <CaptionText>Chọn thời gian dùng món này</CaptionText>
-          <div className="mt-3 flex gap-2">
-            {CAC_BUA.map((b, i) => (
-              <button
-                key={b}
-                type="button"
-                onClick={() => setBuoiChon(i)}
-                className={`flex-1 rounded-full px-2 py-1.5 text-xs font-semibold ${
-                  buoiChon === i ? 'bg-ink text-white' : 'bg-mist text-slate-500'
-                }`}
-              >
-                {b}
-              </button>
+          <CaptionText>Chọn kế hoạch, ngày và buổi dùng món này</CaptionText>
+          <select
+            value={keHoachChon}
+            onChange={(e) => setKeHoachChon(e.target.value)}
+            className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+            aria-label="Chọn kế hoạch"
+          >
+            <option value="">-- Chọn kế hoạch --</option>
+            {(dsKeHoach.data?.noiDung ?? []).map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.ten}
+              </option>
             ))}
+          </select>
+          <div className="mt-2 flex gap-2">
+            <input
+              type="date"
+              value={ngayAn}
+              onChange={(e) => setNgayAn(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              aria-label="Ngày ăn"
+            />
+            <select
+              value={buoiAn}
+              onChange={(e) => setBuoiAn(e.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+              aria-label="Buổi ăn"
+            >
+              {CAC_BUOI.map((b) => (
+                <option key={b.ma} value={b.ma}>
+                  {b.nhan}
+                </option>
+              ))}
+            </select>
           </div>
           <NutBam
             tieuDe="Thêm vào kế hoạch tuần"
             className="mt-3 w-full"
-            khiBam={() => alert('[MEAL-01] Backend chưa hỗ trợ thêm món vào kế hoạch')}
+            dangTai={luuVaoKeHoach.isPending}
+            voHieuHoa={!keHoachChon}
+            khiBam={() => luuVaoKeHoach.mutate()}
           />
           <NutBam
             tieuDe="Thêm nguyên liệu vào Đi chợ"
             bienThe="phu"
             className="mt-2 w-full"
-            khiBam={() => alert('[SHOP-01] Backend chưa hỗ trợ thêm nguyên liệu lẻ')}
+            dangTai={themVaoGio.isPending}
+            khiBam={() => themVaoGio.mutate()}
           />
           <Link to="/ke-hoach" className="mt-3 flex items-center gap-1 text-sm font-semibold text-deepteal">
             <ChevronLeftIcon className="h-4 w-4 rotate-180" /> Xem kế hoạch tuần
@@ -278,20 +529,42 @@ export function ChiTietCongThuc() {
 
       <div className="mt-8 rounded-40px bg-white p-5 shadow-magazine md:p-8">
         <h2 className="font-serif text-2xl font-black text-ink">Nhận xét của bạn đọc</h2>
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-mist p-4">
-          <p className="text-sm font-semibold text-ink">Chấm điểm món này:</p>
-          <span className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <button key={s} type="button" aria-label={`${s} sao`} onClick={() => setDiem(s)}>
-                {s <= diem ? (
-                  <SaoDac className="h-6 w-6 text-stargold" />
-                ) : (
-                  <StarIcon className="h-6 w-6 text-muted" />
-                )}
-              </button>
-            ))}
-          </span>
-          <NutBam tieuDe="Gửi điểm" bienThe="vien" className="ml-auto" khiBam={() => diem > 0 && guiDiem.mutate()} />
+        <div className="mt-4 flex flex-wrap items-center gap-4 rounded-2xl bg-mist p-4">
+          <div className="text-center">
+            <p className="font-serif text-3xl font-black text-ink">
+              {tongCham > 0 ? tomTat.data?.diemTrungBinh : '—'}
+            </p>
+            <CaptionText>{tongCham} lượt chấm</CaptionText>
+          </div>
+          <div className="min-w-40 flex-1">
+            {[5, 4, 3, 2, 1].map((sao) => {
+              const so = Number(phanBo[String(sao)] ?? 0);
+              const tyLe = tongCham > 0 ? Math.round((so / tongCham) * 100) : 0;
+              return (
+                <p key={sao} className="flex items-center gap-2 text-xs text-muted">
+                  <span className="w-6 text-right font-semibold">{sao}★</span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-white">
+                    <span className="block h-full rounded-full bg-stargold" style={{ width: `${tyLe}%` }} />
+                  </span>
+                  <span className="w-6">{so}</span>
+                </p>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button key={s} type="button" aria-label={`${s} sao`} onClick={() => setDiem(s)}>
+                  {s <= diem ? (
+                    <SaoDac className="h-6 w-6 text-stargold" />
+                  ) : (
+                    <StarIcon className="h-6 w-6 text-muted" />
+                  )}
+                </button>
+              ))}
+            </span>
+            <NutBam tieuDe="Gửi điểm" bienThe="vien" khiBam={() => diem > 0 && guiDiem.mutate()} dangTai={guiDiem.isPending} voHieuHoa={diem === 0} />
+          </div>
         </div>
         <form
           className="mt-4 flex gap-2"
@@ -307,24 +580,17 @@ export function ChiTietCongThuc() {
             aria-label="Viết bình luận"
             className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-ink outline-none focus:border-accent"
           />
-          <NutBam tieuDe="Gửi" loai="submit" className="shrink-0" />
+          <NutBam tieuDe="Gửi" loai="submit" className="shrink-0" dangTai={guiBinhLuan.isPending} voHieuHoa={!binhLuan.trim()} />
         </form>
         <ul className="mt-4">
           {(binhLuans.data?.noiDung ?? []).map((bl) => (
-            <li key={bl.id} className="flex gap-3 border-t border-slate-100 py-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-light text-sm font-bold text-ink">
-                {bl.tacGia.tenHienThi.trim().charAt(0).toUpperCase()}
-              </span>
-              <div>
-                <p className="text-left text-sm font-semibold text-ink">
-                  {bl.tacGia.tenHienThi}{' '}
-                  <span className="font-normal text-muted">
-                    • {format(new Date(bl.thoiGianTao), 'dd/MM/yyyy')}
-                  </span>
-                </p>
-                <p className="mt-1 text-left text-sm text-ink">{bl.noiDung}</p>
-              </div>
-            </li>
+            <TheBinhLuan
+              key={bl.id}
+              recipeId={id ?? ''}
+              bl={bl}
+              laCuaToi={nguoiDung?.id === bl.tacGia.id}
+              laQuanTri={laAdmin()}
+            />
           ))}
         </ul>
       </div>

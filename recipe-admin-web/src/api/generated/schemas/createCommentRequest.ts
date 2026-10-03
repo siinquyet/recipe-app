@@ -7,9 +7,7 @@
  */
 
 export interface CreateCommentRequest {
-  recipeId?: string;
-  recipeReferenceId?: string;
   /** @maxLength 1000 */
-  content: string;
-  parentId?: string;
+  noiDung: string;
+  chaId?: string;
 }

@@ -7,5 +7,5 @@
  */
 
 export interface AdminRejectRecipeRequest {
-  reason: string;
+  lyDo: string;
 }

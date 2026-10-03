@@ -38,6 +38,11 @@ export class MealPlansService {
             });
         }
 
+        // BR-MEAL-04: Món gửi kèm lúc tạo cũng phải duyệt + trong khoảng + không trùng buổi
+        if (dto.cacMon) {
+            await this.validateMonMoi(dto.cacMon, dto.ngayBatDau, dto.ngayKetThuc);
+        }
+
         const mealPlan = await this.prisma.mealPlan.create({
             data: {
                 userId,
@@ -213,6 +218,42 @@ export class MealPlansService {
             throw new NotFoundException({ code: 'MEAL-05', message: '[MEAL-05] Không tìm thấy món trong kế hoạch' });
         }
         return this.layChiTiet(keHoachId);
+    }
+
+    private async validateMonMoi(
+        cacMon: Array<{ congThucId?: string; thamChieuId?: string; ngay: string; buoiAn: string }>,
+        ngayBatDau: string,
+        ngayKetThuc: string,
+    ) {
+        const batDau = new Date(`${ngayBatDau}T00:00:00`);
+        const ketThuc = new Date(`${ngayKetThuc}T00:00:00`);
+        const daThay = new Set<string>();
+        for (const mon of cacMon) {
+            if (mon.congThucId) {
+                const congThuc = await this.prisma.recipe.findFirst({
+                    where: { id: mon.congThucId, deletedAt: null, status: 'APPROVED' },
+                    select: { id: true },
+                });
+                if (!congThuc) {
+                    throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Chỉ thêm được món đã duyệt' });
+                }
+            }
+            const ngayAn = new Date(`${mon.ngay}T00:00:00`);
+            if (ngayAn < batDau || ngayAn > ketThuc) {
+                throw new BadRequestException({
+                    code: 'MEAL-06',
+                    message: '[MEAL-06] Ngày ăn phải trong khoảng kế hoạch',
+                });
+            }
+            const khoa = `${mon.ngay}|${mon.buoiAn}`;
+            if (daThay.has(khoa)) {
+                throw new BadRequestException({
+                    code: 'MEAL-07',
+                    message: '[MEAL-07] Buổi này đã có món, sửa thay vì thêm mới',
+                });
+            }
+            daThay.add(khoa);
+        }
     }
 
     private async layCuaNguoiDung(userId: string, id: string) {

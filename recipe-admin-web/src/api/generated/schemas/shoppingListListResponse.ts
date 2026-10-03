@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ShoppingList } from './shoppingList.ts';
-import type { ShoppingListListResponsePageable } from './shoppingListListResponsePageable.ts';
 
 export interface ShoppingListListResponse {
-  content?: ShoppingList[];
-  pageable?: ShoppingListListResponsePageable;
-  totalElements?: number;
-  totalPages?: number;
+  noiDung?: ShoppingList[];
+  tongSoPhanTu?: number;
+  tongSoTrang?: number;
 }

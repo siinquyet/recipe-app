@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { Comment } from './comment.ts';
-import type { CommentListResponsePageable } from './commentListResponsePageable.ts';
 
 export interface CommentListResponse {
-  content?: Comment[];
-  pageable?: CommentListResponsePageable;
-  totalElements?: number;
-  totalPages?: number;
+  noiDung?: Comment[];
+  tongSoPhanTu?: number;
+  tongSoTrang?: number;
 }

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ApiError } from '../lib/api/client';
 import {
   capNhatKeHoachAn,
   capNhatMonTrongKeHoach,
@@ -14,6 +15,15 @@ import { layChiTietDanhSachDiCho, layDanhSachDiCho, suaMonDiCho, taoDanhSachDiCh
 import type { CapNhatDanhSachDiChoPayload, MonDiChoMoi, SuaMonDiChoPayload, TaoDanhSachDiChoPayload } from '../lib/api/shoppingLists';
 import { capNhatDanhSachDiCho, capNhatTrangThaiMon, taoTuCongThuc, taoTuKeHoachAn, xoaDanhSachDiCho } from '../lib/api/shoppingLists';
 import type { DanhSachDiCho } from '../types/api';
+
+// BR-UX: Xóa bất biến — bấm 2 lần (lần 2 đã mất → 404) vẫn coi như xong và tải lại
+function boQuaKhongThay(queryClient: ReturnType<typeof useQueryClient>, khoa: readonly unknown[]) {
+  return (loi: unknown) => {
+    if (loi instanceof ApiError && loi.status === 404) {
+      queryClient.invalidateQueries({ queryKey: khoa });
+    }
+  };
+}
 import { khoaTruyVan } from '../lib/queryClient';
 
 export function useDanhSachKeHoachAn() {
@@ -52,6 +62,7 @@ export function useXoaKeHoachAn() {
   return useMutation({
     mutationFn: (id: string) => xoaKeHoachAn(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ke-hoach-an'] }),
+    onError: boQuaKhongThay(queryClient, ['ke-hoach-an']),
   });
 }
 
@@ -86,6 +97,7 @@ export function useXoaMonKhoiKeHoach(keHoachId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: khoaTruyVan.keHoachAn.chiTiet(keHoachId) });
     },
+    onError: boQuaKhongThay(queryClient, khoaTruyVan.keHoachAn.chiTiet(keHoachId)),
   });
 }
 
@@ -150,6 +162,7 @@ export function useXoaDanhSachDiCho() {
   return useMutation({
     mutationFn: (id: string) => xoaDanhSachDiCho(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] }),
+    onError: boQuaKhongThay(queryClient, ['danh-sach-di-cho']),
   });
 }
 
@@ -187,6 +200,7 @@ export function useXoaMonDiCho(listId: string) {
       queryClient.setQueryData(khoaTruyVan.danhSachDiCho.chiTiet(listId), duLieu);
       queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] });
     },
+    onError: boQuaKhongThay(queryClient, khoaTruyVan.danhSachDiCho.chiTiet(listId)),
   });
 }
 // BR-SHOP: Toggle đã mua với optimistic update để UI phản hồi ngay

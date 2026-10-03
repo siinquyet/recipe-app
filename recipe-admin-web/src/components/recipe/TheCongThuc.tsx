@@ -13,9 +13,15 @@ interface TheCongThucProps {
 
 function gocBackend(): string {
   if (typeof window === 'undefined') return '';
-  return window.location.protocol === 'http:' && window.location.hostname === 'localhost'
-    ? `${window.location.protocol}//${window.location.hostname}:3000`
-    : '';
+  // BR-UREC: Dev LAN (máy thật cùng mạng) thì ảnh về thẳng backend cùng host cổng 3000
+  const { protocol, hostname, port } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:3000`;
+  }
+  if (port === '5173' || port === '') {
+    return `${protocol}//${hostname}:3000`;
+  }
+  return '';
 }
 
 // BR-UREC: Backend trả đường dẫn tương đối (/uploads/x.jpg) — FE đổi tuyệt đối để hiện

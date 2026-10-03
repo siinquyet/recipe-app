@@ -2021,6 +2021,72 @@ export const useSubmitRecipeForReview = <TError = void,
     }
 
 /**
+ * @summary Rút bài đang chờ duyệt về nháp (PENDING → DRAFT)
+ */
+export const withdrawRecipeFromReview = (
+    id: string,
+ options?: SecondParameter<typeof goiAxiosChung>,signal?: AbortSignal
+) => {
+
+
+      return goiAxiosChung<RecipeDetail>(
+      {url: `/recipes/${id}/rut-lai`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWithdrawRecipeFromReviewMutationKey = () => ['withdrawRecipeFromReview'] as const;
+
+export const getWithdrawRecipeFromReviewMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdrawRecipeFromReview>>, TError,WithdrawRecipeFromReviewMutationVariables, TContext>, request?: SecondParameter<typeof goiAxiosChung>}
+): UseMutationOptions<Awaited<ReturnType<typeof withdrawRecipeFromReview>>, TError,WithdrawRecipeFromReviewMutationVariables, TContext> => {
+
+const mutationKey = getWithdrawRecipeFromReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof withdrawRecipeFromReview>>, WithdrawRecipeFromReviewMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  withdrawRecipeFromReview(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WithdrawRecipeFromReviewMutationResult = NonNullable<Awaited<ReturnType<typeof withdrawRecipeFromReview>>>
+
+    export type WithdrawRecipeFromReviewMutationError = unknown
+    export type WithdrawRecipeFromReviewMutationVariables = {id: string}
+
+    /**
+ * @summary Rút bài đang chờ duyệt về nháp (PENDING → DRAFT)
+ */
+export const useWithdrawRecipeFromReview = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdrawRecipeFromReview>>, TError,WithdrawRecipeFromReviewMutationVariables, TContext>, request?: SecondParameter<typeof goiAxiosChung>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof withdrawRecipeFromReview>>,
+        TError,
+        WithdrawRecipeFromReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getWithdrawRecipeFromReviewMutationOptions(options), queryClient);
+    }
+
+/**
  * @summary Công thức tương tự
  */
 export const getSimilarRecipes = (
@@ -5803,6 +5869,72 @@ export const useAdminUnhideRecipe = <TError = unknown,
         TContext
       > => {
       return useMutation(getAdminUnhideRecipeMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Xóa bình luận vi phạm (Admin)
+ */
+export const adminDeleteComment = (
+    id: string,
+ options?: SecondParameter<typeof goiAxiosChung>,signal?: AbortSignal
+) => {
+
+
+      return goiAxiosChung<void>(
+      {url: `/admin/comments/${id}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+
+export const getAdminDeleteCommentMutationKey = () => ['adminDeleteComment'] as const;
+
+export const getAdminDeleteCommentMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteComment>>, TError,AdminDeleteCommentMutationVariables, TContext>, request?: SecondParameter<typeof goiAxiosChung>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteComment>>, TError,AdminDeleteCommentMutationVariables, TContext> => {
+
+const mutationKey = getAdminDeleteCommentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteComment>>, AdminDeleteCommentMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminDeleteComment(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteCommentMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteComment>>>
+
+    export type AdminDeleteCommentMutationError = unknown
+    export type AdminDeleteCommentMutationVariables = {id: string}
+
+    /**
+ * @summary Xóa bình luận vi phạm (Admin)
+ */
+export const useAdminDeleteComment = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteComment>>, TError,AdminDeleteCommentMutationVariables, TContext>, request?: SecondParameter<typeof goiAxiosChung>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteComment>>,
+        TError,
+        AdminDeleteCommentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminDeleteCommentMutationOptions(options), queryClient);
     }
 
 /**

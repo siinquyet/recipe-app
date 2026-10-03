@@ -143,6 +143,20 @@ export class AdminService {
         return { thanhCong: true };
     }
 
+    async xoaBinhLuan(adminId: string, id: string) {
+        // BR-ADM: Admin dọn bình luận vi phạm (xóa mềm, giữ mạch hội thoại)
+        const cu = await this.prisma.comment.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'CMT-04', message: '[CMT-04] Không tìm thấy bình luận' });
+        }
+        await this.prisma.comment.update({ where: { id }, data: { deletedAt: new Date() } });
+        await this.ghiNhatKy(adminId, 'DELETE', 'Comment', id, {}, {});
+        return { thanhCong: true };
+    }
+
     private async doiTrangThaiBai(
         adminId: string,
         id: string,
@@ -166,27 +180,32 @@ export class AdminService {
 
     async layDashboard() {
         // BR-ADM: Số liệu tổng quan cho trang quản trị
-        const [tongNguoiDung, dangHoatDong, choDuyet, daDuyet, topDanhGia, tangNguoiDung, tangBai] =
+        const bayNgayTruoc = new Date();
+        bayNgayTruoc.setDate(bayNgayTruoc.getDate() - 7);
+        const [tongNguoiDung, dangHoatDong, choDuyet, daDuyet, ungVienTop, tangNguoiDung, tangBai, tuongTac] =
             await Promise.all([
                 this.prisma.user.count(),
-                this.prisma.user.count({ where: { status: 'ACTIVE' } }),
+                // BR-ADM: Hoạt động = có tài khoản tạo trong 7 ngày qua (chưa tracking hành vi)
+                this.prisma.user.count({ where: { status: 'ACTIVE', createdAt: { gte: bayNgayTruoc } } }),
                 this.prisma.recipe.count({ where: { deletedAt: null, status: 'PENDING' } }),
                 this.prisma.recipe.count({ where: { deletedAt: null, status: 'APPROVED' } }),
                 this.prisma.recipe.findMany({
                     where: { deletedAt: null, status: 'APPROVED' },
-                    take: 5,
+                    take: 20,
                     orderBy: { ratings: { _count: 'desc' } },
                     select: { id: true, title: true, ratings: { select: { score: true } } },
                 }),
                 this.thongKeTheoNgay('user'),
                 this.thongKeTheoNgay('recipe'),
+                Promise.all([
+                    this.prisma.favorite.count(),
+                    this.prisma.rating.count(),
+                    this.prisma.comment.count({ where: { deletedAt: null } }),
+                ]),
             ]);
-        return {
-            tongNguoiDung,
-            dangHoatDong,
-            baiChoDuyet: choDuyet,
-            baiDaDuyet: daDuyet,
-            topDanhGia: topDanhGia.map((r) => ({
+        // BR-ADM: Top theo điểm trung bình, tối thiểu 5 lượt chấm mới xếp hạng
+        const topDanhGia = ungVienTop
+            .map((r) => ({
                 id: r.id,
                 ten: r.title,
                 diemTrungBinh:
@@ -194,9 +213,19 @@ export class AdminService {
                         ? Math.round((r.ratings.reduce((s, x) => s + x.score, 0) / r.ratings.length) * 10) / 10
                         : 0,
                 tongDanhGia: r.ratings.length,
-            })),
+            }))
+            .filter((r) => r.tongDanhGia >= 5)
+            .sort((a, b) => b.diemTrungBinh - a.diemTrungBinh || b.tongDanhGia - a.tongDanhGia)
+            .slice(0, 5);
+        return {
+            tongNguoiDung,
+            dangHoatDong,
+            baiChoDuyet: choDuyet,
+            baiDaDuyet: daDuyet,
+            topDanhGia,
             tangTruongNguoiDung: tangNguoiDung,
             tangTruongCongThuc: tangBai,
+            tuongTac: { tongYeuThich: tuongTac[0], tongDanhGia: tuongTac[1], tongBinhLuan: tuongTac[2] },
         };
     }
 
@@ -221,7 +250,7 @@ export class AdminService {
 
     private async ghiNhatKy(
         adminId: string,
-        hanhDong: 'BAN_USER' | 'ACTIVATE_USER' | 'CHANGE_ROLE' | 'APPROVE' | 'REJECT' | 'HIDE' | 'UNHIDE',
+        hanhDong: 'BAN_USER' | 'ACTIVATE_USER' | 'CHANGE_ROLE' | 'APPROVE' | 'REJECT' | 'HIDE' | 'UNHIDE' | 'DELETE',
         loaiThucThe: string,
         thucTheId: string,
         duLieuCu: object,

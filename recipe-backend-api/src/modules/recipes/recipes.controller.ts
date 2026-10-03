@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 import { CapNhatCongThucDto, TaoCongThucDto } from './dto/recipe.dto';
 import { JwtAuthGuard, OptionalJwtGuard } from '../../common/jwt-auth.guard';
@@ -10,18 +10,16 @@ export class RecipesController {
     @Get()
     @UseGuards(OptionalJwtGuard)
     layDanhSach(
-        @Query('trang', new DefaultValuePipe(0), ParseIntPipe) trang: number,
         @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
-        @Query('kichThuoc', new DefaultValuePipe(10), ParseIntPipe) kichThuoc: number,
         @Query('size', new DefaultValuePipe(10), ParseIntPipe) size: number,
         @Query('tuKhoa') tuKhoa?: string,
         @Query('search') search?: string,
         @Query('tacGiaId') tacGiaId?: string,
         @Req() req?: { user?: { id: string } },
     ) {
-        const finalTrang = page > 0 ? page : trang;
-        const finalSize = size !== 10 ? size : kichThuoc;
-        const safeSize = Math.min(Math.max(finalSize, 1), 50);
+        // BR-API: Phân trang page/size 0-based, chặn số âm và size quá lớn
+        const finalTrang = Math.max(page, 0);
+        const safeSize = Math.min(Math.max(size, 1), 50);
         const finalKeyword = (search || tuKhoa)?.trim() || undefined;
         return this.recipesService.layDanhSach({
             trang: finalTrang,
@@ -58,20 +56,18 @@ export class RecipesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Post(':id/rut-lai')
+    rutLai(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+        return this.recipesService.rutLai(id, req.user.id);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post()
     taoMoi(@Body() dto: TaoCongThucDto, @Req() req: { user: { id: string } }) {
         return this.recipesService.taoMoi(req.user.id, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
-    @Put(':id')
-    capNhat(
-        @Param('id') id: string,
-        @Body() dto: CapNhatCongThucDto,
-        @Req() req: { user: { id: string } },
-    ) {
-        return this.recipesService.capNhat(id, req.user.id, dto);
-    }
+    
 
     @UseGuards(JwtAuthGuard)
     @Patch(':id')

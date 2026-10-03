@@ -5,17 +5,18 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { AdminDashboardResponseEngagement } from './adminDashboardResponseEngagement.ts';
-import type { AdminDashboardResponseRecipesGrowthItem } from './adminDashboardResponseRecipesGrowthItem.ts';
-import type { AdminDashboardResponseTopRatedRecipesItem } from './adminDashboardResponseTopRatedRecipesItem.ts';
-import type { AdminDashboardResponseUsersGrowthItem } from './adminDashboardResponseUsersGrowthItem.ts';
+import type { AdminDashboardResponseTangTruongCongThucItem } from './adminDashboardResponseTangTruongCongThucItem.ts';
+import type { AdminDashboardResponseTangTruongNguoiDungItem } from './adminDashboardResponseTangTruongNguoiDungItem.ts';
+import type { AdminDashboardResponseTopDanhGiaItem } from './adminDashboardResponseTopDanhGiaItem.ts';
+import type { AdminDashboardResponseTuongTac } from './adminDashboardResponseTuongTac.ts';
 
 export interface AdminDashboardResponse {
-  totalUsers?: number;
-  activeUsers?: number;
-  publishedRecipes?: number;
-  topRatedRecipes?: AdminDashboardResponseTopRatedRecipesItem[];
-  usersGrowth?: AdminDashboardResponseUsersGrowthItem[];
-  recipesGrowth?: AdminDashboardResponseRecipesGrowthItem[];
-  engagement?: AdminDashboardResponseEngagement;
+  tongNguoiDung?: number;
+  dangHoatDong?: number;
+  baiChoDuyet?: number;
+  baiDaDuyet?: number;
+  topDanhGia?: AdminDashboardResponseTopDanhGiaItem[];
+  tangTruongNguoiDung?: AdminDashboardResponseTangTruongNguoiDungItem[];
+  tangTruongCongThuc?: AdminDashboardResponseTangTruongCongThucItem[];
+  tuongTac?: AdminDashboardResponseTuongTac;
 }

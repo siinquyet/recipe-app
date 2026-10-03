@@ -7,8 +7,7 @@
  */
 
 export interface RecipeIngredientCreate {
-  name: string;
-  quantity: number;
-  unit: string;
-  sortOrder: number;
+  ten: string;
+  dinhLuong: number;
+  donVi: string;
 }

@@ -5,15 +5,14 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { ShoppingListSourceType } from './shoppingListSourceType.ts';
-import type { ShoppingListStatus } from './shoppingListStatus.ts';
+import type { ShoppingListLoaiNguon } from './shoppingListLoaiNguon.ts';
+import type { ShoppingListTrangThai } from './shoppingListTrangThai.ts';
 
 export interface ShoppingList {
   id?: string;
-  name?: string;
-  sourceType?: ShoppingListSourceType;
+  ten?: string;
+  loaiNguon?: ShoppingListLoaiNguon;
   /** @nullable */
-  sourceId?: string | null;
-  status?: ShoppingListStatus;
-  createdAt?: string;
+  nguonId?: string | null;
+  trangThai?: ShoppingListTrangThai;
 }

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ShoppingListStatus } from '@prisma/client';
 import { aggregateQuantities, generateShoppingItems, scaleQuantity, type ScaledItem } from '@cook/shared';
 import { PrismaService } from '../../common/prisma.service';
-import { MonMoiDto, SuaMonDiChoDto, TaoDanhSachDiChoDto } from './dto/shopping-list.dto';
+import { MonMoiDto, SuaMonDiChoDto, CapNhatDanhSachDto, TaoDanhSachDiChoDto } from './dto/shopping-list.dto';
 
 @Injectable()
 export class ShoppingListsService {
@@ -75,21 +75,25 @@ export class ShoppingListsService {
 
     async xoa(id: string, userId: string) {
         // BR-SHOP: Xóa mềm (ARCHIVED) để giữ lịch sử đi chợ
-        const list = await this.prisma.shoppingList.findFirst({
-            where: { id, userId },
-            select: { id: true },
-        });
-        if (!list) {
-            throw new NotFoundException({
-                code: 'SHOP-04',
-                message: '[SHOP-04] Không tìm thấy danh sách đi chợ',
-            });
-        }
+        await this.layCuaNguoiDung(id, userId);
         await this.prisma.shoppingList.update({
             where: { id },
             data: { status: 'ARCHIVED' },
         });
         return { thanhCong: true };
+    }
+
+    async capNhat(id: string, userId: string, dto: CapNhatDanhSachDto) {
+        // BR-SHOP: Đổi tên / chuyển trạng thái (mobile nút Hoàn thành)
+        await this.layCuaNguoiDung(id, userId);
+        await this.prisma.shoppingList.update({
+            where: { id },
+            data: {
+                ...(dto.ten !== undefined ? { name: dto.ten } : {}),
+                ...(dto.trangThai !== undefined ? { status: dto.trangThai } : {}),
+            },
+        });
+        return this.layChiTiet(id, userId);
     }
 
     // BR-SHOP: Đánh dấu đã mua/bỏ chọn — chỉ chủ sở hữu được đổi

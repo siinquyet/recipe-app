@@ -5,9 +5,9 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { UpdateShoppingListRequestStatus } from './updateShoppingListRequestStatus.ts';
+import type { UpdateShoppingListRequestTrangThai } from './updateShoppingListRequestTrangThai.ts';
 
 export interface UpdateShoppingListRequest {
-  name?: string;
-  status?: UpdateShoppingListRequestStatus;
+  ten?: string;
+  trangThai?: UpdateShoppingListRequestTrangThai;
 }

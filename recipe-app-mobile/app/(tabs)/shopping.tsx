@@ -145,7 +145,12 @@ function ChiTietDiCho({ id }: { id: string }) {
                 >
                   <Text className="text-xs font-semibold text-deepteal">Sửa</Text>
                 </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => xoaMon.mutate(mon.id)}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={xoaMon.isPending}
+                  onPress={() => xoaMon.mutate(mon.id)}
+                  className={xoaMon.isPending ? 'opacity-50' : undefined}
+                >
                   <Text className="text-xs font-semibold text-red-500">Xóa</Text>
                 </Pressable>
               </View>

@@ -26,13 +26,19 @@ import { danhGiaCongThuc } from '../../src/lib/api/recipes';
 import { themMonVaoKeHoach } from '../../src/lib/api/mealPlans';
 import { khoaTruyVan } from '../../src/lib/queryClient';
 import { useAuthStore } from '../../src/stores/authStore';
+import type { BinhLuan } from '../../src/types/api';
 import {
   useBinhLuan,
   useChiTietCongThuc,
   useChuyenDoiYeuThich,
   useCongThucTuongTu,
   useDanhSachYeuThich,
+  usePhanHoi,
+  useSuaBinhLuan,
   useTaoBinhLuan,
+  useTomTatDanhGia,
+  useTraLoiBinhLuan,
+  useXoaBinhLuan,
   useXoaCongThuc,
 } from '../../src/hooks/useRecipes';
 import { useDanhSachKeHoachAn, useTaoTuCongThuc } from '../../src/hooks/useMealShopping';
@@ -75,6 +81,158 @@ const HangNguyenLieu: FC<{
   );
 };
 
+// BR-SOC: Khối đánh giá thật — điểm TB + phân bổ sao + chấm/cập nhật điểm
+const KhoiDanhGia: FC<{ maCongThuc: string }> = ({ maCongThuc }) => {
+  const queryClient = useQueryClient();
+  const tomTat = useTomTatDanhGia(maCongThuc);
+  const [diem, setDiem] = useState(5);
+  const gui = useMutation({
+    mutationFn: (d: number) => danhGiaCongThuc(maCongThuc, d),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'danh-gia', maCongThuc] }),
+  });
+  const phanBo = tomTat.data?.phanBo ?? {};
+  const tong = tomTat.data?.tongSoDanhGia ?? 0;
+
+  return (
+    <View>
+      <TitleText className="mt-2 text-lg">Đánh giá</TitleText>
+      <View className="mt-2 flex-row items-center gap-3 rounded-2xl bg-mist p-3">
+        <View className="items-center">
+          <Text className="font-serif text-3xl font-black text-primary">
+            {tong > 0 ? (tomTat.data?.diemTrungBinh ?? 0) : '—'}
+          </Text>
+          <CaptionText canLe="giua">{tong} lượt chấm</CaptionText>
+        </View>
+        <View className="flex-1 gap-1">
+          {[5, 4, 3, 2, 1].map((sao) => {
+            const so = Number(phanBo[String(sao)] ?? 0);
+            const tyLe = tong > 0 ? Math.round((so / tong) * 100) : 0;
+            return (
+              <View key={sao} className="flex-row items-center gap-1.5">
+                <Text className="w-6 text-right text-xs font-semibold text-neutral-600">{sao}★</Text>
+                <View className="h-1.5 flex-1 overflow-hidden rounded-full bg-neutral-200">
+                  <View className="h-full rounded-full bg-star" style={{ width: `${tyLe}%` }} />
+                </View>
+                <Text className="w-6 text-xs text-neutral-500">{so}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+      <View className="mt-2 flex-row items-center gap-3">
+        <RatingStars diem={diem} khiChon={setDiem} />
+        <NutBam
+          tieuDe="Gửi"
+          dangTai={gui.isPending}
+          khiBam={() => gui.mutate(diem)}
+          className="px-6 py-2"
+        />
+      </View>
+      {gui.isSuccess ? <CaptionText className="mt-1 text-green-700">Đã ghi nhận điểm của bạn</CaptionText> : null}
+    </View>
+  );
+};
+
+// BR-SOC: Một bình luận tương tác được — trả lời, xem replies, sửa/xóa của mình
+const TheBinhLuan: FC<{ maCongThuc: string; bl: BinhLuan; laCuaToi: boolean }> = ({
+  maCongThuc,
+  bl,
+  laCuaToi,
+}) => {
+  const [moReplies, setMoReplies] = useState(false);
+  const [dangTraLoi, setDangTraLoi] = useState(false);
+  const [noiDungTraLoi, setNoiDungTraLoi] = useState('');
+  const [dangSua, setDangSua] = useState(false);
+  const [noiDungSua, setNoiDungSua] = useState(bl.noiDung);
+  const replies = usePhanHoi(maCongThuc, moReplies ? bl.id : null);
+  const traLoi = useTraLoiBinhLuan(maCongThuc);
+  const sua = useSuaBinhLuan(maCongThuc);
+  const xoa = useXoaBinhLuan(maCongThuc);
+
+  return (
+    <View className="rounded-2xl bg-mist p-3">
+      <View className="flex-row items-center justify-between">
+        <BodyText dam>{bl.tacGia.tenHienThi}</BodyText>
+        <CaptionText>{dinhDangNgay(bl.thoiGianTao)}</CaptionText>
+      </View>
+      {dangSua ? (
+        <View className="mt-1">
+          <ONhapLieu giaTri={noiDungSua} khiDoi={setNoiDungSua} goiY="Sửa bình luận..." />
+          <View className="mt-2 flex-row gap-2">
+            <NutBam
+              tieuDe="Lưu"
+              dangTai={sua.isPending}
+              voHieuHoa={!noiDungSua.trim()}
+              khiBam={() => sua.mutate({ commentId: bl.id, noiDung: noiDungSua.trim() }, { onSuccess: () => setDangSua(false) })}
+              className="flex-1"
+            />
+            <NutBam tieuDe="Hủy" bienThe="mo" khiBam={() => setDangSua(false)} className="flex-1" />
+          </View>
+        </View>
+      ) : (
+        <BodyText className="mt-1">{bl.noiDung}</BodyText>
+      )}
+      <View className="mt-1 flex-row items-center gap-3">
+        <Pressable onPress={() => setDangTraLoi((v) => !v)}>
+          <Text className="text-xs font-semibold text-deepteal">Trả lời</Text>
+        </Pressable>
+        {bl.soLuongPhanHoi > 0 ? (
+          <Pressable onPress={() => setMoReplies((v) => !v)}>
+            <Text className="text-xs text-neutral-500">
+              {moReplies ? 'Ẩn' : 'Xem'} {bl.soLuongPhanHoi} phản hồi
+            </Text>
+          </Pressable>
+        ) : null}
+        {laCuaToi ? (
+          <View className="ml-auto flex-row gap-3">
+            <Pressable onPress={() => setDangSua((v) => !v)}>
+              <Text className="text-xs font-semibold text-deepteal">Sửa</Text>
+            </Pressable>
+            <Pressable disabled={xoa.isPending} onPress={() => xoa.mutate(bl.id)}>
+              <Text className="text-xs font-semibold text-red-500">Xóa</Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
+      {dangTraLoi ? (
+        <View className="mt-2 flex-row gap-2">
+          <View className="flex-1">
+            <ONhapLieu giaTri={noiDungTraLoi} khiDoi={setNoiDungTraLoi} goiY={`Trả lời ${bl.tacGia.tenHienThi}...`} />
+          </View>
+          <NutBam
+            tieuDe="Gửi"
+            dangTai={traLoi.isPending}
+            voHieuHoa={!noiDungTraLoi.trim()}
+            khiBam={() =>
+              traLoi.mutate({ chaId: bl.id, noiDung: noiDungTraLoi.trim() }, {
+                onSuccess: () => {
+                  setNoiDungTraLoi('');
+                  setDangTraLoi(false);
+                  setMoReplies(true);
+                },
+              })
+            }
+            className="px-4"
+          />
+        </View>
+      ) : null}
+      {moReplies && (replies.data?.noiDung.length ?? 0) > 0 ? (
+        <View className="ml-4 mt-2 gap-2 border-l-2 border-neutral-200 pl-2">
+          {replies.data?.noiDung.map((tl) => (
+            <View key={tl.id}>
+              <View className="flex-row items-center justify-between">
+                <BodyText dam>{tl.tacGia.tenHienThi}</BodyText>
+                <CaptionText>{dinhDangNgay(tl.thoiGianTao)}</CaptionText>
+              </View>
+              <BodyText className="mt-0.5 text-sm">{tl.noiDung}</BodyText>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+};
+
 export default function ManHinhChiTietCongThuc() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const maCongThuc = Array.isArray(id) ? id[0] : (id ?? '');
@@ -92,8 +250,6 @@ export default function ManHinhChiTietCongThuc() {
     [dsYeuThich.data, maCongThuc],
   );
   const chuyenYeuThich = useChuyenDoiYeuThich(maCongThuc, dangYeuThich);
-  const [diem, setDiem] = useState(5);
-  const guiDanhGia = useMutation({ mutationFn: (d: number) => danhGiaCongThuc(maCongThuc, d) });
   const [binhLuan, setBinhLuan] = useState('');
   const taoBinhLuan = useTaoBinhLuan(maCongThuc);
   const xoaCongThuc = useXoaCongThuc();
@@ -328,11 +484,7 @@ export default function ManHinhChiTietCongThuc() {
         </View>
 
         <View className="px-4">
-          <TitleText className="mt-2 text-lg">Đánh giá</TitleText>
-          <View className="mt-2 flex-row items-center gap-3">
-            <RatingStars diem={diem} khiChon={setDiem} />
-            <NutBam tieuDe="Gửi" dangTai={guiDanhGia.isPending} khiBam={() => guiDanhGia.mutate(diem)} className="px-6 py-2" />
-          </View>
+          <KhoiDanhGia maCongThuc={maCongThuc} />
 
           <TitleText className="mt-6 text-lg">Bình luận</TitleText>
           <View className="mt-2 flex-row gap-2">
@@ -350,16 +502,12 @@ export default function ManHinhChiTietCongThuc() {
           {(dsBinhLuan.data?.noiDung.length ?? 0) > 0 ? (
             <View className="mt-3 gap-3">
               {dsBinhLuan.data?.noiDung.map((bl) => (
-                <View key={bl.id} className="rounded-2xl bg-mist p-3">
-                  <View className="flex-row items-center justify-between">
-                    <BodyText dam>{bl.tacGia.tenHienThi}</BodyText>
-                    <CaptionText>{dinhDangNgay(bl.thoiGianTao)}</CaptionText>
-                  </View>
-                  <BodyText className="mt-1">{bl.noiDung}</BodyText>
-                  {bl.soLuongPhanHoi > 0 ? (
-                    <CaptionText className="mt-1">{bl.soLuongPhanHoi} phản hồi</CaptionText>
-                  ) : null}
-                </View>
+                <TheBinhLuan
+                  key={bl.id}
+                  maCongThuc={maCongThuc}
+                  bl={bl}
+                  laCuaToi={nguoiDung?.id === bl.tacGia.id}
+                />
               ))}
             </View>
           ) : null}

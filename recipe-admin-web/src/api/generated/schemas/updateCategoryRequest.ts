@@ -7,8 +7,7 @@
  */
 
 export interface UpdateCategoryRequest {
-  name?: string;
+  ten?: string;
   slug?: string;
-  description?: string;
-  parentId?: string;
+  moTa?: string;
 }

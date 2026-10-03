@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ApiError } from '../lib/api/client';
 import {
   capNhatCongThuc,
   guiDuyetCongThuc,
@@ -7,9 +8,13 @@ import {
   layCongThucTuongTu,
   layDanhSachCongThuc,
   layDanhSachYeuThich,
+  layPhanHoi,
+  layTomTatDanhGia,
+  suaBinhLuan,
   taoBinhLuan,
   taoCongThuc,
   themYeuThich,
+  xoaBinhLuan,
   xoaCongThuc,
   xoaYeuThich,
 } from '../lib/api/recipes';
@@ -64,6 +69,12 @@ export function useXoaCongThuc() {
   return useMutation({
     mutationFn: (id: string) => xoaCongThuc(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cong-thuc'] }),
+    // BR-UX: Bấm 2 lần (lần 2 đã mất → 404) vẫn coi như xong
+    onError: (loi: unknown) => {
+      if (loi instanceof ApiError && loi.status === 404) {
+        queryClient.invalidateQueries({ queryKey: ['cong-thuc'] });
+      }
+    },
   });
 }
 
@@ -108,6 +119,64 @@ export function useBinhLuan(id: string, page = 0, size = 20) {
     queryFn: () => layBinhLuan(id, page, size),
     enabled: id.length > 0,
     placeholderData: keepPreviousData,
+  });
+}
+
+// BR-SOC: Tổng quan đánh giá thật (trung bình + phân bổ sao)
+export function useTomTatDanhGia(id: string) {
+  return useQuery({
+    queryKey: ['cong-thuc', 'danh-gia', id],
+    queryFn: () => layTomTatDanhGia(id),
+    enabled: id.length > 0,
+  });
+}
+
+// BR-SOC: Replies, sửa/xóa bình luận của chính mình
+export function usePhanHoi(recipeId: string, commentId: string | null) {
+  return useQuery({
+    queryKey: ['cong-thuc', 'binh-luan', recipeId, 'phan-hoi', commentId],
+    queryFn: () => layPhanHoi(recipeId, commentId as string),
+    enabled: !!commentId && recipeId.length > 0,
+  });
+}
+
+export function useSuaBinhLuan(recipeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ commentId, noiDung }: { commentId: string; noiDung: string }) =>
+      suaBinhLuan(recipeId, commentId, noiDung),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+    },
+  });
+}
+
+export function useXoaBinhLuan(recipeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => xoaBinhLuan(recipeId, commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+    },
+    onError: (loi: unknown) => {
+      if (loi instanceof ApiError && loi.status === 404) {
+        queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+      }
+    },
+  });
+}
+
+export function useTraLoiBinhLuan(recipeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ chaId, noiDung }: { chaId: string; noiDung: string }) =>
+      taoBinhLuan(recipeId, noiDung, chaId),
+    onSuccess: (_duLieu, bien) => {
+      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+      queryClient.invalidateQueries({
+        queryKey: ['cong-thuc', 'binh-luan', recipeId, 'phan-hoi', bien.chaId],
+      });
+    },
   });
 }
 

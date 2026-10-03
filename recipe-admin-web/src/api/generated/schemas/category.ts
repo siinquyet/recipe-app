@@ -8,11 +8,8 @@
 
 export interface Category {
   id?: string;
-  name?: string;
+  ten?: string;
   slug?: string;
   /** @nullable */
-  description?: string | null;
-  /** @nullable */
-  parentId?: string | null;
-  children?: Category[];
+  moTa?: string | null;
 }

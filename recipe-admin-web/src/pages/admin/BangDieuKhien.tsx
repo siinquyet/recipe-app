@@ -22,9 +22,12 @@ export function BangDieuKhien() {
 
   const the = [
     { nhan: 'Người dùng', so: data.tongNguoiDung },
-    { nhan: 'Đang hoạt động', so: data.dangHoatDong },
+    { nhan: 'Hoạt động 7 ngày', so: data.dangHoatDong },
     { nhan: 'Bài chờ duyệt', so: data.baiChoDuyet },
     { nhan: 'Bài đã duyệt', so: data.baiDaDuyet },
+    { nhan: 'Lượt thích', so: data.tuongTac?.tongYeuThich ?? 0 },
+    { nhan: 'Lượt chấm', so: data.tuongTac?.tongDanhGia ?? 0 },
+    { nhan: 'Bình luận', so: data.tuongTac?.tongBinhLuan ?? 0 },
   ];
 
   return (

@@ -9,11 +9,11 @@
 export interface ShoppingListItem {
   id?: string;
   /** @nullable */
-  internalIngredientId?: string | null;
-  originalText?: string;
+  nguyenLieuId?: string | null;
+  tenGoc?: string;
   /** VN format: 1.000, 100.000 */
-  quantity?: string;
-  unit?: string;
-  isChecked?: boolean;
-  sortOrder?: number;
+  dinhLuong?: string;
+  donVi?: string;
+  daChon?: boolean;
+  thuTu?: number;
 }

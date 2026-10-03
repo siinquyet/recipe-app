@@ -8,6 +8,6 @@
 
 export interface Tag {
   id?: string;
-  name?: string;
+  ten?: string;
   slug?: string;
 }

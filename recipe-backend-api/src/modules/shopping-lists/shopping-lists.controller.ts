@@ -1,6 +1,6 @@
 import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ShoppingListsService } from './shopping-lists.service';
-import { TaoDanhSachDiChoDto, MonMoiDto, SuaMonDiChoDto, TaoTuCongThucDto, TaoTuKeHoachAnDto } from './dto/shopping-list.dto';
+import { TaoDanhSachDiChoDto, MonMoiDto, SuaMonDiChoDto, CapNhatDanhSachDto, TaoTuCongThucDto, TaoTuKeHoachAnDto } from './dto/shopping-list.dto';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -11,14 +11,12 @@ export class ShoppingListsController {
     @Get()
     layDanhSach(
         @Req() req: { user: { id: string } },
-        @Query('trang', new DefaultValuePipe(0), ParseIntPipe) trang: number,
         @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
-        @Query('kichThuoc', new DefaultValuePipe(20), ParseIntPipe) kichThuoc: number,
         @Query('size', new DefaultValuePipe(20), ParseIntPipe) size: number,
     ) {
-        const finalTrang = page > 0 ? page : trang;
-        const finalSize = size !== 20 ? size : kichThuoc;
-        const safeSize = Math.min(Math.max(finalSize, 1), 50);
+        // BR-API: Phân trang page/size 0-based, chặn số âm và size quá lớn
+        const finalTrang = Math.max(page, 0);
+        const safeSize = Math.min(Math.max(size, 1), 50);
         return this.shoppingListsService.layDanhSachCuaNguoiDung(req.user.id, finalTrang, safeSize);
     }
 
@@ -45,6 +43,15 @@ export class ShoppingListsController {
     @Delete(':id')
     xoa(@Param('id') id: string, @Req() req: { user: { id: string } }) {
         return this.shoppingListsService.xoa(id, req.user.id);
+    }
+
+    @Patch(':id')
+    capNhat(
+        @Param('id') id: string,
+        @Body() dto: CapNhatDanhSachDto,
+        @Req() req: { user: { id: string } },
+    ) {
+        return this.shoppingListsService.capNhat(id, req.user.id, dto);
     }
 
     @Post(':id/items')

@@ -6,14 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { RecipeListItem } from './recipeListItem.ts';
-import type { RecipeListResponsePageable } from './recipeListResponsePageable.ts';
 
 export interface RecipeListResponse {
-  content?: RecipeListItem[];
-  pageable?: RecipeListResponsePageable;
-  totalElements?: number;
-  totalPages?: number;
-  first?: boolean;
-  last?: boolean;
-  numberOfElements?: number;
+  noiDung?: RecipeListItem[];
+  tongSoPhanTu?: number;
+  tongSoTrang?: number;
 }

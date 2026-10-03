@@ -10,15 +10,15 @@ import type { RecipeIngredientCreate } from './recipeIngredientCreate.ts';
 import type { RecipeStepCreate } from './recipeStepCreate.ts';
 
 export interface RecipeCreateRequest {
-  title: string;
-  description?: string;
-  thumbnailUrl?: string;
-  cookTimeMinutes: number;
-  prepTimeMinutes?: number;
-  servings: number;
-  categoryId?: string;
+  ten: string;
+  moTa?: string;
+  anhThumbnail?: string;
+  thoiGianNauPhut: number;
+  thoiGianChuanBiPhut?: number;
+  khauPhan: number;
+  danhMucId?: string;
   tagIds?: string[];
-  ingredients: RecipeIngredientCreate[];
-  steps: RecipeStepCreate[];
-  nutrition?: NutritionInfoCreate;
+  nguyenLieu: RecipeIngredientCreate[];
+  cacBuoc: RecipeStepCreate[];
+  dinhDuong?: NutritionInfoCreate;
 }

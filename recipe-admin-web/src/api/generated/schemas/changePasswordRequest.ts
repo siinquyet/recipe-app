@@ -7,7 +7,7 @@
  */
 
 export interface ChangePasswordRequest {
-  oldPassword: string;
+  matKhauCu: string;
   /** @minLength 8 */
-  newPassword: string;
+  matKhauMoi: string;
 }

@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { TaoDanhMucDto, TaoNhanDto, slugTuTen } from './dto/danh-muc.dto';
+import { TaoDanhMucDto, CapNhatDanhMucDto, TaoNhanDto, slugTuTen } from './dto/danh-muc.dto';
 
 // BR-ADM: Danh mục + nhãn cho lọc và gắn thẻ công thức
 @Injectable()
@@ -18,6 +18,28 @@ export class DanhMucService {
         try {
             const c = await this.prisma.category.create({
                 data: { name: dto.ten.trim(), slug, description: dto.moTa },
+            });
+            return { id: c.id, ten: c.name, slug: c.slug, moTa: c.description };
+        } catch {
+            throw new ConflictException({ code: 'DUP-01', message: '[DUP-01] Tên hoặc slug danh mục đã tồn tại' });
+        }
+    }
+
+    async capNhatDanhMuc(id: string, dto: CapNhatDanhMucDto) {
+        const cu = await this.prisma.category.findUnique({ where: { id }, select: { id: true } });
+        if (!cu) {
+            throw new NotFoundException({ code: 'NOT-01', message: '[NOT-01] Không tìm thấy danh mục' });
+        }
+        try {
+            const c = await this.prisma.category.update({
+                where: { id },
+                data: {
+                    ...(dto.ten !== undefined
+                        ? { name: dto.ten.trim(), slug: dto.slug?.trim() || slugTuTen(dto.ten) }
+                        : {}),
+                    ...(dto.ten === undefined && dto.slug !== undefined ? { slug: dto.slug.trim() } : {}),
+                    ...(dto.moTa !== undefined ? { description: dto.moTa } : {}),
+                },
             });
             return { id: c.id, ten: c.name, slug: c.slug, moTa: c.description };
         } catch {

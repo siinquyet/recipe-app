@@ -9,10 +9,10 @@
 export interface RegisterRequest {
   email: string;
   /** @minLength 8 */
-  password: string;
+  matKhau: string;
   /**
      * @minLength 2
      * @maxLength 50
      */
-  displayName: string;
+  tenHienThi: string;
 }

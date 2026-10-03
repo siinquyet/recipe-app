@@ -43,3 +43,22 @@ export class TaoNhanDto {
     @IsString()
     slug?: string;
 }
+
+export class CapNhatDanhMucDto {
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    @MaxLength(100)
+    ten?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    slug?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    moTa?: string;
+}

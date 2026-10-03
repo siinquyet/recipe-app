@@ -7,8 +7,8 @@
  */
 
 export interface NutritionInfoCreate {
-  calories?: number;
+  calo?: number;
   protein?: number;
-  carbs?: number;
-  fat?: number;
+  carb?: number;
+  chatBeo?: number;
 }

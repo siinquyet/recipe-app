@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MealPlan } from './mealPlan.ts';
-import type { MealPlanListResponsePageable } from './mealPlanListResponsePageable.ts';
 
 export interface MealPlanListResponse {
-  content?: MealPlan[];
-  pageable?: MealPlanListResponsePageable;
-  totalElements?: number;
-  totalPages?: number;
+  noiDung?: MealPlan[];
+  tongSoPhanTu?: number;
+  tongSoTrang?: number;
 }

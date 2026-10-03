@@ -55,6 +55,17 @@ export async function taoDiChoTuKeHoach(mealPlanId: string): Promise<DanhSachDiC
   return body.data;
 }
 
+// BR-SHOP: Sinh danh sách đi chợ từ 1 công thức (nút Thêm hết vào giỏ)
+export async function taoDiChoTuCongThuc(congThucId: string, khauPhan?: number): Promise<DanhSachDiCho> {
+  const res = await userApiClient.post('/shopping-lists/generate-from-recipe', {
+    congThucId,
+    ...(khauPhan ? { khauPhan } : {}),
+  });
+  const body = res.data as ApiEnvelope<DanhSachDiCho>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
 // BR-SHOP: Tạo danh sách thủ công
 export async function taoDanhSachDiCho(ten: string): Promise<DanhSachDiCho> {
   const res = await userApiClient.post('/shopping-lists', { ten, loaiNguon: 'MANUAL' });

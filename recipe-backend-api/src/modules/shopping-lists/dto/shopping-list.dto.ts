@@ -2,6 +2,20 @@ import { IsArray, IsInt, IsNumber, IsString, MinLength, MaxLength, Min, IsOption
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+export class CapNhatDanhSachDto {
+    @ApiProperty({ example: 'Đi chợ cuối tuần (sửa)', required: false })
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    @MaxLength(100)
+    ten?: string;
+
+    @ApiProperty({ example: 'COMPLETED', enum: ['ACTIVE', 'COMPLETED', 'ARCHIVED'], required: false })
+    @IsOptional()
+    @IsIn(['ACTIVE', 'COMPLETED', 'ARCHIVED'], { message: 'SHOP-00 trangThai không hợp lệ' })
+    trangThai?: 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+}
+
 export class CapNhatTrangThaiMonDto {
     @ApiProperty({ example: true })
     @IsBoolean({ message: 'SHOP-00 daChon phải là true/false' })

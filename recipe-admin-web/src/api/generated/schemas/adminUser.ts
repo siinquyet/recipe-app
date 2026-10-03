@@ -5,17 +5,17 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { AdminUserRole } from './adminUserRole.ts';
-import type { AdminUserStatus } from './adminUserStatus.ts';
+import type { AdminUserTrangThai } from './adminUserTrangThai.ts';
+import type { AdminUserVaiTro } from './adminUserVaiTro.ts';
 
 export interface AdminUser {
   id?: string;
   email?: string;
-  displayName?: string;
+  tenHienThi?: string;
   /** @nullable */
-  avatarUrl?: string | null;
-  role?: AdminUserRole;
-  status?: AdminUserStatus;
-  recipeCount?: number;
-  createdAt?: string;
+  anhDaiDien?: string | null;
+  vaiTro?: AdminUserVaiTro;
+  trangThai?: AdminUserTrangThai;
+  soBaiViet?: number;
+  ngayTao?: string;
 }

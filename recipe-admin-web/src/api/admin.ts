@@ -66,6 +66,7 @@ export interface Dashboard {
   topDanhGia: DongTop[];
   tangTruongNguoiDung: DiemTangTruong[];
   tangTruongCongThuc: DiemTangTruong[];
+  tuongTac?: { tongYeuThich: number; tongDanhGia: number; tongBinhLuan: number };
 }
 
 // BR-ADM: Đăng nhập quản trị — token riêng khóa admin_access_token
@@ -154,4 +155,9 @@ export async function moKhoaNguoiDung(id: string): Promise<void> {
 
 export async function doiRole(id: string, role: 'USER' | 'ADMIN'): Promise<void> {
   await apiClient.patch(`/admin/users/${id}/role`, { role });
+}
+
+// BR-ADM: Xóa bình luận vi phạm
+export async function xoaBinhLuanAdmin(binhLuanId: string): Promise<void> {
+  await apiClient.delete(`/admin/comments/${binhLuanId}`);
 }

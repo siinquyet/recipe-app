@@ -5,12 +5,10 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { RatingSummaryDistribution } from './ratingSummaryDistribution.ts';
+import type { RatingSummaryPhanBo } from './ratingSummaryPhanBo.ts';
 
 export interface RatingSummary {
-  averageScore?: number;
-  totalRatings?: number;
-  distribution?: RatingSummaryDistribution;
-  /** @nullable */
-  userRating?: number | null;
+  diemTrungBinh?: number;
+  tongSoDanhGia?: number;
+  phanBo?: RatingSummaryPhanBo;
 }

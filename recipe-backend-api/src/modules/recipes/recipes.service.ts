@@ -131,6 +131,16 @@ export class RecipesService {
                 });
             }
         }
+        // BR-UREC: tagIds phải tồn tại hết, tránh connect ma
+        if (dto.tagIds && dto.tagIds.length > 0) {
+            const dem = await this.prisma.tag.count({ where: { id: { in: dto.tagIds } } });
+            if (dem !== new Set(dto.tagIds).size) {
+                throw new BadRequestException({
+                    code: 'REC-08',
+                    message: '[REC-08] Có nhãn không tồn tại',
+                });
+            }
+        }
         const recipe = await this.prisma.recipe.create({
             data: {
                 title: dto.ten,
@@ -185,7 +195,7 @@ export class RecipesService {
     async capNhat(id: string, userId: string, dto: CapNhatCongThucDto) {
         const cu = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
-            select: { id: true, authorId: true },
+            select: { id: true, authorId: true, status: true },
         });
         if (!cu) {
             throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
@@ -205,8 +215,7 @@ export class RecipesService {
                     ...(dto.thoiGianNauPhut !== undefined ? { cookTimeMinutes: dto.thoiGianNauPhut } : {}),
                     ...(dto.thoiGianChuanBiPhut !== undefined ? { prepTimeMinutes: dto.thoiGianChuanBiPhut } : {}),
                     ...(dto.khauPhan !== undefined ? { servings: dto.khauPhan } : {}),
-                    status: RecipeStatus.PENDING,
-                    rejectionReason: null,
+                    ...(cu.status === RecipeStatus.APPROVED ? { status: RecipeStatus.PENDING, rejectionReason: null } : {}),
                 },
             });
             if (dto.nguyenLieu) {
@@ -269,6 +278,28 @@ export class RecipesService {
             where: { id },
             data: { status: 'PENDING', rejectionReason: null },
         });
+        return this.layChiTiet(id, userId);
+    }
+
+    async rutLai(id: string, userId: string) {
+        // BR-UREC: Rút bài đang chờ về nháp để sửa tiếp
+        const cu = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, authorId: true, status: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        if (cu.authorId !== userId) {
+            throw new ForbiddenException({ code: 'REC-05', message: '[REC-05] Chỉ tác giả được rút bài' });
+        }
+        if (cu.status !== 'PENDING') {
+            throw new BadRequestException({
+                code: 'REC-06',
+                message: '[REC-06] Chỉ rút được bài đang chờ duyệt',
+            });
+        }
+        await this.prisma.recipe.update({ where: { id }, data: { status: 'DRAFT' } });
         return this.layChiTiet(id, userId);
     }
 

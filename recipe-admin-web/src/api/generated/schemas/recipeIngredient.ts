@@ -7,8 +7,8 @@
  */
 
 export interface RecipeIngredient {
-  name?: string;
+  ten?: string;
   /** VN format: 1.000, 500, 1.500 */
-  quantity?: string;
-  unit?: string;
+  dinhLuong?: string;
+  donVi?: string;
 }

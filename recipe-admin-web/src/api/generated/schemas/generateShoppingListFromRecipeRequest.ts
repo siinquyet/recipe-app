@@ -7,7 +7,6 @@
  */
 
 export interface GenerateShoppingListFromRecipeRequest {
-  recipeId: string;
-  recipeReferenceId?: string;
-  servings?: number;
+  congThucId: string;
+  khauPhan?: number;
 }

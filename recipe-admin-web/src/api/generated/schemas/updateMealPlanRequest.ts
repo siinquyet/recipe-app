@@ -7,8 +7,7 @@
  */
 
 export interface UpdateMealPlanRequest {
-  name?: string;
-  startDate?: string;
-  endDate?: string;
-  isActive?: boolean;
+  ten?: string;
+  ngayBatDau?: string;
+  ngayKetThuc?: string;
 }

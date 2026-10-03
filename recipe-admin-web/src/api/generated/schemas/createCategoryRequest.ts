@@ -7,8 +7,7 @@
  */
 
 export interface CreateCategoryRequest {
-  name: string;
-  slug: string;
-  description?: string;
-  parentId?: string;
+  ten: string;
+  slug?: string;
+  moTa?: string;
 }

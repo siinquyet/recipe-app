@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AdminUser } from './adminUser.ts';
-import type { AdminUserListResponsePageable } from './adminUserListResponsePageable.ts';
 
 export interface AdminUserListResponse {
-  content?: AdminUser[];
-  pageable?: AdminUserListResponsePageable;
-  totalElements?: number;
-  totalPages?: number;
+  noiDung?: AdminUser[];
+  tongSoPhanTu?: number;
+  tongSoTrang?: number;
 }

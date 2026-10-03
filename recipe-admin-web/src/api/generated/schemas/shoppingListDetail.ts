@@ -9,5 +9,5 @@ import type { ShoppingList } from './shoppingList.ts';
 import type { ShoppingListItem } from './shoppingListItem.ts';
 
 export type ShoppingListDetail = ShoppingList & {
-  items?: ShoppingListItem[];
+  cacMon?: ShoppingListItem[];
 };

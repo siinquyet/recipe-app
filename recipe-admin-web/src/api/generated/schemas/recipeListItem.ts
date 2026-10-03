@@ -5,15 +5,22 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
+import type { UserProfile } from './userProfile.ts';
 
 export interface RecipeListItem {
-  title?: string;
+  /** INTERNAL ONLY - never display in UI */
+  id?: string;
+  ten?: string;
   /** @nullable */
-  thumbnailUrl?: string | null;
-  cookTimeMinutes?: number;
-  servings?: number;
-  authorName?: string;
+  moTa?: string | null;
   /** @nullable */
-  authorAvatarUrl?: string | null;
-  createdAt?: string;
+  anhThumbnail?: string | null;
+  thoiGianNauPhut?: number;
+  /** @nullable */
+  thoiGianChuanBiPhut?: number | null;
+  khauPhan?: number;
+  trangThai?: string;
+  tacGia?: UserProfile;
+  ngayTao?: string;
+  ngayCapNhat?: string;
 }

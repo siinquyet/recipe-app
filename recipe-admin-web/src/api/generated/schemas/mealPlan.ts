@@ -8,9 +8,8 @@
 
 export interface MealPlan {
   id?: string;
-  name?: string;
-  startDate?: string;
-  endDate?: string;
-  isActive?: boolean;
-  createdAt?: string;
+  ten?: string;
+  ngayBatDau?: string;
+  ngayKetThuc?: string;
+  kichHoat?: boolean;
 }

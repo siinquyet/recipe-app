@@ -9,5 +9,5 @@ import type { MealPlan } from './mealPlan.ts';
 import type { MealPlanItem } from './mealPlanItem.ts';
 
 export type MealPlanDetail = MealPlan & {
-  items?: MealPlanItem[];
+  cacMon?: MealPlanItem[];
 };

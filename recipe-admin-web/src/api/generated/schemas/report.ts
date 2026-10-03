@@ -5,15 +5,21 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { ReportStatus } from './reportStatus.ts';
+import type { ReportBinhLuan } from './reportBinhLuan.ts';
+import type { ReportCongThuc } from './reportCongThuc.ts';
+import type { ReportTrangThai } from './reportTrangThai.ts';
+import type { UserProfile } from './userProfile.ts';
 
 export interface Report {
   id?: string;
-  reason?: string;
-  status?: ReportStatus;
+  lyDo?: string;
+  trangThai?: ReportTrangThai;
   /** @nullable */
-  adminNote?: string | null;
-  createdAt?: string;
+  ghiChuAdmin?: string | null;
+  nguoiBaoCao?: UserProfile;
   /** @nullable */
-  resolvedAt?: string | null;
+  congThuc?: ReportCongThuc;
+  /** @nullable */
+  binhLuan?: ReportBinhLuan;
+  ngayTao?: string;
 }

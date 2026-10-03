@@ -5,10 +5,12 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { CreateShoppingListRequestSourceType } from './createShoppingListRequestSourceType.ts';
+import type { CreateShoppingListRequestLoaiNguon } from './createShoppingListRequestLoaiNguon.ts';
+import type { ShoppingListItemCreate } from './shoppingListItemCreate.ts';
 
 export interface CreateShoppingListRequest {
-  name: string;
-  sourceType?: CreateShoppingListRequestSourceType;
-  sourceId?: string;
+  ten: string;
+  loaiNguon: CreateShoppingListRequestLoaiNguon;
+  nguonId?: string;
+  cacMon?: ShoppingListItemCreate[];
 }

@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiErrorFormat } from './response.interceptor';
+import { MulterError } from 'multer';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -29,6 +30,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
                     message: Array.isArray(message) ? message.join('; ') : message,
                     details: obj.details as string | undefined,
                 };
+            }
+        } else if (exception instanceof MulterError) {
+            // BR-UPLOAD: Xử lý lỗi Multer bằng tiếng Việt
+            status = HttpStatus.BAD_REQUEST;
+            switch (exception.code) {
+                case 'LIMIT_FILE_SIZE':
+                    error = { code: 'UP-03', message: '[UP-03] File quá lớn, tối đa 5MB' };
+                    break;
+                case 'LIMIT_FILE_COUNT':
+                    error = { code: 'UP-04', message: '[UP-04] Quá nhiều file, tối đa 1 file' };
+                    break;
+                case 'LIMIT_UNEXPECTED_FILE':
+                    error = { code: 'UP-05', message: '[UP-05] Field file không đúng' };
+                    break;
+                default:
+                    error = { code: 'UP-00', message: `[UP-00] Lỗi tải file: ${exception.message}` };
             }
         } else if (exception instanceof Error) {
             this.logger.error(exception.message, exception.stack);

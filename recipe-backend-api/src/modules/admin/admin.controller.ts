@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../../common/admin.guard';
 import { AdminService } from './admin.service';
@@ -71,6 +71,11 @@ export class AdminController {
     @Post('recipes/:id/unhide')
     hienBai(@Param('id') id: string, @Req() req: { user: { id: string } }) {
         return this.adminService.hienBai(req.user.id, id);
+    }
+
+    @Delete('comments/:id')
+    xoaBinhLuan(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+        return this.adminService.xoaBinhLuan(req.user.id, id);
     }
 
     @Get('analytics/dashboard')

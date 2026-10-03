@@ -5,13 +5,12 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { CreateMealPlanItemRequestMealType } from './createMealPlanItemRequestMealType.ts';
+import type { CreateMealPlanItemRequestBuoiAn } from './createMealPlanItemRequestBuoiAn.ts';
 
 export interface CreateMealPlanItemRequest {
-  recipeId?: string;
-  recipeReferenceId?: string;
-  date: string;
-  mealType: CreateMealPlanItemRequestMealType;
-  servings: number;
-  sortOrder: number;
+  congThucId?: string;
+  thamChieuId?: string;
+  ngay: string;
+  buoiAn: CreateMealPlanItemRequestBuoiAn;
+  khauPhan: number;
 }

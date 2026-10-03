@@ -8,5 +8,5 @@
 
 export interface UpdateCommentRequest {
   /** @maxLength 1000 */
-  content: string;
+  noiDung: string;
 }

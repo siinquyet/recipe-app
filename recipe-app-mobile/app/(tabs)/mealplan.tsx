@@ -209,7 +209,9 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
                             </View>
                             <Pressable
                               accessibilityRole="button"
+                              disabled={xoaMon.isPending}
                               onPress={() => xoaMon.mutate(mon.id)}
+                              className={xoaMon.isPending ? 'opacity-50' : undefined}
                             >
                               <Text className="text-xs font-medium text-red-500">Xóa món</Text>
                             </Pressable>
@@ -326,7 +328,8 @@ export default function ManHinhKeHoachAn() {
       <ScrollView className="flex-1 px-4 pt-4">
         <CaptionText className="font-bold uppercase tracking-widest text-deepteal">
           Kế hoạch tuần & Đi chợ tự động
-        </CaptionText>        <View className="mt-1 flex-row items-center justify-between">
+        </CaptionText>
+        <View className="mt-1 flex-row items-center justify-between">
           <TitleText className="flex-1 text-2xl">Kế hoạch dinh dưỡng tuần này</TitleText>
           <NutBam tieuDe={dangTao ? 'Hủy' : '+ Mới'} bienThe="mo" khiBam={() => { setDangTao((v) => !v); setLoiTao(''); }} />
         </View>

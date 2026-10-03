@@ -7,11 +7,11 @@
  */
 
 export interface CreateRatingRequest {
-  recipeId?: string;
-  recipeReferenceId?: string;
   /**
      * @minimum 1
      * @maximum 5
      */
-  score: number;
+  diem: number;
+  /** @maxLength 500 */
+  binhLuan?: string;
 }

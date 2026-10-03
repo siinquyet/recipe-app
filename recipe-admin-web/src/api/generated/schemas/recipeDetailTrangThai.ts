@@ -6,9 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-/**
- * Trạng thái duyệt (backend trả thêm ngoài spec Anh)
- */
 export type RecipeDetailTrangThai = typeof RecipeDetailTrangThai[keyof typeof RecipeDetailTrangThai];
 
 

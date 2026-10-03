@@ -5,9 +5,9 @@
  * REST API for Cookbook App (Android + Web Admin) - Online Recipe Management System
  * OpenAPI spec version: 1.0.0
  */
-import type { ResolveReportRequestStatus } from './resolveReportRequestStatus.ts';
+import type { ResolveReportRequestTrangThai } from './resolveReportRequestTrangThai.ts';
 
 export interface ResolveReportRequest {
-  status: ResolveReportRequestStatus;
-  adminNote: string;
+  trangThai: ResolveReportRequestTrangThai;
+  ghiChu?: string;
 }

@@ -7,8 +7,8 @@
  */
 
 export interface RecipeStep {
-  stepOrder?: number;
-  content?: string;
+  thuTu?: number;
+  noiDung?: string;
   /** @nullable */
-  imageUrl?: string | null;
+  anhBuoc?: string | null;
 }

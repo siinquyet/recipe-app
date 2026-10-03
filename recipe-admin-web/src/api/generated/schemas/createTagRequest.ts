@@ -7,6 +7,6 @@
  */
 
 export interface CreateTagRequest {
-  name: string;
-  slug: string;
+  ten: string;
+  slug?: string;
 }

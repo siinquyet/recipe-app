@@ -8,5 +8,5 @@
 
 export interface LoginRequest {
   email: string;
-  password: string;
+  matKhau: string;
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { TaoBinhLuanDto } from './dto/comment.dto';
 import { JwtAuthGuard, OptionalJwtGuard } from '../../common/jwt-auth.guard';
@@ -11,15 +11,13 @@ export class CommentsController {
     @UseGuards(OptionalJwtGuard)
     layDanhSach(
         @Param('recipeId') recipeId: string,
-        @Query('trang', new DefaultValuePipe(0), ParseIntPipe) trang: number,
         @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
-        @Query('kichThuoc', new DefaultValuePipe(20), ParseIntPipe) kichThuoc: number,
         @Query('size', new DefaultValuePipe(20), ParseIntPipe) size: number,
         @Req() req: { user?: { id: string } },
     ) {
-        const finalTrang = page > 0 ? page : trang;
-        const finalSize = size !== 20 ? size : kichThuoc;
-        const safeSize = Math.min(Math.max(finalSize, 1), 50);
+        // BR-API: Phân trang page/size 0-based, chặn số âm và size quá lớn
+        const finalTrang = Math.max(page, 0);
+        const safeSize = Math.min(Math.max(size, 1), 50);
         return this.commentsService.layDanhSach(recipeId, finalTrang, safeSize, req.user?.id);
     }
 
@@ -44,7 +42,7 @@ export class CommentsController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Put(':id')
+    @Patch(':id')
     capNhat(
         @Param('recipeId') recipeId: string,
         @Param('id') id: string,

@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { Report } from './report.ts';
-import type { ReportListResponsePageable } from './reportListResponsePageable.ts';
 
 export interface ReportListResponse {
-  content?: Report[];
-  pageable?: ReportListResponsePageable;
-  totalElements?: number;
-  totalPages?: number;
+  noiDung?: Report[];
+  tongSoPhanTu?: number;
+  tongSoTrang?: number;
 }

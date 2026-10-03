@@ -16,12 +16,11 @@ export type RecipeDetail = RecipeListItem & ({
   /** INTERNAL ONLY - never display in UI */
   id?: string;
   /** @nullable */
-  description?: string | null;
-  /** Trạng thái duyệt (backend trả thêm ngoài spec Anh) */
+  moTa?: string | null;
   trangThai?: RecipeDetailTrangThai;
-  author?: UserProfile;
-  ingredients?: RecipeIngredient[];
-  steps?: RecipeStep[];
-  nutrition?: NutritionInfo;
-  updatedAt?: string;
+  tacGia?: UserProfile;
+  nguyenLieu?: RecipeIngredient[];
+  cacBuoc?: RecipeStep[];
+  dinhDuong?: NutritionInfo;
+  ngayCapNhat?: string;
 });

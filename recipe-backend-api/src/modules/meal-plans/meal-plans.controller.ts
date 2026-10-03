@@ -10,16 +10,14 @@ export class MealPlansController {
     @UseGuards(JwtAuthGuard)
     @Get()
     layDanhSach(
-        @Query('trang', new DefaultValuePipe(0), ParseIntPipe) trang: number,
         @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
-        @Query('kichThuoc', new DefaultValuePipe(20), ParseIntPipe) kichThuoc: number,
         @Query('size', new DefaultValuePipe(20), ParseIntPipe) size: number,
         @Req() req: { user: { id: string } },
     ) {
-        const finalTrang = page > 0 ? page : trang;
-        const finalSize = size !== 20 ? size : kichThuoc;
-        const safeSize = Math.min(Math.max(finalSize, 1), 50);
+        // BR-API: Phân trang page/size 0-based, chặn số âm và size quá lớn
         // BR-MEAL: Mỗi tài khoản chỉ thấy kế hoạch của mình
+        const finalTrang = Math.max(page, 0);
+        const safeSize = Math.min(Math.max(size, 1), 50);
         return this.mealPlansService.layDanhSach(finalTrang, safeSize, req.user.id);
     }
 

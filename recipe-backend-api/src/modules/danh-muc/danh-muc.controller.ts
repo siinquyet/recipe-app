@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../../common/admin.guard';
 import { DanhMucService } from './danh-muc.service';
-import { TaoDanhMucDto, TaoNhanDto } from './dto/danh-muc.dto';
+import { CapNhatDanhMucDto, TaoDanhMucDto, TaoNhanDto } from './dto/danh-muc.dto';
 
 @ApiTags('danh-muc')
 @Controller()
@@ -31,6 +31,13 @@ export class DanhMucController {
     @Delete('categories/:id')
     xoaDanhMuc(@Param('id') id: string) {
         return this.danhMucService.xoaDanhMuc(id);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AdminGuard)
+    @Patch('categories/:id')
+    capNhatDanhMuc(@Param('id') id: string, @Body() dto: CapNhatDanhMucDto) {
+        return this.danhMucService.capNhatDanhMuc(id, dto);
     }
 
     @ApiBearerAuth()

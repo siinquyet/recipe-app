@@ -9,10 +9,8 @@ import type { UserProfile } from './userProfile.ts';
 
 export interface Comment {
   id?: string;
-  content?: string;
-  user?: UserProfile;
-  /** @nullable */
-  parentId?: string | null;
-  repliesCount?: number;
-  createdAt?: string;
+  noiDung?: string;
+  tacGia?: UserProfile;
+  thoiGianTao?: string;
+  soLuongPhanHoi?: number;
 }

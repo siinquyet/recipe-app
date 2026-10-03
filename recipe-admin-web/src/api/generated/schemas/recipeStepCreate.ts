@@ -7,7 +7,5 @@
  */
 
 export interface RecipeStepCreate {
-  stepOrder: number;
-  content: string;
-  imageUrl?: string;
+  noiDung: string;
 }

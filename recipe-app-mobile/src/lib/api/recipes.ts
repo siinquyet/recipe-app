@@ -182,3 +182,42 @@ export async function taoBinhLuan(
   );
   return binhLuanSchema.parse(duLieu);
 }
+
+// BR-SOC: Sửa/xóa bình luận của chính mình, xem replies
+export async function suaBinhLuan(recipeId: string, commentId: string, noiDung: string): Promise<BinhLuan> {
+  const duLieu = await goiApi(
+    apiClient
+      .patch(`recipes/${recipeId}/comments/${commentId}`, { json: { noiDung } })
+      .json<ApiResponse<BinhLuan>>(),
+  );
+  return binhLuanSchema.parse(duLieu);
+}
+
+export async function xoaBinhLuan(recipeId: string, commentId: string): Promise<void> {
+  await goiApi(apiClient.delete(`recipes/${recipeId}/comments/${commentId}`).json<ApiResponse<unknown>>());
+}
+
+export async function layPhanHoi(
+  recipeId: string,
+  commentId: string,
+): Promise<DanhSachTrang<BinhLuan>> {
+  const duLieu = await goiApi(
+    apiClient
+      .get(`recipes/${recipeId}/comments/${commentId}/replies`)
+      .json<ApiResponse<DanhSachTrang<BinhLuan>>>(),
+  );
+  return danhSachTrangSchema(binhLuanSchema).parse(duLieu);
+}
+
+export interface TomTatDanhGia {
+  diemTrungBinh: number;
+  tongSoDanhGia: number;
+  phanBo: Record<string, number>;
+}
+
+// BR-SOC: Tổng quan điểm + phân bổ sao (thật từ server)
+export async function layTomTatDanhGia(id: string): Promise<TomTatDanhGia> {
+  return goiApi(
+    apiClient.get(`recipes/${id}/rating/summary`).json<ApiResponse<TomTatDanhGia>>(),
+  );
+}

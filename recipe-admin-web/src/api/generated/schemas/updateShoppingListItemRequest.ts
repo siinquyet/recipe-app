@@ -7,7 +7,8 @@
  */
 
 export interface UpdateShoppingListItemRequest {
-  isChecked?: boolean;
-  quantity?: number;
-  unit?: string;
+  tenGoc?: string;
+  dinhLuong?: number;
+  donVi?: string;
+  daChon?: boolean;
 }
