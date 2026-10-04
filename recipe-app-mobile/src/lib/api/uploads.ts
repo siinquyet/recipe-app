@@ -9,9 +9,21 @@ const taiAnhResponseSchema = z.object({
   error: z.object({ code: z.string(), message: z.string() }).nullable(),
 });
 
-function doanDinhDang(uri: string): { ten: string; loai: string } {
-  const duoi = uri.split('?')[0].split('.').pop()?.toLowerCase() ?? 'jpg';
-  const loai = duoi === 'png' ? 'image/png' : duoi === 'webp' ? 'image/webp' : 'image/jpeg';
+const DINH_DANG_CHO_PHEP: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+};
+
+function doanDinhDang(uri: string, blobLoai?: string): { ten: string; loai: string } {
+  const sach = uri.split('?')[0];
+  const duoiTho = sach.split('.').pop()?.toLowerCase() ?? '';
+  // BR-UREC: Expo web trả blob: không đuôi, HEIC iOS; ưu tiên mimetype thật của blob
+  const duoiTuBlob = Object.keys(DINH_DANG_CHO_PHEP).find((d) => DINH_DANG_CHO_PHEP[d] === blobLoai);
+  const duoi = DINH_DANG_CHO_PHEP[duoiTho] ? duoiTho : (duoiTuBlob ?? 'jpg');
+  const loai = DINH_DANG_CHO_PHEP[duoi] ?? 'image/jpeg';
   return { ten: `anh-${Date.now()}.${duoi}`, loai };
 }
 
@@ -21,7 +33,7 @@ export async function taiAnhLen(fileUri: string): Promise<string> {
   try {
     const phanHoi = await fetch(fileUri);
     const duLieuAnh = await phanHoi.blob();
-    const { ten, loai } = doanDinhDang(fileUri);
+    const { ten, loai } = doanDinhDang(fileUri, duLieuAnh.type);
 
     const bieuMau = new FormData();
     bieuMau.append('file', new Blob([duLieuAnh], { type: loai }), ten);

@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/authStore';
 import { Chip } from '../../src/components/ui/Chip';
+import { DinhLuong } from '../../src/components/ui/DinhLuong';
 import { NutBam } from '../../src/components/ui/NutBam';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../src/components/ui/TrangThai';
@@ -35,12 +36,12 @@ function ChiTietDiCho({ id }: { id: string }) {
   const [dangMuaHet, setDangMuaHet] = useState(false);
   const [dangThem, setDangThem] = useState(false);
   const [tenMoi, setTenMoi] = useState('');
-  const [luongMoi, setLuongMoi] = useState('');
+  const [luongMoi, setLuongMoi] = useState(0);
   const [donViMoi, setDonViMoi] = useState('g');
   const [dangSuaId, setDangSuaId] = useState<string | null>(null);
   const [suaTen, setSuaTen] = useState('');
-  const [suaLuong, setSuaLuong] = useState('');
-  const [suaDonVi, setSuaDonVi] = useState('');
+  const [suaLuong, setSuaLuong] = useState(0);
+  const [suaDonVi, setSuaDonVi] = useState('g');
 
   // BR-SHOP: Mua/bỏ hết 1 chạm — gom N request rồi tải lại 1 lần
   const doiHet = async (daChon: boolean) => {
@@ -68,15 +69,15 @@ function ChiTietDiCho({ id }: { id: string }) {
   const luuMonMoi = () => {
     if (!tenMoi.trim()) return;
     themMon.mutate(
-      { tenGoc: tenMoi.trim(), dinhLuong: parseFloat(luongMoi.replace(',', '.')) || 0, donVi: donViMoi.trim() || 'g' },
-      { onSuccess: () => { setTenMoi(''); setLuongMoi(''); setDonViMoi('g'); setDangThem(false); } },
+      { tenGoc: tenMoi.trim(), dinhLuong: luongMoi, donVi: donViMoi.trim() || 'g' },
+      { onSuccess: () => { setTenMoi(''); setLuongMoi(0); setDonViMoi('g'); setDangThem(false); } },
     );
   };
 
-  const batDauSua = (monId: string, ten: string, luong: string, donVi: string) => {
+  const batDauSua = (monId: string, ten: string, luong: string | number, donVi: string) => {
     setDangSuaId(monId);
     setSuaTen(ten);
-    setSuaLuong(luong);
+    setSuaLuong(Number(luong) || 0);
     setSuaDonVi(donVi);
   };
 
@@ -87,7 +88,7 @@ function ChiTietDiCho({ id }: { id: string }) {
         itemId: monId,
         payload: {
           tenGoc: suaTen.trim(),
-          dinhLuong: parseFloat(suaLuong.replace(',', '.')) || 0,
+          dinhLuong: suaLuong,
           donVi: suaDonVi.trim() || 'g',
         },
       },
@@ -157,13 +158,8 @@ function ChiTietDiCho({ id }: { id: string }) {
               {dangSuaId === mon.id ? (
                 <View className="mt-2 rounded-xl bg-mist p-3">
                   <ONhapLieu nhan="Tên món" giaTri={suaTen} khiDoi={setSuaTen} />
-                  <View className="mt-2 flex-row gap-2">
-                    <View className="flex-1">
-                      <ONhapLieu nhan="Định lượng" giaTri={suaLuong} khiDoi={setSuaLuong} banPhim="decimal-pad" />
-                    </View>
-                    <View className="flex-1">
-                      <ONhapLieu nhan="Đơn vị" giaTri={suaDonVi} khiDoi={setSuaDonVi} goiY="g, ml..." />
-                    </View>
+                  <View className="mt-2">
+                    <DinhLuong giaTri={suaLuong} khiDoi={setSuaLuong} donVi={suaDonVi} khiDoiDonVi={setSuaDonVi} />
                   </View>
                   <NutBam tieuDe="Lưu" dangTai={suaMon.isPending} khiBam={() => luuSua(mon.id)} className="mt-2" />
                 </View>
@@ -180,13 +176,8 @@ function ChiTietDiCho({ id }: { id: string }) {
         {dangThem ? (
           <View className="mt-2 rounded-xl bg-mist p-3">
             <ONhapLieu nhan="Tên món *" giaTri={tenMoi} khiDoi={setTenMoi} goiY="VD: Rau muống" />
-            <View className="mt-2 flex-row gap-2">
-              <View className="flex-1">
-                <ONhapLieu nhan="Định lượng" giaTri={luongMoi} khiDoi={setLuongMoi} banPhim="decimal-pad" goiY="0" />
-              </View>
-              <View className="flex-1">
-                <ONhapLieu nhan="Đơn vị" giaTri={donViMoi} khiDoi={setDonViMoi} goiY="g, ml..." />
-              </View>
+            <View className="mt-2">
+              <DinhLuong giaTri={luongMoi} khiDoi={setLuongMoi} donVi={donViMoi} khiDoiDonVi={setDonViMoi} />
             </View>
             <NutBam
               tieuDe="Thêm vào danh sách"

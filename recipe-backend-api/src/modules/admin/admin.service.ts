@@ -11,6 +11,9 @@ export class AdminService {
 
     async layNguoiDung(trang: number, kichThuoc: number, tuKhoa?: string, trangThai?: string) {
         // BR-ADM: Tìm theo email/tên, lọc ACTIVE/BANNED, kèm số bài đã đăng
+        if (trangThai && !['ACTIVE', 'BANNED'].includes(trangThai)) {
+            throw new BadRequestException({ code: 'ADM-00', message: '[ADM-00] Trạng thái lọc không hợp lệ' });
+        }
         const where: Prisma.UserWhereInput = {
             ...(tuKhoa
                 ? { OR: [{ email: { contains: tuKhoa } }, { displayName: { contains: tuKhoa } }] }
@@ -61,8 +64,20 @@ export class AdminService {
         if (adminId === id) {
             throw new BadRequestException({ code: 'ADM-05', message: '[ADM-05] Không tự khóa/mở chính mình' });
         }
-        const moi = await this.prisma.user.update({ where: { id }, data: { status: trangThai } });
-        await this.ghiNhatKy(adminId, hanhDong, 'User', id, { status: cu.status }, { status: moi.status });
+        // BR-05: Gộp đổi trạng thái + audit vào transaction để rollback khi lỗi
+        await this.prisma.$transaction([
+            this.prisma.user.update({ where: { id }, data: { status: trangThai } }),
+            this.prisma.auditLog.create({
+                data: {
+                    userId: adminId,
+                    action: hanhDong,
+                    entityType: 'User',
+                    entityId: id,
+                    oldData: { status: cu.status },
+                    newData: { status: trangThai },
+                },
+            }),
+        ]);
     }
 
     async doiRole(adminId: string, id: string, role: 'USER' | 'ADMIN') {
@@ -73,8 +88,20 @@ export class AdminService {
         if (adminId === id) {
             throw new BadRequestException({ code: 'ADM-05', message: '[ADM-05] Không tự đổi role chính mình' });
         }
-        const moi = await this.prisma.user.update({ where: { id }, data: { role } });
-        await this.ghiNhatKy(adminId, 'CHANGE_ROLE', 'User', id, { role: cu.role }, { role: moi.role });
+        // BR-05: Gộp đổi role + audit vào transaction để rollback khi lỗi
+        await this.prisma.$transaction([
+            this.prisma.user.update({ where: { id }, data: { role } }),
+            this.prisma.auditLog.create({
+                data: {
+                    userId: adminId,
+                    action: 'CHANGE_ROLE',
+                    entityType: 'User',
+                    entityId: id,
+                    oldData: { role: cu.role },
+                    newData: { role },
+                },
+            }),
+        ]);
         return { thanhCong: true };
     }
 
@@ -152,8 +179,13 @@ export class AdminService {
         if (!cu) {
             throw new NotFoundException({ code: 'CMT-04', message: '[CMT-04] Không tìm thấy bình luận' });
         }
-        await this.prisma.comment.update({ where: { id }, data: { deletedAt: new Date() } });
-        await this.ghiNhatKy(adminId, 'DELETE', 'Comment', id, {}, {});
+        // BR-05: Gộp xóa mềm + audit vào transaction để rollback khi lỗi
+        await this.prisma.$transaction([
+            this.prisma.comment.update({ where: { id }, data: { deletedAt: new Date() } }),
+            this.prisma.auditLog.create({
+                data: { userId: adminId, action: 'DELETE', entityType: 'Comment', entityId: id, oldData: {}, newData: {} },
+            }),
+        ]);
         return { thanhCong: true };
     }
 
@@ -171,11 +203,23 @@ export class AdminService {
         if (!cu) {
             throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
         }
-        const moi = await this.prisma.recipe.update({
-            where: { id },
-            data: { status: trangThai, rejectionReason: lyDo ?? null },
-        });
-        await this.ghiNhatKy(adminId, hanhDong, 'Recipe', id, { status: cu.status }, { status: moi.status });
+        // BR-05: Gộp đổi trạng thái + audit vào transaction để rollback khi lỗi
+        await this.prisma.$transaction([
+            this.prisma.recipe.update({
+                where: { id },
+                data: { status: trangThai, rejectionReason: lyDo ?? null },
+            }),
+            this.prisma.auditLog.create({
+                data: {
+                    userId: adminId,
+                    action: hanhDong,
+                    entityType: 'Recipe',
+                    entityId: id,
+                    oldData: { status: cu.status },
+                    newData: { status: trangThai },
+                },
+            }),
+        ]);
     }
 
     async layDashboard() {

@@ -38,8 +38,9 @@ async function khoiDong() {
             .addBearerAuth()
             .build();
         const taiLieu = SwaggerModule.createDocument(ungDung, cauHinh);
-        // Ghép global prefix để UI nằm ở /api/v1/docs thay vì /docs
+        // BR-API: Giữ /api/v1/docs cũ + thêm alias /api/docs đúng yêu cầu
         SwaggerModule.setup('docs', ungDung, taiLieu, { useGlobalPrefix: true });
+        SwaggerModule.setup('api/docs', ungDung, taiLieu);
     }
 
     const cong = Number(process.env.PORT) || 3000;

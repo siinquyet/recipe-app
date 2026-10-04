@@ -11,7 +11,7 @@ import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
 import { NumberDisplay } from '../../src/components/ui/NumberDisplay';
-import { ChonBuoiAn, DaiNgay, TangGiamKhauPhan } from '../../src/components/meal/BoChonMon';
+import { ChonBuoiAn, ChonKhoangNgay, DaiNgay, TangGiamKhauPhan } from '../../src/components/meal/BoChonMon';
 import { useDebounce } from '../../src/hooks/useDebounce';
 import { useDanhSachCongThuc, useDanhSachYeuThich } from '../../src/hooks/useRecipes';
 import { dinhDangNgay } from '../../src/lib/utils/dinh-dang';
@@ -39,6 +39,8 @@ function ChonMonChoNgay({
   khiDong: () => void;
 }) {
   const [tuKhoa, setTuKhoa] = useState('');
+  // BR-MEAL: 1 danh sách duy nhất theo tab, khỏi 3 khối trùng nhau khó chọn
+  const [nguon, setNguon] = useState<'da-luu' | 'cua-toi' | 'tim'>('da-luu');
   const [congThucChon, setCongThucChon] = useState('');
   const [ngay, setNgay] = useState(ngayMacDinh);
   const [buoi, setBuoi] = useState<string>(() => buoiGoiYTheoGio());
@@ -47,22 +49,50 @@ function ChonMonChoNgay({
   const tuKhoaTre = useDebounce(tuKhoa.trim(), 400);
   const goiY = useDanhSachCongThuc({ page: 0, size: 5, ...(tuKhoaTre ? { search: tuKhoaTre } : {}) });
   const themMon = useThemMonVaoKeHoach(keHoachId);
-  // BR-MEAL: Chọn nhanh từ món đã lưu + món của tôi, khỏi gõ tìm kiếm
+  // BR-MEAL: Tận dụng 2 nguồn trang chủ — món đã lưu + món của tôi, nhấn là chọn
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
-  const daLuu = useDanhSachYeuThich(0, 5);
+  const daLuu = useDanhSachYeuThich(0, 20);
   const cuaToi = useDanhSachCongThuc({
     page: 0,
-    size: 5,
+    size: 20,
     ...(nguoiDung?.id ? { tacGiaId: nguoiDung.id } : {}),
   });
+  const danhSachNguon =
+    nguon === 'da-luu' ? (daLuu.data?.noiDung ?? []) : nguon === 'cua-toi' ? (cuaToi.data?.noiDung ?? []) : (goiY.data?.noiDung ?? []);
 
-  const HangChonNhanh = ({ tieuDe, ds }: { tieuDe: string; ds: Array<{ id: string; ten: string }> }) => {
-    if (ds.length === 0) return null;
-    return (
-      <View className="mt-3">
-        <CaptionText className="font-semibold">{tieuDe}</CaptionText>
-        <View className="mt-2 gap-1.5">
-          {ds.map((ct) => (
+  const luuMon = () => {
+    if (!congThucChon || !ngay.trim()) return;
+    setLoiThem('');
+    themMon.mutate(
+      { congThucId: congThucChon, ngay: ngay.trim(), buoiAn: buoi, khauPhan },
+      {
+        onSuccess: () => khiDong(),
+        // BR-MEAL: Hiện mã thật MEAL-00/06/07 để biết thiếu field, ngoài khoảng hay trùng buổi
+        onError: (loi: unknown) => {
+          const thongDiep = loi instanceof Error ? loi.message : '';
+          setLoiThem(thongDiep || 'Không thêm được, thử lại sau');
+        },
+      },
+    );
+  };
+
+  return (
+    <BottomSheet hienThi tieuDe="Chọn món cho ngày" khiDong={khiDong}>
+      <View className="mt-3 flex-row gap-2">
+        <Chip nhan="Đã lưu" chon={nguon === 'da-luu'} khiBam={() => setNguon('da-luu')} />
+        <Chip nhan="Của tôi" chon={nguon === 'cua-toi'} khiBam={() => setNguon('cua-toi')} />
+        <Chip nhan="Tìm món" chon={nguon === 'tim'} khiBam={() => setNguon('tim')} />
+      </View>
+      {nguon === 'tim' ? (
+        <ONhapLieu nhan="Tìm món" giaTri={tuKhoa} khiDoi={setTuKhoa} goiY="VD: phở bò" className="mt-3" />
+      ) : null}
+      <View className="mt-2 gap-1.5">
+        {danhSachNguon.length === 0 ? (
+          <CaptionText canLe="giua">
+            {nguon === 'da-luu' ? 'Chưa lưu món nào — qua trang chủ lưu món yêu thích' : nguon === 'cua-toi' ? 'Chưa có món nào — tạo món đầu tiên của bạn' : 'Không tìm thấy món'}
+          </CaptionText>
+        ) : (
+          danhSachNguon.map((ct) => (
             <Pressable
               key={ct.id}
               accessibilityRole="button"
@@ -71,37 +101,8 @@ function ChonMonChoNgay({
             >
               <BodyText soDongToiDa={1}>{ct.ten}</BodyText>
             </Pressable>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
-  const luuMon = () => {
-    if (!congThucChon || !ngay.trim()) return;
-    setLoiThem('');
-    themMon.mutate(
-      { congThucId: congThucChon, ngay: ngay.trim(), buoiAn: buoi, khauPhan },
-      { onSuccess: () => khiDong() },
-    );
-  };
-
-  return (
-    <BottomSheet hienThi tieuDe="Chọn món cho ngày" khiDong={khiDong}>
-      <HangChonNhanh tieuDe="Món đã lưu" ds={daLuu.data?.noiDung ?? []} />
-      <HangChonNhanh tieuDe="Món của tôi" ds={cuaToi.data?.noiDung ?? []} />
-      <ONhapLieu nhan="Tìm món" giaTri={tuKhoa} khiDoi={setTuKhoa} goiY="VD: phở bò" className="mt-3" />
-      <View className="mt-2">
-        {(goiY.data?.noiDung ?? []).map((ct) => (
-          <Pressable
-            key={ct.id}
-            accessibilityRole="button"
-            onPress={() => setCongThucChon(ct.id)}
-            className={`rounded-xl border px-3 py-2 ${congThucChon === ct.id ? 'border-primary bg-accent-light' : 'border-neutral-200'}`}
-          >
-            <BodyText soDongToiDa={1}>{ct.ten}</BodyText>
-          </Pressable>
-        ))}
+          ))
+        )}
       </View>
       <View className="mt-3">
         <DaiNgay ngayChon={ngay} khiChon={setNgay} tuNgay={ngayMacDinh} />
@@ -113,7 +114,7 @@ function ChonMonChoNgay({
         <TangGiamKhauPhan khauPhan={khauPhan} khiDoi={setKhauPhan} />
       </View>
       {loiThem ? <CaptionText className="mt-1 text-red-500">{loiThem}</CaptionText> : null}
-      {themMon.isError ? <CaptionText className="mt-1 text-red-500">Không thêm được, thử lại sau</CaptionText> : null}
+      {!congThucChon ? <CaptionText canLe="giua" className="mt-1">Hãy chọn 1 món ở trên rồi bấm Thêm món</CaptionText> : null}
       <NutBam
         tieuDe="Thêm món"
         voHieuHoa={!congThucChon || !ngay.trim()}
@@ -133,12 +134,21 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
   const xoaMon = useXoaMonKhoiKeHoach(keHoachId);
   const suaMon = useCapNhatMonTrongKeHoach(keHoachId);
   const [monMoiNgay, setMonMoiNgay] = useState<string | null>(null);
+  // BR-SHOP: Tick chọn từng ngày T2..CN, null nghĩa là chọn hết (cả tuần)
+  const [ngayDiCho, setNgayDiCho] = useState<string[] | null>(null);
 
   if (isLoading) return <TrangDangTai />;
   if (isError || !data) return <TrangLoi loi="Không tải được kế hoạch" />;
 
   const lichTuan = nhomMonTheoNgay(data.cacMon, data.ngayBatDau, data.ngayKetThuc);
   const tongKhauPhan = data.cacMon.reduce((s, m) => s + m.khauPhan, 0);
+  // BR-SHOP: Ngày tick đi chợ — null là chọn hết cả tuần
+  const tatCaNgay = lichTuan.map((n) => n.ngay);
+  const cacNgayDiCho = ngayDiCho ?? tatCaNgay;
+  const doiTickNgay = (ngay: string) => {
+    const hien = ngayDiCho ?? tatCaNgay;
+    setNgayDiCho(hien.includes(ngay) ? hien.filter((n) => n !== ngay) : [...hien, ngay]);
+  };
 
   return (
     <View>
@@ -156,12 +166,41 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
         ))}
       </View>
 
+      <CaptionText className="mt-3 font-semibold">Tick ngày đi chợ ({cacNgayDiCho.length}/{tatCaNgay.length})</CaptionText>
+      <View className="mt-2 flex-row flex-wrap gap-2">
+        {lichTuan.map((n) => {
+          const chon = cacNgayDiCho.includes(n.ngay);
+          return (
+            <Pressable
+              key={n.ngay}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: chon }}
+              onPress={() => doiTickNgay(n.ngay)}
+              className={`w-14 items-center rounded-2xl border px-1 py-2 ${chon ? 'border-primary bg-primary' : 'border-neutral-200 bg-white'}`}
+            >
+              <Text className={`text-[11px] font-semibold ${chon ? 'text-white' : 'text-neutral-500'}`}>
+                {tenThuTiengViet(n.ngay)}
+              </Text>
+              <Text className={`mt-0.5 text-sm font-bold ${chon ? 'text-white' : 'text-primary'}`}>
+                {dinhDangNgay(n.ngay).slice(0, 5)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <NutBam
-        tieuDe="Tạo danh sách đi chợ"
-        bienThe="vien"
+        tieuDe={`Đẩy ${cacNgayDiCho.length} ngày sang đi chợ`}
+        voHieuHoa={cacNgayDiCho.length === 0}
         dangTai={taoDiCho.isPending}
-        khiBam={() => taoDiCho.mutate(data.id, { onSuccess: () => khiDong() })}
-        className="mt-4"
+        khiBam={() => {
+          // BR-SHOP: Chọn hết thì gửi cả tuần (không kèm ngày), tick lẻ thì gửi đúng các ngày
+          const payload =
+            cacNgayDiCho.length === tatCaNgay.length
+              ? { mealPlanId: data.id }
+              : { mealPlanId: data.id, cacNgay: [...cacNgayDiCho].sort() };
+          taoDiCho.mutate(payload, { onSuccess: () => khiDong() });
+        }}
+        className="mt-2"
       />
       {taoDiCho.isError ? <CaptionText className="mt-1 text-red-500">Không tạo được danh sách đi chợ</CaptionText> : null}
 
@@ -352,8 +391,13 @@ export default function ManHinhKeHoachAn() {
         {dangTao ? (
           <View className="mt-3 rounded-3xl bg-white p-4 shadow-sm">
             <ONhapLieu nhan="Tên kế hoạch" giaTri={ten} khiDoi={(giaTri) => { setTen(giaTri); if (loiTao) setLoiTao(''); }} goiY="VD: Tuần 1" />
-            <ONhapLieu nhan="Từ ngày (YYYY-MM-DD)" giaTri={tuNgay} khiDoi={(giaTri) => { setTuNgay(giaTri); if (loiTao) setLoiTao(''); }} goiY="2026-09-01" className="mt-3" />
-            <ONhapLieu nhan="Đến ngày (YYYY-MM-DD)" giaTri={denNgay} khiDoi={(giaTri) => { setDenNgay(giaTri); if (loiTao) setLoiTao(''); }} goiY="2026-09-07" className="mt-3" />
+            <View className="mt-3">
+              <ChonKhoangNgay
+                tuNgay={tuNgay}
+                denNgay={denNgay}
+                khiDoi={(t, d) => { setTuNgay(t); setDenNgay(d); if (loiTao) setLoiTao(''); }}
+              />
+            </View>
             {loiTao ? <CaptionText className="mt-1 text-red-500">{loiTao}</CaptionText> : null}
             {taoMoi.isError ? <CaptionText className="mt-1 text-red-500">Không lưu được, thử lại sau</CaptionText> : null}
             <NutBam tieuDe="Lưu kế hoạch" khiBam={luuMoi} dangTai={taoMoi.isPending} className="mt-4" />
@@ -373,8 +417,13 @@ export default function ManHinhKeHoachAn() {
               {dangSuaId === keHoachId ? (
                 <View className="mt-2 rounded-3xl bg-white p-4 shadow-sm">
                   <ONhapLieu nhan="Tên kế hoạch" giaTri={suaTen} khiDoi={(giaTri) => { setSuaTen(giaTri); if (loiSua) setLoiSua(''); }} />
-                  <ONhapLieu nhan="Từ ngày (YYYY-MM-DD)" giaTri={suaTuNgay} khiDoi={(giaTri) => { setSuaTuNgay(giaTri); if (loiSua) setLoiSua(''); }} className="mt-3" />
-                  <ONhapLieu nhan="Đến ngày (YYYY-MM-DD)" giaTri={suaDenNgay} khiDoi={(giaTri) => { setSuaDenNgay(giaTri); if (loiSua) setLoiSua(''); }} className="mt-3" />
+                  <View className="mt-3">
+                    <ChonKhoangNgay
+                      tuNgay={suaTuNgay}
+                      denNgay={suaDenNgay}
+                      khiDoi={(t, d) => { setSuaTuNgay(t); setSuaDenNgay(d); if (loiSua) setLoiSua(''); }}
+                    />
+                  </View>
                   {loiSua ? <CaptionText className="mt-1 text-red-500">{loiSua}</CaptionText> : null}
                   <View className="mt-3 flex-row gap-2">
                     <NutBam tieuDe="Lưu" dangTai={capNhat.isPending} khiBam={luuSua} className="flex-1" />

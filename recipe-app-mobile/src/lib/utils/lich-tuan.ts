@@ -51,6 +51,19 @@ export function homNay(): string {
   return sangYyyyMmDd(new Date());
 }
 
+// BR-MEAL: Thứ Hai và Chủ nhật tuần này để preset khoảng khỏi gõ ngày
+export function dauTuanNay(): string {
+  const d = new Date();
+  const thu = d.getDay();
+  const lui = thu === 0 ? 6 : thu - 1;
+  d.setDate(d.getDate() - lui);
+  return sangYyyyMmDd(d);
+}
+
+export function cuoiTuanNay(): string {
+  return congNgay(dauTuanNay(), 6);
+}
+
 // BR-MEAL: Gợi ý buổi theo giờ hiện tại để khỏi chọn tay
 export function buoiGoiYTheoGio(gio = new Date().getHours()): string {
   if (gio < 10) return 'BREAKFAST';

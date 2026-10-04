@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -7,12 +7,12 @@ export const CAC_BUOI_AN = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] as const;
 export class MonMoiDto {
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', required: false })
     @IsOptional()
-    @IsString()
+    @IsUUID('4', { message: 'MEAL-00 congThucId không hợp lệ' })
     congThucId?: string;
 
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174001', required: false })
     @IsOptional()
-    @IsString()
+    @IsUUID('4', { message: 'MEAL-00 thamChieuId không hợp lệ' })
     thamChieuId?: string;
 
     @ApiProperty({ example: '2026-09-03' })

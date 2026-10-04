@@ -52,6 +52,14 @@ export class RatingsService {
     }
 
     async tomTat(recipeId: string) {
+        // BR-SOC-05: Chặn trả 0/0 cho id ma, báo 404 đúng Docs
+        const tonTai = await this.prisma.recipe.findFirst({
+            where: { id: recipeId, deletedAt: null },
+            select: { id: true },
+        });
+        if (!tonTai) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
         // BR-SOC: Tổng quan điểm + phân bổ 1-5 sao cho khối đánh giá
         const nhom = await this.prisma.rating.groupBy({
             by: ['score'],

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { tenTrangThai } from '@cook/shared';
 import { NutBam } from '../../components/ui/NutBam';
 import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../components/ui/TrangThai';
@@ -115,7 +116,7 @@ export function CongThucCuaToi() {
                   <Link to={`/cong-thuc/${ct.id}`} className="mt-1 block text-left font-serif text-xl font-bold text-ink">
                     {ct.ten}
                   </Link>
-                  <p className="mt-1 text-left text-xs text-muted">Trạng thái: {ct.trangThai}</p>
+                  <p className="mt-1 text-left text-xs text-muted">Trạng thái: {tenTrangThai(ct.trangThai)}</p>
                   <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
                     <Link to={`/cong-thuc/${ct.id}`} className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-mist py-2 text-sm font-semibold text-ink">
                       Xem chi tiết

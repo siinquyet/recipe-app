@@ -16,13 +16,6 @@ export interface ThamSoDanhSachCongThuc {
   size?: number;
   search?: string;
   tacGiaId?: string;
-  category?: string;
-  cuisine?: string;
-  diet?: string;
-  minCookTime?: number;
-  maxCookTime?: number;
-  servings?: number;
-  sort?: string;
 }
 
 export interface NguyenLieuMoi {
@@ -57,13 +50,6 @@ export async function layDanhSachCongThuc(
           size: thamSo.size ?? KICH_THUOC_TRANG_MAC_DINH,
           ...(thamSo.search ? { search: thamSo.search } : {}),
           ...(thamSo.tacGiaId ? { tacGiaId: thamSo.tacGiaId } : {}),
-          ...(thamSo.category ? { category: thamSo.category } : {}),
-          ...(thamSo.cuisine ? { cuisine: thamSo.cuisine } : {}),
-          ...(thamSo.diet ? { diet: thamSo.diet } : {}),
-          ...(thamSo.minCookTime !== undefined ? { minCookTime: thamSo.minCookTime } : {}),
-          ...(thamSo.maxCookTime !== undefined ? { maxCookTime: thamSo.maxCookTime } : {}),
-          ...(thamSo.servings !== undefined ? { servings: thamSo.servings } : {}),
-          ...(thamSo.sort ? { sort: thamSo.sort } : {}),
         },
       })
       .json<ApiResponse<DanhSachTrang<CongThuc>>>(),

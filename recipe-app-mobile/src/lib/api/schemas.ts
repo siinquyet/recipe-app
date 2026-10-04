@@ -25,7 +25,8 @@ export const nguoiDungSchema = z.object({
 
 export const nguyenLieuSchema = z.object({
   ten: z.string(),
-  dinhLuong: z.string(),
+  // BR-03: BE nhận number lúc tạo nhưng trả string lúc đọc (Decimal.toString)
+  dinhLuong: z.union([z.string(), z.number()]),
   donVi: z.string(),
 });
 
@@ -36,10 +37,11 @@ export const buocNauAnSchema = z.object({
 });
 
 export const dinhDuongSchema = z.object({
-  calo: z.number(),
-  protein: z.string(),
-  carb: z.string(),
-  chatBeo: z.string(),
+  calo: z.union([z.string(), z.number()]),
+  // BR-04: BE nhận number lúc tạo nhưng trả string lúc đọc (Decimal.toString)
+  protein: z.union([z.string(), z.number()]),
+  carb: z.union([z.string(), z.number()]),
+  chatBeo: z.union([z.string(), z.number()]),
 });
 
 export const congThucSchema = z.object({
@@ -109,7 +111,8 @@ export const monDiChoSchema = z.object({
   id: z.string(),
   nguyenLieuId: z.string().nullable(),
   tenGoc: z.string(),
-  dinhLuong: z.string(),
+  // BR-03: BE nhận number lúc tạo nhưng trả string lúc đọc (Decimal.toString)
+  dinhLuong: z.union([z.string(), z.number()]),
   donVi: z.string(),
   daChon: z.boolean(),
   thuTu: z.number(),

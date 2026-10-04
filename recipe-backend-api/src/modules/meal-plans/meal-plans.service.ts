@@ -191,13 +191,41 @@ export class MealPlansService {
     }
 
     async capNhatMon(userId: string, keHoachId: string, monId: string, dto: CapNhatMonDto) {
-        await this.layCuaNguoiDung(userId, keHoachId);
+        const plan = await this.layCuaNguoiDung(userId, keHoachId);
         const mon = await this.prisma.mealPlanItem.findFirst({
             where: { id: monId, mealPlanId: keHoachId },
-            select: { id: true },
+            select: { id: true, date: true, mealType: true },
         });
         if (!mon) {
             throw new NotFoundException({ code: 'MEAL-05', message: '[MEAL-05] Không tìm thấy món trong kế hoạch' });
+        }
+        const ngayMoi = dto.ngay !== undefined ? new Date(`${dto.ngay}T00:00:00`) : mon.date;
+        const buoiMoi = (dto.buoiAn ?? mon.mealType) as MealType;
+        // BR-MEAL: Chặn dời ngày ra ngoài khoảng kế hoạch (MEAL-06)
+        const batDau = new Date(plan.startDate);
+        batDau.setHours(0, 0, 0, 0);
+        const ketThuc = new Date(plan.endDate);
+        ketThuc.setHours(0, 0, 0, 0);
+        const ngayChuan = new Date(ngayMoi);
+        ngayChuan.setHours(0, 0, 0, 0);
+        if (ngayChuan < batDau || ngayChuan > ketThuc) {
+            throw new BadRequestException({
+                code: 'MEAL-06',
+                message: '[MEAL-06] Ngày ăn phải trong khoảng kế hoạch',
+            });
+        }
+        // BR-MEAL-04: Chặn đổi sang buổi đã có món (MEAL-07)
+        if (dto.ngay !== undefined || dto.buoiAn !== undefined) {
+            const trung = await this.prisma.mealPlanItem.findFirst({
+                where: { mealPlanId: keHoachId, date: ngayChuan, mealType: buoiMoi, NOT: { id: monId } },
+                select: { id: true },
+            });
+            if (trung) {
+                throw new BadRequestException({
+                    code: 'MEAL-07',
+                    message: '[MEAL-07] Buổi này đã có món, chọn buổi khác',
+                });
+            }
         }
         // BR-MEAL-04: Cho dời ngày/đổi buổi kèm khẩu phần
         await this.prisma.mealPlanItem.update({

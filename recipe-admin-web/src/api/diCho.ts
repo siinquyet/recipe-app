@@ -48,8 +48,12 @@ export async function chuyenTrangThaiMon(listId: string, itemId: string, daChon:
   return body.data;
 }
 
-export async function taoDiChoTuKeHoach(mealPlanId: string): Promise<DanhSachDiCho> {
-  const res = await userApiClient.post('/shopping-lists/generate-from-meal-plan', { mealPlanId });
+export async function taoDiChoTuKeHoach(mealPlanId: string, tuNgay?: string, denNgay?: string): Promise<DanhSachDiCho> {
+  const res = await userApiClient.post('/shopping-lists/generate-from-meal-plan', {
+    mealPlanId,
+    ...(tuNgay ? { tuNgay } : {}),
+    ...(denNgay ? { denNgay } : {}),
+  });
   const body = res.data as ApiEnvelope<DanhSachDiCho>;
   if (!body.success) throw nemLoi(body);
   return body.data;

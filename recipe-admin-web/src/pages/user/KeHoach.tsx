@@ -18,7 +18,7 @@ import {
   xoaKeHoachAn,
   xoaMonKhoiKeHoach,
 } from '../../api/keHoachAn';
-import { layDanhSachCongThucUser } from '../../api/congThuc';
+import { layDanhSachCongThucUser, layDanhSachYeuThichUser } from '../../api/congThuc';
 import { taoDiChoTuKeHoach } from '../../api/diCho';
 
 const TEN_BUOI: Record<string, string> = {
@@ -60,9 +60,11 @@ export function KeHoach() {
   // BR-MEAL: Thêm món — tìm công thức rồi chọn ngày + buổi + khẩu phần
   const [themNgay, setThemNgay] = useState('');
   const [tuKhoaMon, setTuKhoaMon] = useState('');
+  const [nguonMon, setNguonMon] = useState<'yeu-thich' | 'cua-toi'>('yeu-thich');
   const [congThucChon, setCongThucChon] = useState('');
   const [buoiChon, setBuoiChon] = useState<string>('LUNCH');
   const [khauPhanMoi, setKhauPhanMoi] = useState(2);
+  const [loiThemMon, setLoiThemMon] = useState('');
 
   const danhSach = useQuery({
     queryKey: ['user', 'meal-plans'],
@@ -75,8 +77,11 @@ export function KeHoach() {
     enabled: !!keHoachId,
   });
   const goiYMon = useQuery({
-    queryKey: ['user', 'recipes', 'goi-y-mon', tuKhoaMon],
-    queryFn: () => layDanhSachCongThucUser({ trang: 0, kichThuoc: 5, tuKhoa: tuKhoaMon || undefined }),
+    queryKey: ['user', 'recipes', 'goi-y-mon', nguonMon, tuKhoaMon],
+    queryFn: () =>
+      nguonMon === 'yeu-thich'
+        ? layDanhSachYeuThichUser(0, 50)
+        : layDanhSachCongThucUser({ trang: 0, kichThuoc: 5, tuKhoa: tuKhoaMon || undefined }),
     enabled: themNgay.length > 0,
   });
   const lamMoi = () => {
@@ -120,9 +125,15 @@ export function KeHoach() {
       setCongThucChon('');
       setTuKhoaMon('');
       setKhauPhanMoi(2);
+      setLoiThemMon('');
       queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan', keHoachId] });
     },
-    onError: () => alert('[MEAL-01] Không thêm được, thử lại'),
+    // BR-MEAL: Hiện mã thật MEAL-00/06/07 để biết thiếu field, ngoài khoảng hay trùng buổi
+    onError: (loi: unknown) => {
+      const ma = (loi as { code?: string })?.code;
+      const thongDiep = loi instanceof Error ? loi.message : '';
+      setLoiThemMon(thongDiep || (ma ? `[${ma}] Không thêm được` : '[MEAL-01] Không thêm được, thử lại'));
+    },
   });
   const suaKhauPhan = useMutation({
     mutationFn: ({ monId, khauPhan }: { monId: string; khauPhan: number }) =>
@@ -136,13 +147,16 @@ export function KeHoach() {
     onError: () => alert('[MEAL-01] Không xóa được, thử lại'),
   });
   const sinhDiCho = useMutation({
-    mutationFn: () => taoDiChoTuKeHoach(keHoachId),
+    mutationFn: ({ tuNgay, denNgay }: { tuNgay?: string; denNgay?: string }) =>
+      taoDiChoTuKeHoach(keHoachId, tuNgay, denNgay),
     onSuccess: (ds) => {
       queryClient.invalidateQueries({ queryKey: ['user', 'shopping'] });
       alert(`Đã tạo "${ds.ten}" — sang Đi chợ để xem!`);
     },
     onError: () => alert('[SHOP-01] Cần đăng nhập để tạo danh sách'),
   });
+  const [diChoTuNgay, setDiChoTuNgay] = useState('');
+  const [diChoDenNgay, setDiChoDenNgay] = useState('');
 
   const ngayTrongTuan = useMemo(() => {
     if (!chiTiet.data) return [];
@@ -212,7 +226,26 @@ export function KeHoach() {
             ))}
           </select>
           <NutBam tieuDe={dangTao ? 'Hủy' : '+ Mới'} bienThe="vien" khiBam={() => setDangTao((v) => !v)} />
-          <NutBam tieuDe="Tạo danh sách đi chợ" khiBam={() => keHoachId && sinhDiCho.mutate()} dangTai={sinhDiCho.isPending} />
+          <input
+            value={diChoTuNgay}
+            onChange={(e) => setDiChoTuNgay(e.target.value)}
+            placeholder="Từ ngày"
+            className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs outline-none"
+            aria-label="Đi chợ từ ngày"
+          />
+          <input
+            value={diChoDenNgay}
+            onChange={(e) => setDiChoDenNgay(e.target.value)}
+            placeholder="Đến ngày"
+            className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs outline-none"
+            aria-label="Đi chợ đến ngày"
+          />
+          <NutBam
+            tieuDe="Đi chợ ngày chọn"
+            khiBam={() => keHoachId && sinhDiCho.mutate({ tuNgay: diChoTuNgay.trim() || undefined, denNgay: diChoDenNgay.trim() || undefined })}
+            dangTai={sinhDiCho.isPending}
+          />
+          <NutBam tieuDe="Đi chợ cả tuần" bienThe="vien" khiBam={() => keHoachId && sinhDiCho.mutate({})} dangTai={sinhDiCho.isPending} />
         </div>
       </div>
 
@@ -365,13 +398,37 @@ export function KeHoach() {
                     )}
                     {dangThem ? (
                       <div className="rounded-xl border border-accent bg-white p-2">
+                        <div className="flex gap-1">
+                          {(
+                            [
+                              { ma: 'yeu-thich', nhan: 'Món yêu thích' },
+                              { ma: 'cua-toi', nhan: 'Món của tôi' },
+                            ] as const
+                          ).map((t) => (
+                            <button
+                              key={t.ma}
+                              type="button"
+                              onClick={() => {
+                                setNguonMon(t.ma);
+                                setCongThucChon('');
+                              }}
+                              className={`flex-1 rounded-lg px-2 py-1 text-[11px] font-semibold ${
+                                nguonMon === t.ma ? 'bg-ink text-white' : 'bg-mist text-slate-500'
+                              }`}
+                            >
+                              {t.nhan}
+                            </button>
+                          ))}
+                        </div>
                         <input
                           value={tuKhoaMon}
                           onChange={(e) => setTuKhoaMon(e.target.value)}
                           placeholder="Tìm món..."
-                          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none"
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none"
                         />
-                        {(goiYMon.data?.noiDung ?? []).map((ct) => (
+                        {(goiYMon.data?.noiDung ?? [])
+                          .filter((ct) => !tuKhoaMon.trim() || ct.ten.toLowerCase().includes(tuKhoaMon.trim().toLowerCase()))
+                          .map((ct) => (
                           <button
                             key={ct.id}
                             type="button"
@@ -429,12 +486,14 @@ export function KeHoach() {
                             onClick={() => {
                               setThemNgay('');
                               setCongThucChon('');
+                              setLoiThemMon('');
                             }}
                             className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs"
                           >
                             Hủy
                           </button>
                         </div>
+                        {loiThemMon ? <p className="mt-1 text-left text-xs text-red-600">{loiThemMon}</p> : null}
                       </div>
                     ) : (
                       <button

@@ -79,6 +79,14 @@ export class DanhMucService {
     }
 
     async xoaNhan(id: string) {
+        // BR-ADM: Chặn xóa nhãn đang gắn công thức để giữ liên kết
+        const dangDung = await this.prisma.recipe.count({ where: { tags: { some: { id } } } });
+        if (dangDung > 0) {
+            throw new ConflictException({
+                code: 'DUP-01',
+                message: '[DUP-01] Nhãn còn công thức, không xóa được',
+            });
+        }
         const xoa = await this.prisma.tag.deleteMany({ where: { id } });
         if (xoa.count === 0) {
             throw new NotFoundException({ code: 'NOT-01', message: '[NOT-01] Không tìm thấy nhãn' });

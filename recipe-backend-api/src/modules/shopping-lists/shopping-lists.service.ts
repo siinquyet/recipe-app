@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ShoppingListStatus } from '@prisma/client';
 import { aggregateQuantities, generateShoppingItems, scaleQuantity, type ScaledItem } from '@cook/shared';
 import { PrismaService } from '../../common/prisma.service';
@@ -167,7 +167,7 @@ export class ShoppingListsService {
 
     // BR-SHOP + BR-03/BR-04: Sinh món từ kế hoạch — scale từng món rồi gộp qua @cook/shared.
     // 500g + 1kg cùng nguyên liệu gộp thành 1500g thay vì 2 dòng.
-    async taoTuKeHoachAn(userId: string, mealPlanId: string) {
+    async taoTuKeHoachAn(userId: string, mealPlanId: string, tuNgay?: string, denNgay?: string, cacNgay?: string[]) {
         const plan = await this.prisma.mealPlan.findFirst({
             where: { id: mealPlanId, userId },
             include: {
@@ -185,8 +185,32 @@ export class ShoppingListsService {
         }
 
         const daScale: ScaledItem[] = [];
+        // BR-SHOP: Tick từng ngày thì lọc đúng các ngày đó, else lọc theo khoảng
+        const ngayChon = new Set((cacNgay ?? []).map((n) => n.slice(0, 10)));
+        const tu = tuNgay ? new Date(`${tuNgay}T00:00:00`) : null;
+        const den = denNgay ? new Date(`${denNgay}T00:00:00`) : null;
+        if (tu && den && tu > den) {
+            throw new BadRequestException({ code: 'SHOP-00', message: '[SHOP-00] Từ ngày phải trước đến ngày' });
+        }
         for (const item of plan.items) {
             if (!item.recipe) continue;
+            const ngayMon = new Date(item.date);
+            ngayMon.setHours(0, 0, 0, 0);
+            if (ngayChon.size > 0) {
+                const ma = `${ngayMon.getFullYear()}-${String(ngayMon.getMonth() + 1).padStart(2, '0')}-${String(ngayMon.getDate()).padStart(2, '0')}`;
+                if (!ngayChon.has(ma)) continue;
+            } else {
+            if (tu) {
+                const moc = new Date(tu);
+                moc.setHours(0, 0, 0, 0);
+                if (ngayMon < moc) continue;
+            }
+            if (den) {
+                const moc = new Date(den);
+                moc.setHours(0, 0, 0, 0);
+                if (ngayMon > moc) continue;
+            }
+            }
             for (const nl of item.recipe.ingredients) {
                 const kq = scaleQuantity(Number(nl.quantity), item.recipe.servings, item.servings);
                 daScale.push({

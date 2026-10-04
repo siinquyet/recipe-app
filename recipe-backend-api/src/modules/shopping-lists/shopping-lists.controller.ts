@@ -27,7 +27,7 @@ export class ShoppingListsController {
 
     @Post('generate-from-meal-plan')
     taoTuKeHoachAn(@Body() body: TaoTuKeHoachAnDto, @Req() req: { user: { id: string } }) {
-        return this.shoppingListsService.taoTuKeHoachAn(req.user.id, body.mealPlanId);
+        return this.shoppingListsService.taoTuKeHoachAn(req.user.id, body.mealPlanId, body.tuNgay, body.denNgay, body.cacNgay);
     }
 
     @Post('generate-from-recipe')

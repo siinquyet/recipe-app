@@ -8,6 +8,7 @@ import { chuyenThanhDuLieuThe } from '../src/components/recipe/DanhSachCongThuc'
 import { NutBam } from '../src/components/ui/NutBam';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../src/components/ui/VanBan';
+import { tenTrangThai } from '@cook/shared';
 import { useDanhSachCongThuc, useGuiDuyet } from '../src/hooks/useRecipes';
 import { useAuthStore } from '../src/stores/authStore';
 
@@ -55,7 +56,7 @@ export default function ManHinhCongThucCuaToi() {
               />
               <View className="mt-2 flex-row items-center justify-between">
                 <BodyText>
-                  Trạng thái: <CaptionText>{item.trangThai}</CaptionText>
+                  Trạng thái: <CaptionText>{tenTrangThai(item.trangThai)}</CaptionText>
                 </BodyText>
                 {item.trangThai === 'DRAFT' || item.trangThai === 'REJECTED' ? (
                   <NutBam

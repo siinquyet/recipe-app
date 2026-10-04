@@ -116,7 +116,6 @@ export default function ManHinhTrangChu() {
   const phoBien = useDanhSachCongThuc({
     page: 0,
     size: 6,
-    sort: 'rating:desc',
     ...(tuKhoaNhom ? { search: tuKhoaNhom } : {}),
   });
   const yeuThich = useDanhSachYeuThich(0, 100);

@@ -213,7 +213,15 @@ export function ChiTietCongThuc() {
   const queryClient = useQueryClient();
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
   const [tab, setTab] = useState<(typeof CAC_TAB)[number]>(CAC_TAB[0]);
-  const [khauPhanChon, setKhauPhanChon] = useState<number | null>(null);
+  const [khauPhanChon, setKhauPhanChon] = useState<number | null>(() => {
+    // BR-04: Mở lại đúng khẩu phần cá nhân đã lưu
+    try {
+      const v = id ? Number(localStorage.getItem(`canhan:${id}`)) : NaN;
+      return Number.isFinite(v) && v >= 1 ? v : null;
+    } catch {
+      return null;
+    }
+  });
   const [daChuanBi, setDaChuanBi] = useState<Record<string, boolean>>({});
   const [diem, setDiem] = useState(0);
   const [binhLuan, setBinhLuan] = useState('');
@@ -416,13 +424,22 @@ export function ChiTietCongThuc() {
               </button>
             ))}
             <label className="ml-auto flex items-center gap-2 text-sm text-slate-500">
-              Khẩu phần
+              Cá nhân hóa khẩu phần
               <select
                 value={khauPhanHien}
-                onChange={(e) => setKhauPhanChon(Number(e.target.value))}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setKhauPhanChon(v);
+                  // BR-04: Nhớ khẩu phần riêng từng món để lần sau + đi chợ dùng đúng
+                  try {
+                    localStorage.setItem(`canhan:${id}`, String(v));
+                  } catch {
+                    /* bỏ qua */
+                  }
+                }}
                 className="rounded-full border border-slate-300 bg-white px-3 py-1.5 font-semibold text-ink"
               >
-                {[2, 4, 6, 8].map((k) => (
+                {[1, 2, 4, 6, 8].map((k) => (
                   <option key={k} value={k}>
                     {k} người
                   </option>

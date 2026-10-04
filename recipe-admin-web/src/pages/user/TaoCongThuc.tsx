@@ -4,6 +4,7 @@ import { Dialog } from '@headlessui/react';
 import { CheckCircleIcon, PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { NutBam } from '../../components/ui/NutBam';
 import { ONhapLieu } from '../../components/ui/ONhapLieu';
+import { DinhLuong } from '../../components/ui/DinhLuong';
 import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { CaptionText } from '../../components/ui/VanBan';
 import { layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
@@ -13,7 +14,7 @@ const CAC_BUOC = ['Thông tin & Ảnh bìa', 'Nguyên liệu & Định lượng'
 
 interface DongNguyenLieu {
   ten: string;
-  dinhLuong: string;
+  dinhLuong: number;
   donVi: string;
 }
 
@@ -32,7 +33,7 @@ export function TaoCongThuc() {
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
   const [thoiGianNau, setThoiGianNau] = useState('30');
   const [khauPhan, setKhauPhan] = useState('2');
-  const [nguyenLieu, setNguyenLieu] = useState<DongNguyenLieu[]>([{ ten: '', dinhLuong: '', donVi: 'g' }]);
+  const [nguyenLieu, setNguyenLieu] = useState<DongNguyenLieu[]>([{ ten: '', dinhLuong: 0, donVi: 'g' }]);
   const [cacBuoc, setCacBuoc] = useState<string[]>(['']);
   const [calo, setCalo] = useState('');
   const [moModal, setMoModal] = useState(false);
@@ -49,7 +50,7 @@ export function TaoCongThuc() {
     }
   };
 
-  const doiNguyenLieu = (i: number, khoa: keyof DongNguyenLieu, giaTri: string) => {
+  const doiNguyenLieu = (i: number, khoa: keyof DongNguyenLieu, giaTri: string | number) => {
     setNguyenLieu((cu) => cu.map((d, j) => (j === i ? { ...d, [khoa]: giaTri } : d)));
   };
 
@@ -134,19 +135,11 @@ export function TaoCongThuc() {
                     className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
                     aria-label={`Nguyên liệu ${i + 1}`}
                   />
-                  <input
-                    value={d.dinhLuong}
-                    onChange={(e) => doiNguyenLieu(i, 'dinhLuong', e.target.value)}
-                    placeholder="500"
-                    className="w-20 rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
-                    aria-label="Định lượng"
-                  />
-                  <input
-                    value={d.donVi}
-                    onChange={(e) => doiNguyenLieu(i, 'donVi', e.target.value)}
-                    placeholder="g"
-                    className="w-16 rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
-                    aria-label="Đơn vị"
+                  <DinhLuong
+                    giaTri={typeof d.dinhLuong === 'number' ? d.dinhLuong : parseFloat(String(d.dinhLuong).replace(',', '.')) || 0}
+                    khiDoi={(v) => doiNguyenLieu(i, 'dinhLuong', v)}
+                    donVi={d.donVi}
+                    khiDoiDonVi={(v) => doiNguyenLieu(i, 'donVi', v)}
                   />
                   <button
                     type="button"
@@ -160,7 +153,7 @@ export function TaoCongThuc() {
               ))}
               <button
                 type="button"
-                onClick={() => setNguyenLieu((cu) => [...cu, { ten: '', dinhLuong: '', donVi: 'g' }])}
+                onClick={() => setNguyenLieu((cu) => [...cu, { ten: '', dinhLuong: 0, donVi: 'g' }])}
                 className="mt-3 flex items-center gap-1 text-sm font-semibold text-deepteal"
               >
                 <PlusIcon className="h-4 w-4" /> Thêm nguyên liệu mới

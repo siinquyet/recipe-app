@@ -1,13 +1,13 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { RatingsService } from './ratings.service';
 import { TaoDanhGiaDto } from './dto/rating.dto';
-import { JwtAuthGuard } from '../../common/jwt-auth.guard';
+import { JwtAuthGuard, OptionalJwtGuard } from '../../common/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
 @Controller('recipes/:recipeId/rating')
 export class RatingsController {
     constructor(private readonly ratingsService: RatingsService) {}
 
+    @UseGuards(JwtAuthGuard)
     @Post()
     danhGia(
         @Param('recipeId') recipeId: string,
@@ -17,6 +17,7 @@ export class RatingsController {
         return this.ratingsService.danhGia(req.user.id, recipeId, dto);
     }
 
+    @UseGuards(OptionalJwtGuard)
     @Get('summary')
     tomTat(@Param('recipeId') recipeId: string) {
         return this.ratingsService.tomTat(recipeId);

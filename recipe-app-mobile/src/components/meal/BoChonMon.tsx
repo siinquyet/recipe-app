@@ -4,7 +4,7 @@ import { Minus, Plus } from 'lucide-react-native';
 import { Chip } from '../ui/Chip';
 import { BodyText, CaptionText } from '../ui/VanBan';
 import { CAC_BUOI_AN } from '../../lib/utils/lich-tuan';
-import { congNgay, homNay, nhanThuNgan } from '../../lib/utils/lich-tuan';
+import { congNgay, cuoiTuanNay, dauTuanNay, homNay, nhanThuNgan } from '../../lib/utils/lich-tuan';
 import { dinhDangNgay } from '../../lib/utils/dinh-dang';
 
 interface DaiNgayProps {
@@ -12,16 +12,17 @@ interface DaiNgayProps {
   khiChon: (ngay: string) => void;
   soNgay?: number;
   tuNgay?: string;
+  nhan?: string;
 }
 
 // BR-MEAL: Dải ngày bấm ngang 14 ngày — khỏi gõ YYYY-MM-DD
-export const DaiNgay: FC<DaiNgayProps> = ({ ngayChon, khiChon, soNgay = 14, tuNgay }) => {
+export const DaiNgay: FC<DaiNgayProps> = ({ ngayChon, khiChon, soNgay = 14, tuNgay, nhan = 'Ngày ăn' }) => {
   const homNayStr = homNay();
   const moc = tuNgay && tuNgay.length > 0 ? tuNgay : homNayStr;
   const cacNgay = Array.from({ length: soNgay }, (_, i) => congNgay(moc, i));
   return (
     <View>
-      <CaptionText className="font-semibold">Ngày ăn</CaptionText>
+      <CaptionText className="font-semibold">{nhan}</CaptionText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
         <View className="flex-row gap-2">
           {cacNgay.map((ngay) => {
@@ -67,6 +68,35 @@ export const ChonBuoiAn: FC<ChonBuoiAnProps> = ({ buoiChon, khiChon }) => (
     </View>
   </View>
 );
+
+interface ChonKhoangNgayProps {
+  tuNgay: string;
+  denNgay: string;
+  khiDoi: (tuNgay: string, denNgay: string) => void;
+}
+
+// BR-MEAL: Chọn khoảng bằng preset + dải bấm — khỏi gõ YYYY-MM-DD
+export const ChonKhoangNgay: FC<ChonKhoangNgayProps> = ({ tuNgay, denNgay, khiDoi }) => {
+  const datTuanNay = () => khiDoi(dauTuanNay(), cuoiTuanNay());
+  const dat7NgayToi = () => khiDoi(homNay(), congNgay(homNay(), 6));
+  return (
+    <View>
+      <View className="flex-row gap-2">
+        <Chip nhan="Tuần này (T2–CN)" chon={false} khiBam={datTuanNay} />
+        <Chip nhan="7 ngày tới" chon={false} khiBam={dat7NgayToi} />
+      </View>
+      <View className="mt-2">
+        <DaiNgay nhan="Từ ngày" ngayChon={tuNgay} khiChon={(n) => khiDoi(n, denNgay < n ? n : denNgay)} soNgay={14} />
+      </View>
+      <View className="mt-2">
+        <DaiNgay nhan="Đến ngày" ngayChon={denNgay} khiChon={(n) => khiDoi(tuNgay > n ? n : tuNgay, n)} soNgay={14} />
+      </View>
+      <CaptionText className="mt-1">
+        {tuNgay && denNgay ? `Từ ${dinhDangNgay(tuNgay)} đến ${dinhDangNgay(denNgay)}` : 'Bấm chọn ngày bắt đầu và kết thúc'}
+      </CaptionText>
+    </View>
+  );
+};
 
 interface TangGiamKhauPhanProps {
   khauPhan: number;

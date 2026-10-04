@@ -128,7 +128,17 @@ export function useTaoDanhSachDiCho() {
 export function useTaoTuKeHoachAn() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (mealPlanId: string) => taoTuKeHoachAn(mealPlanId),
+    mutationFn: ({
+      mealPlanId,
+      tuNgay,
+      denNgay,
+      cacNgay,
+    }: {
+      mealPlanId: string;
+      tuNgay?: string;
+      denNgay?: string;
+      cacNgay?: string[];
+    }) => taoTuKeHoachAn(mealPlanId, tuNgay, denNgay, cacNgay),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['danh-sach-di-cho'] }),
   });
 }

@@ -51,13 +51,13 @@ export default function ManHinhTimKiem() {
 
   // BR-UI: Thời gian chọn tay thắng độ khó; chưa chọn thời gian thì dùng ngưỡng độ khó
   const gioiHanDoKho = doKhoChon && thoiGianChon === null ? DO_KHO_SANG_PHUT[doKhoChon] : {};
+  const gioiHanThoiGian = thoiGianChon ?? gioiHanDoKho.maxCookTime ?? gioiHanDoKho.minCookTime;
+  const chiChieuTren = gioiHanDoKho.maxCookTime !== undefined || thoiGianChon !== null;
+  // BR-REC: BE chỉ lọc page/size/search/tacGiaId, các filter còn lại lọc client-side ở ketQua
   const thamSo: ThamSoDanhSachCongThuc = {
     page: trang,
     size: KICH_THUOC_TRANG,
     ...(tuKhoaTre.length > 0 ? { search: tuKhoaTre } : {}),
-    ...(kieuAnChon ? { diet: kieuAnChon } : {}),
-    ...(thoiGianChon ? { maxCookTime: thoiGianChon } : gioiHanDoKho),
-    ...(khauPhanChon ? { servings: khauPhanChon } : {}),
   };
   const { data, isLoading, isFetching, isError, error, refetch } = useDanhSachCongThuc(thamSo);
 
@@ -80,10 +80,25 @@ export default function ManHinhTimKiem() {
   }, [data, trang]);
 
   const ketQua = useMemo(() => {
-    const ds = [...tichLuy];
+    let ds = [...tichLuy];
+    // BR-REC: Lọc client-side vì BE chưa hỗ trợ diet/thời gian/khẩu phần
+    if (kieuAnChon) {
+      const tu = kieuAnChon.toLowerCase();
+      ds = ds.filter(
+        (ct) =>
+          ct.ten.toLowerCase().includes(tu) ||
+          (ct.moTa ?? '').toLowerCase().includes(tu),
+      );
+    }
+    if (gioiHanThoiGian !== undefined) {
+      ds = ds.filter((ct) =>
+        chiChieuTren ? ct.thoiGianNauPhut <= gioiHanThoiGian : ct.thoiGianNauPhut >= gioiHanThoiGian,
+      );
+    }
+    if (khauPhanChon) ds = ds.filter((ct) => ct.khauPhan >= khauPhanChon);
     if (sapXep === 'nhanh') ds.sort((a, b) => a.thoiGianNauPhut - b.thoiGianNauPhut);
     return ds;
-  }, [tichLuy, sapXep]);
+  }, [tichLuy, sapXep, kieuAnChon, gioiHanThoiGian, chiChieuTren, khauPhanChon]);
 
   const goiY = ketQua.slice(0, 3);
   const tongSo = data?.tongSoPhanTu ?? 0;

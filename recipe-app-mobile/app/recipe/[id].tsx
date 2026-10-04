@@ -60,12 +60,12 @@ const TheThongTin: FC<{ nhan: string; giaTri: string; Icon: LucideIcon }> = ({ n
 // BR-04: Scaled Quantity = Original Quantity × (Khẩu phần chọn / Khẩu phần gốc)
 const HangNguyenLieu: FC<{
   ten: string;
-  dinhLuong: string;
+  dinhLuong: string | number;
   donVi: string;
   tiLe: number;
 }> = ({ ten, dinhLuong, donVi, tiLe }) => {
-  const goc = parseVn(dinhLuong) || 0;
-  const daQuyDoi = goc > 0 ? formatVn(Math.round(goc * tiLe * 10) / 10) : dinhLuong;
+  const goc = parseVn(String(dinhLuong)) || 0;
+  const daQuyDoi = goc > 0 ? formatVn(Math.round(goc * tiLe * 10) / 10) : String(dinhLuong);
   return (
     <View className="flex-row items-center justify-between border-b border-neutral-100 py-3">
       <View className="h-10 w-10 items-center justify-center rounded-xl bg-cream">
@@ -261,7 +261,21 @@ export default function ManHinhChiTietCongThuc() {
     Share.share({ message: `${data.ten}${data.moTa ? ` — ${data.moTa}` : ''}` }).catch(() => {});
   };
   // BR-04: Khẩu phần người xem chọn để quy đổi định lượng (mặc định = khẩu phần gốc)
+  // Cá nhân hóa: nhớ riêng từng món qua SecureStore để đi chợ dùng đúng
   const [khauPhanChon, setKhauPhanChon] = useState<number | null>(null);
+  useEffect(() => {
+    import('expo-secure-store')
+      .then((m) => m.getItemAsync(`canhan:${maCongThuc}`))
+      .then((v) => {
+        const so = Number(v);
+        if (Number.isFinite(so) && so >= 1) setKhauPhanChon(so);
+      })
+      .catch(() => {});
+  }, [maCongThuc]);
+  const doiKhauPhanCaNhan = (v: number) => {
+    setKhauPhanChon(v);
+    import('expo-secure-store').then((m) => m.setItemAsync(`canhan:${maCongThuc}`, String(v)).catch(() => {}));
+  };
 
   const [themVaoKeHoach, setThemVaoKeHoach] = useState(false);
   const [keHoachChon, setKeHoachChon] = useState('');
@@ -326,7 +340,7 @@ export default function ManHinhChiTietCongThuc() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Giảm khẩu phần"
-            onPress={() => setKhauPhanChon(Math.max(1, khauPhanHienTai - 1))}
+            onPress={() => doiKhauPhanCaNhan(Math.max(1, khauPhanHienTai - 1))}
             className="h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-white"
           >
             <Minus size={15} color={MAU_SAC.MUC} />
@@ -337,7 +351,7 @@ export default function ManHinhChiTietCongThuc() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Tăng khẩu phần"
-            onPress={() => setKhauPhanChon(Math.min(20, khauPhanHienTai + 1))}
+            onPress={() => doiKhauPhanCaNhan(Math.min(20, khauPhanHienTai + 1))}
             className="h-8 w-8 items-center justify-center rounded-full bg-primary"
           >
             <Plus size={15} color="#fff" />
@@ -384,15 +398,15 @@ export default function ManHinhChiTietCongThuc() {
           </View>
           <View className="mt-1 flex-row justify-between">
             <CaptionText>Protein</CaptionText>
-            <NumberDisplay value={parseFloat(data.dinhDuong.protein)} unit="g" className="text-sm" />
+            <NumberDisplay value={parseFloat(String(data.dinhDuong.protein))} unit="g" className="text-sm" />
           </View>
           <View className="mt-1 flex-row justify-between">
             <CaptionText>Carb</CaptionText>
-            <NumberDisplay value={parseFloat(data.dinhDuong.carb)} unit="g" className="text-sm" />
+            <NumberDisplay value={parseFloat(String(data.dinhDuong.carb))} unit="g" className="text-sm" />
           </View>
           <View className="mt-1 flex-row justify-between">
             <CaptionText>Chất béo</CaptionText>
-            <NumberDisplay value={parseFloat(data.dinhDuong.chatBeo)} unit="g" className="text-sm" />
+            <NumberDisplay value={parseFloat(String(data.dinhDuong.chatBeo))} unit="g" className="text-sm" />
           </View>
         </View>
       ) : null}

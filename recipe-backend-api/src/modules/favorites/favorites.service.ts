@@ -33,9 +33,16 @@ export class FavoritesService {
     }
 
     async xoaYeuThich(userId: string, recipeId: string) {
-        await this.prisma.favorite.deleteMany({
+        const xoa = await this.prisma.favorite.deleteMany({
             where: { userId, recipeId },
         });
+        // BR-SOC-01: Báo đúng khi chưa từng thích thay vì luôn daXoa:true
+        if (xoa.count === 0) {
+            throw new NotFoundException({
+                code: 'FAV-02',
+                message: '[FAV-02] Chưa yêu thích công thức này',
+            });
+        }
         return { daXoa: true };
     }
 

@@ -1,4 +1,4 @@
-import { IsArray, IsInt, IsNumber, IsString, MinLength, MaxLength, Min, IsOptional, IsIn, IsBoolean, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsInt, IsNumber, IsString, Matches, MinLength, MaxLength, Min, IsOptional, IsIn, IsBoolean, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -49,13 +49,31 @@ export class SuaMonDiChoDto {
 
 export class TaoTuKeHoachAnDto {
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
-    @IsString({ message: 'SHOP-00 mealPlanId không hợp lệ' })
+    @IsUUID('4', { message: 'SHOP-00 mealPlanId không hợp lệ' })
     mealPlanId!: string;
+
+    // BR-SHOP: Chọn ngày hoặc cả tuần — trống nghĩa là cả kế hoạch
+    @ApiProperty({ example: '2026-09-01', required: false })
+    @IsOptional()
+    @IsDateString({}, { message: 'SHOP-00 tuNgay không hợp lệ (YYYY-MM-DD)' })
+    tuNgay?: string;
+
+    @ApiProperty({ example: '2026-09-07', required: false })
+    @IsOptional()
+    @IsDateString({}, { message: 'SHOP-00 denNgay không hợp lệ (YYYY-MM-DD)' })
+    denNgay?: string;
+
+    // BR-SHOP: Tick chọn từng ngày T2..CN — trống nghĩa là cả kế hoạch
+    @ApiProperty({ example: ['2026-09-01', '2026-09-03'], required: false })
+    @IsOptional()
+    @IsArray({ message: 'SHOP-00 cacNgay phải là mảng ngày' })
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, { each: true, message: 'SHOP-00 cacNgay chứa ngày không hợp lệ (YYYY-MM-DD)' })
+    cacNgay?: string[];
 }
 
 export class TaoTuCongThucDto {
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
-    @IsString({ message: 'SHOP-00 congThucId không hợp lệ' })
+    @IsUUID('4', { message: 'SHOP-00 congThucId không hợp lệ' })
     congThucId!: string;
 
     @ApiProperty({ example: 4, required: false })
@@ -83,7 +101,7 @@ export class MonMoiDto {
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsString()
+    @IsUUID('4', { message: 'SHOP-00 nguyenLieuId không hợp lệ' })
     nguyenLieuId?: string;
 }
 
@@ -102,7 +120,7 @@ export class TaoDanhSachDiChoDto {
 
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', required: false })
     @IsOptional()
-    @IsString()
+    @IsUUID('4', { message: 'SHOP-00 nguonId không hợp lệ' })
     nguonId?: string;
 
     @ApiProperty({ type: [MonMoiDto], required: false })

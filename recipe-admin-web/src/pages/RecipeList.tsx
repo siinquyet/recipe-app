@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { formatVn } from '@cook/shared';
+import { formatVn, tenTrangThai } from '@cook/shared';
 import { anBai, hienBai, layTatCaBai } from '../api/admin';
 
 const KICH_THUOC = 20;
@@ -50,7 +50,7 @@ export function RecipeList() {
               trangThai === tt ? 'bg-ink text-white' : 'bg-white text-slate-600'
             }`}
           >
-            {tt === '' ? 'Tất cả' : tt}
+            {tt === '' ? 'Tất cả' : tenTrangThai(tt)}
           </button>
         ))}
       </div>
@@ -76,7 +76,7 @@ export function RecipeList() {
               </td>
               <td className="number-vn border p-2">{formatVn(ct.thoiGianNauPhut)}</td>
               <td className="number-vn border p-2">{formatVn(ct.khauPhan)}</td>
-              <td className="border p-2 text-left">{ct.trangThai}</td>
+              <td className="border p-2 text-left">{tenTrangThai(ct.trangThai)}</td>
               <td className="border p-2 text-left">{format(new Date(ct.ngayTao), 'dd/MM/yyyy')}</td>
               <td className="border p-2">
                 {ct.trangThai === 'HIDDEN' ? (

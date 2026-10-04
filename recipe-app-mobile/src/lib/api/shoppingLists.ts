@@ -36,10 +36,22 @@ export async function layChiTietDanhSachDiCho(id: string): Promise<DanhSachDiCho
 }
 
 // BR-SHOP + BR-03/BR-04: Sinh danh sách đi chợ từ kế hoạch ăn (server gộp + scale)
-export async function taoTuKeHoachAn(mealPlanId: string): Promise<DanhSachDiCho> {
+export async function taoTuKeHoachAn(
+  mealPlanId: string,
+  tuNgay?: string,
+  denNgay?: string,
+  cacNgay?: string[],
+): Promise<DanhSachDiCho> {
   const duLieu = await goiApi(
     apiClient
-      .post('shopping-lists/generate-from-meal-plan', { json: { mealPlanId } })
+      .post('shopping-lists/generate-from-meal-plan', {
+        json: {
+          mealPlanId,
+          ...(tuNgay ? { tuNgay } : {}),
+          ...(denNgay ? { denNgay } : {}),
+          ...(cacNgay && cacNgay.length > 0 ? { cacNgay } : {}),
+        },
+      })
       .json<ApiResponse<DanhSachDiCho>>(),
   );
   return danhSachDiChoSchema.parse(duLieu);

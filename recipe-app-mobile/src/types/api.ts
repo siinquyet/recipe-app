@@ -29,7 +29,8 @@ export interface NguoiDung {
 
 export interface NguyenLieuCongThuc {
   ten: string;
-  dinhLuong: string;
+  // BR-03: BE nhận number lúc tạo nhưng trả string lúc đọc (Decimal.toString)
+  dinhLuong: string | number;
   donVi: string;
 }
 
@@ -40,10 +41,10 @@ export interface BuocNauAn {
 }
 
 export interface DinhDuong {
-  calo: number;
-  protein: string;
-  carb: string;
-  chatBeo: string;
+  calo: string | number;
+  protein: string | number;
+  carb: string | number;
+  chatBeo: string | number;
 }
 
 export interface CongThuc {
@@ -106,7 +107,7 @@ export interface MonTrongDanhSachDiCho {
   id: string;
   nguyenLieuId: string | null;
   tenGoc: string;
-  dinhLuong: string;
+  dinhLuong: string | number;
   donVi: string;
   daChon: boolean;
   thuTu: number;

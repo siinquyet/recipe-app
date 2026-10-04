@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import { ChevronLeft, Minus, Plus } from 'lucide-react-native';
 import { NutBam } from '../../src/components/ui/NutBam';
+import { DinhLuong } from '../../src/components/ui/DinhLuong';
 import { ONhapLieu } from '../../src/components/ui/ONhapLieu';
 import { TrangDangTai } from '../../src/components/ui/TrangThai';
 import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan';
@@ -123,7 +124,7 @@ export default function ManHinhTaoCongThuc() {
         khauPhan: chiTiet.data.khauPhan,
         nguyenLieu: chiTiet.data.nguyenLieu.map((nl) => ({
           ten: nl.ten,
-          dinhLuong: parseFloat(nl.dinhLuong) || 0,
+          dinhLuong: parseFloat(String(nl.dinhLuong)) || 0,
           donVi: nl.donVi,
         })),
         cacBuoc: chiTiet.data.cacBuoc.map((b) => ({ noiDung: b.noiDung })),
@@ -223,46 +224,24 @@ export default function ManHinhTaoCongThuc() {
                 <ONhapLieu nhan={`Tên #${i + 1}`} giaTri={value} khiDoi={onChange} loi={errors.nguyenLieu?.[i]?.ten?.message} />
               )}
             />
-            <View className="mt-2 flex-row gap-2">
-              <View className="flex-1">
-                <Controller
-                  control={control}
-                  name={`nguyenLieu.${i}.dinhLuong`}
-                  render={({ field: { value, onChange } }) => (
-                    <ONhapLieu nhan="Định lượng" giaTri={String(value)} khiDoi={(v) => onChange(parseFloat(v.replace(',', '.')) || 0)} banPhim="decimal-pad" loi={errors.nguyenLieu?.[i]?.dinhLuong?.message} />
-                  )}
-                />
-              </View>
-              <View className="flex-1">
-                <Controller
-                  control={control}
-                  name={`nguyenLieu.${i}.donVi`}
-                  render={({ field: { value, onChange } }) => (
-                    <ONhapLieu nhan="Đơn vị" giaTri={value} khiDoi={onChange} goiY="g, ml..." />
-                  )}
-                />
-              </View>
+            <View className="mt-2">
+              <Controller
+                control={control}
+                name={`nguyenLieu.${i}.dinhLuong`}
+                render={({ field: { value, onChange } }) => (
+                  <Controller
+                    control={control}
+                    name={`nguyenLieu.${i}.donVi`}
+                    render={({ field: { value: dv, onChange: doiDv } }) => (
+                      <DinhLuong giaTri={value} khiDoi={onChange} donVi={dv} khiDoiDonVi={doiDv} />
+                    )}
+                  />
+                )}
+              />
+              {errors.nguyenLieu?.[i]?.dinhLuong?.message ? (
+                <CaptionText className="mt-1 text-red-600">{errors.nguyenLieu?.[i]?.dinhLuong?.message}</CaptionText>
+              ) : null}
             </View>
-            <Controller
-              control={control}
-              name={`nguyenLieu.${i}.donVi`}
-              render={({ field: { value, onChange } }) => (
-                <View className="mt-2 flex-row flex-wrap gap-1.5">
-                  {DON_VI_NHANH.map((dv) => (
-                    <Pressable
-                      key={dv}
-                      accessibilityRole="button"
-                      onPress={() => onChange(dv)}
-                      className={`rounded-full px-2.5 py-1 ${value === dv ? 'bg-primary' : 'bg-white'}`}
-                    >
-                      <Text className={`text-xs ${value === dv ? 'font-semibold text-white' : 'text-neutral-600'}`}>
-                        {dv}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            />
             {dsNguyenLieu.fields.length > 1 ? (
               <NutBam tieuDe="Xóa" bienThe="mo" khiBam={() => dsNguyenLieu.remove(i)} className="mt-1 self-end px-2 py-1" />
             ) : null}
