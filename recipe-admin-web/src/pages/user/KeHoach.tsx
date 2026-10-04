@@ -8,6 +8,7 @@ import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../components/ui/TrangThai';
 import { CaptionText } from '../../components/ui/VanBan';
 import { layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
+import { ChonKhoangNgay } from '../../components/ui/ChonKhoangNgay';
 import {
   capNhatKeHoachAn,
   capNhatMonTrongKeHoach,
@@ -147,16 +148,16 @@ export function KeHoach() {
     onError: () => alert('[MEAL-01] Không xóa được, thử lại'),
   });
   const sinhDiCho = useMutation({
-    mutationFn: ({ tuNgay, denNgay }: { tuNgay?: string; denNgay?: string }) =>
-      taoDiChoTuKeHoach(keHoachId, tuNgay, denNgay),
+    mutationFn: ({ cacNgay }: { cacNgay?: string[] }) =>
+      taoDiChoTuKeHoach(keHoachId, undefined, undefined, cacNgay),
     onSuccess: (ds) => {
       queryClient.invalidateQueries({ queryKey: ['user', 'shopping'] });
       alert(`Đã tạo "${ds.ten}" — sang Đi chợ để xem!`);
     },
     onError: () => alert('[SHOP-01] Cần đăng nhập để tạo danh sách'),
   });
-  const [diChoTuNgay, setDiChoTuNgay] = useState('');
-  const [diChoDenNgay, setDiChoDenNgay] = useState('');
+  // BR-SHOP: Tick chọn từng ngày T2..CN, null nghĩa là chọn hết (cả tuần)
+  const [ngayDiChoTick, setNgayDiChoTick] = useState<string[] | null>(null);
 
   const ngayTrongTuan = useMemo(() => {
     if (!chiTiet.data) return [];
@@ -215,7 +216,10 @@ export function KeHoach() {
         <div className="flex items-center gap-2">
           <select
             value={keHoachId}
-            onChange={(e) => setKeHoachChon(e.target.value)}
+            onChange={(e) => {
+              setKeHoachChon(e.target.value);
+              setNgayDiChoTick(null);
+            }}
             className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-ink"
             aria-label="Chọn kế hoạch"
           >
@@ -226,27 +230,51 @@ export function KeHoach() {
             ))}
           </select>
           <NutBam tieuDe={dangTao ? 'Hủy' : '+ Mới'} bienThe="vien" khiBam={() => setDangTao((v) => !v)} />
-          <input
-            value={diChoTuNgay}
-            onChange={(e) => setDiChoTuNgay(e.target.value)}
-            placeholder="Từ ngày"
-            className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs outline-none"
-            aria-label="Đi chợ từ ngày"
-          />
-          <input
-            value={diChoDenNgay}
-            onChange={(e) => setDiChoDenNgay(e.target.value)}
-            placeholder="Đến ngày"
-            className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs outline-none"
-            aria-label="Đi chợ đến ngày"
-          />
-          <NutBam
-            tieuDe="Đi chợ ngày chọn"
-            khiBam={() => keHoachId && sinhDiCho.mutate({ tuNgay: diChoTuNgay.trim() || undefined, denNgay: diChoDenNgay.trim() || undefined })}
-            dangTai={sinhDiCho.isPending}
-          />
-          <NutBam tieuDe="Đi chợ cả tuần" bienThe="vien" khiBam={() => keHoachId && sinhDiCho.mutate({})} dangTai={sinhDiCho.isPending} />
         </div>
+        {/* BR-SHOP: Tick chọn từng ngày T2..CN rồi đẩy định lượng sang đi chợ */}
+        {chiTiet.data ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {ngayTrongTuan.map((ngay) => {
+              const iso = format(ngay, 'yyyy-MM-dd');
+              const tatCa = ngayTrongTuan.map((d) => format(d, 'yyyy-MM-dd'));
+              const dangChon = ngayDiChoTick ?? tatCa;
+              const chon = dangChon.includes(iso);
+              const nhanThu = ngay.getDay() === 0 ? 'CN' : `T${ngay.getDay() + 1}`;
+              return (
+                <button
+                  key={iso}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={chon}
+                  onClick={() =>
+                    setNgayDiChoTick(dangChon.includes(iso) ? dangChon.filter((n) => n !== iso) : [...dangChon, iso])
+                  }
+                  className={`rounded-2xl border px-2.5 py-1.5 text-xs font-semibold ${
+                    chon ? 'border-ink bg-ink text-white' : 'border-slate-300 bg-white text-slate-500'
+                  }`}
+                >
+                  {nhanThu} {format(ngay, 'dd/MM')}
+                </button>
+              );
+            })}
+            <NutBam
+              tieuDe={
+                (ngayDiChoTick ?? ngayTrongTuan.map((d) => format(d, 'yyyy-MM-dd'))).length ===
+                ngayTrongTuan.length
+                  ? 'Đẩy cả tuần sang đi chợ'
+                  : `Đẩy ${(ngayDiChoTick ?? []).length} ngày sang đi chợ`
+              }
+              khiBam={() => {
+                const tatCa = ngayTrongTuan.map((d) => format(d, 'yyyy-MM-dd'));
+                const chon = [...(ngayDiChoTick ?? tatCa)].sort();
+                if (chon.length === 0) return;
+                keHoachId &&
+                  sinhDiCho.mutate({ cacNgay: chon.length === tatCa.length ? undefined : chon });
+              }}
+              dangTai={sinhDiCho.isPending}
+            />
+          </div>
+        ) : null}
       </div>
 
       {dangTao ? (
@@ -257,18 +285,15 @@ export function KeHoach() {
             placeholder="Tên kế hoạch (VD: Tuần 1)"
             className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
           />
-          <div className="mt-2 flex gap-2">
-            <input
-              value={tuNgay}
-              onChange={(e) => setTuNgay(e.target.value)}
-              placeholder="Từ ngày (YYYY-MM-DD)"
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
-            />
-            <input
-              value={denNgay}
-              onChange={(e) => setDenNgay(e.target.value)}
-              placeholder="Đến ngày (YYYY-MM-DD)"
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
+          <div className="mt-2">
+            <ChonKhoangNgay
+              tuNgay={tuNgay}
+              denNgay={denNgay}
+              khiDoi={(t, d) => {
+                setTuNgay(t);
+                setDenNgay(d);
+                if (loiTao) setLoiTao('');
+              }}
             />
           </div>
           {loiTao ? <p className="mt-1 text-left text-sm text-red-600">{loiTao}</p> : null}
@@ -310,17 +335,14 @@ export function KeHoach() {
                   placeholder="Tên kế hoạch"
                   className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
                 />
-                <input
-                  value={suaTuNgay}
-                  onChange={(e) => setSuaTuNgay(e.target.value)}
-                  placeholder="Từ ngày"
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
-                />
-                <input
-                  value={suaDenNgay}
-                  onChange={(e) => setSuaDenNgay(e.target.value)}
-                  placeholder="Đến ngày"
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none"
+                <ChonKhoangNgay
+                  tuNgay={suaTuNgay}
+                  denNgay={suaDenNgay}
+                  khiDoi={(t, d) => {
+                    setSuaTuNgay(t);
+                    setSuaDenNgay(d);
+                    if (loiSua) setLoiSua('');
+                  }}
                 />
                 <NutBam tieuDe="Lưu" dangTai={capNhat.isPending} khiBam={luuSua} className="px-5" />
                 <NutBam tieuDe="Hủy" bienThe="mo" khiBam={() => setDangSua(false)} />

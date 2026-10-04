@@ -28,3 +28,5 @@ __exportStar(require("./types"), exports);
 __exportStar(require("./trang-thai"), exports);
 // BR-03: Mốc định lượng + đơn vị dùng chung
 __exportStar(require("./dinh-luong"), exports);
+// BR-MEAL/BR-SHOP: Ngày YYYY-MM-DD dùng chung
+__exportStar(require("./ngay"), exports);

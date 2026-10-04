@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { aggregateQuantities } from '@cook/shared';
 import { NutBam } from '../../components/ui/NutBam';
+import { DinhLuong } from '../../components/ui/DinhLuong';
 import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { TrangDangTai, TrangLoi, TrangTrong } from '../../components/ui/TrangThai';
 import { CaptionText } from '../../components/ui/VanBan';
@@ -24,12 +25,12 @@ export function DiCho() {
   const [tenMoi, setTenMoi] = useState('');
   const [dangThemMon, setDangThemMon] = useState(false);
   const [tenMonMoi, setTenMonMoi] = useState('');
-  const [luongMoi, setLuongMoi] = useState('');
+  const [luongMoi, setLuongMoi] = useState(0);
   const [donViMoi, setDonViMoi] = useState('g');
   const [dangSuaId, setDangSuaId] = useState('');
   const [suaTen, setSuaTen] = useState('');
-  const [suaLuong, setSuaLuong] = useState('');
-  const [suaDonVi, setSuaDonVi] = useState('');
+  const [suaLuong, setSuaLuong] = useState(0);
+  const [suaDonVi, setSuaDonVi] = useState('g');
 
   const danhSach = useQuery({
     queryKey: ['user', 'shopping'],
@@ -72,13 +73,13 @@ export function DiCho() {
     mutationFn: () =>
       themMonDiCho(dsId, {
         tenGoc: tenMonMoi.trim(),
-        dinhLuong: parseFloat(luongMoi.replace(',', '.')) || 0,
+        dinhLuong: luongMoi,
         donVi: donViMoi.trim() || 'g',
       }),
     onSuccess: (moi) => {
       queryClient.setQueryData(['user', 'shopping', dsId], moi);
       setTenMonMoi('');
-      setLuongMoi('');
+      setLuongMoi(0);
       setDonViMoi('g');
       setDangThemMon(false);
       lamMoi();
@@ -89,7 +90,7 @@ export function DiCho() {
     mutationFn: ({ itemId }: { itemId: string }) =>
       suaMonDiCho(dsId, itemId, {
         tenGoc: suaTen.trim(),
-        dinhLuong: parseFloat(suaLuong.replace(',', '.')) || 0,
+        dinhLuong: suaLuong,
         donVi: suaDonVi.trim() || 'g',
       }),
     onSuccess: (moi) => {
@@ -209,7 +210,7 @@ export function DiCho() {
                         } else {
                           setDangSuaId(mon.id);
                           setSuaTen(mon.tenGoc);
-                          setSuaLuong(mon.dinhLuong);
+                          setSuaLuong(Number(mon.dinhLuong) || 0);
                           setSuaDonVi(mon.donVi);
                         }
                       }}
@@ -233,18 +234,12 @@ export function DiCho() {
                         placeholder="Tên món"
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
                       />
-                      <div className="mt-2 flex gap-2">
-                        <input
-                          value={suaLuong}
-                          onChange={(e) => setSuaLuong(e.target.value)}
-                          placeholder="Định lượng"
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
-                        />
-                        <input
-                          value={suaDonVi}
-                          onChange={(e) => setSuaDonVi(e.target.value)}
-                          placeholder="Đơn vị"
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
+                      <div className="mt-2">
+                        <DinhLuong
+                          giaTri={suaLuong}
+                          khiDoi={setSuaLuong}
+                          donVi={suaDonVi}
+                          khiDoiDonVi={setSuaDonVi}
                         />
                       </div>
                       <NutBam
@@ -273,18 +268,12 @@ export function DiCho() {
                   placeholder="Tên món * (VD: Rau muống)"
                   className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
                 />
-                <div className="mt-2 flex gap-2">
-                  <input
-                    value={luongMoi}
-                    onChange={(e) => setLuongMoi(e.target.value)}
-                    placeholder="Định lượng"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
-                  />
-                  <input
-                    value={donViMoi}
-                    onChange={(e) => setDonViMoi(e.target.value)}
-                    placeholder="Đơn vị (g)"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
+                <div className="mt-2">
+                  <DinhLuong
+                    giaTri={luongMoi}
+                    khiDoi={setLuongMoi}
+                    donVi={donViMoi}
+                    khiDoiDonVi={setDonViMoi}
                   />
                 </div>
                 <NutBam

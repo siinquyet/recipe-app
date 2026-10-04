@@ -17,3 +17,6 @@ export * from './trang-thai';
 
 // BR-03: Mốc định lượng + đơn vị dùng chung
 export * from './dinh-luong';
+
+// BR-MEAL/BR-SHOP: Ngày YYYY-MM-DD dùng chung
+export * from './ngay';
