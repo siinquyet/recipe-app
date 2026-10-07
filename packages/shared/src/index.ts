@@ -20,3 +20,6 @@ export * from './dinh-luong';
 
 // BR-MEAL/BR-SHOP: Ngày YYYY-MM-DD dùng chung
 export * from './ngay';
+
+// BR-ANTOAN: Cảnh báo combo nguyên liệu kỵ nhau (offline, 3 nền tảng)
+export * from './canh-bao-doc';

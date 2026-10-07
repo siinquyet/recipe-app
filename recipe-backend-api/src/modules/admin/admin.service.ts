@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, RecipeStatus } from '@prisma/client';
+import { kiemTraComboDoc } from '@cook/shared';
 import { PrismaService } from '../../common/prisma.service';
 import { TuChoiBaiDto } from './dto/admin.dto';
 
@@ -128,7 +129,7 @@ export class AdminService {
                 skip: trang * kichThuoc,
                 take: kichThuoc,
                 orderBy: { createdAt: 'desc' },
-                include: { author: true },
+                include: { author: true, ingredients: { select: { originalText: true } } },
             }),
             this.prisma.recipe.count({ where }),
         ]);
@@ -142,6 +143,8 @@ export class AdminService {
                 khauPhan: r.servings,
                 trangThai: r.status,
                 lyDoTuChoi: r.rejectionReason,
+                // BR-ANTOAN: Kèm cảnh báo combo độc để admin thấy ngay khi duyệt
+                canhBao: kiemTraComboDoc(r.ingredients.map((nl) => nl.originalText)),
                 tacGia: { id: r.author.id, tenHienThi: r.author.displayName, email: r.author.email },
                 ngayTao: r.createdAt.toISOString(),
             })),

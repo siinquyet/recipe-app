@@ -19,6 +19,7 @@ import { BodyText, CaptionText, TitleText } from '../../src/components/ui/VanBan
 import { DanhSachCongThuc } from '../../src/components/recipe/DanhSachCongThuc';
 import { ChonBuoiAn, DaiNgay, TangGiamKhauPhan } from '../../src/components/meal/BoChonMon';
 import { buoiGoiYTheoGio, congNgay, homNay } from '../../src/lib/utils/lich-tuan';
+import { kiemTraComboDoc } from '@cook/shared';
 import { dinhDangNgay, formatVn, parseVn } from '../../src/lib/utils/dinh-dang';
 import { MAU_SAC } from '../../src/constants/cau-hinh';
 import { layUrlAnh } from '../../src/lib/utils/anh';
@@ -323,6 +324,11 @@ export default function ManHinhChiTietCongThuc() {
   const laTacGia = nguoiDung?.id === data.tacGia.id;
   const khauPhanHienTai = khauPhanChon ?? data.khauPhan;
   const tiLeQuyDoi = data.khauPhan > 0 ? khauPhanHienTai / data.khauPhan : 1;
+  // BR-ANTOAN: Check local từ nguyên liệu đang hiện — offline vẫn báo
+  const canhBaoDoc = useMemo(
+    () => kiemTraComboDoc((data?.nguyenLieu ?? []).map((nl) => nl.ten)),
+    [data],
+  );
 
   const thanhPhanNguyenLieu = (
     <View>
@@ -480,6 +486,18 @@ export default function ManHinhChiTietCongThuc() {
           </View>
 
           {data.moTa ? <BodyText className="mt-3 text-neutral-600" soDongToiDa={3}>{data.moTa}</BodyText> : null}
+
+          {canhBaoDoc.map((cb) => (
+            <View
+              key={cb.cap.join('+')}
+              className={`mt-3 rounded-2xl border p-3 ${cb.muc === 'cao' ? 'border-red-500 bg-red-50' : 'border-amber-400 bg-amber-50'}`}
+            >
+              <Text className={`text-left text-sm font-bold ${cb.muc === 'cao' ? 'text-red-700' : 'text-amber-700'}`}>
+                {cb.muc === 'cao' ? 'Cảnh báo: combo kỵ nhau' : 'Lưu ý khi kết hợp'}
+              </Text>
+              <BodyText className="mt-1 text-sm">{cb.lyDo}</BodyText>
+            </View>
+          ))}
 
           {laTacGia ? (
             <View className="mt-3 flex-row gap-2">

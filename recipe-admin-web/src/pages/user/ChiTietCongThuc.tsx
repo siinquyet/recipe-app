@@ -366,6 +366,19 @@ export function ChiTietCongThuc() {
 
       <h1 className="mt-4 font-serif text-4xl font-black tracking-tight text-ink md:text-5xl">{ct.ten}</h1>
       {ct.moTa ? <p className="mt-2 max-w-2xl text-left text-sm text-slate-500">{ct.moTa}</p> : null}
+      {(ct.canhBao ?? []).map((cb) => (
+        <div
+          key={cb.cap.join('+')}
+          className={`mt-3 max-w-2xl rounded-2xl border p-3 text-left ${
+            cb.muc === 'cao' ? 'border-red-500 bg-red-50' : 'border-amber-400 bg-amber-50'
+          }`}
+        >
+          <p className={`text-sm font-bold ${cb.muc === 'cao' ? 'text-red-700' : 'text-amber-700'}`}>
+            {cb.muc === 'cao' ? 'Cảnh báo: combo kỵ nhau' : 'Lưu ý khi kết hợp'}
+          </p>
+          <p className="mt-1 text-sm text-ink">{cb.lyDo}</p>
+        </div>
+      ))}
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <span className="flex items-center gap-2">

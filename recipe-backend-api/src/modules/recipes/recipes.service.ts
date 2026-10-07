@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { Prisma, RecipeStatus } from '@prisma/client';
+import { kiemTraComboDoc, type CanhBao } from '@cook/shared';
 import { CapNhatCongThucDto, TaoCongThucDto } from './dto/recipe.dto';
 
 interface ListParams {
@@ -467,6 +468,10 @@ export class RecipesService {
             nutrition?: { calories: number; protein: Prisma.Decimal; carbs: Prisma.Decimal; fat: Prisma.Decimal } | null;
         },
     ) {
+        // BR-ANTOAN: Gắn cảnh báo combo độc theo nguyên liệu — client hiện banner, không chặn đăng
+        const canhBao: CanhBao[] = extra?.ingredients
+            ? kiemTraComboDoc(extra.ingredients.map((i) => i.originalText))
+            : [];
         return {
             id: recipe.id,
             ten: recipe.title,
@@ -504,6 +509,7 @@ export class RecipesService {
                       chatBeo: extra.nutrition.fat.toString(),
                   }
                 : null,
+            canhBao,
             ngayTao: recipe.createdAt.toISOString(),
             ngayCapNhat: recipe.updatedAt.toISOString(),
         };

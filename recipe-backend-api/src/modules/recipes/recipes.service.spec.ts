@@ -42,4 +42,27 @@ describe('RecipesService.forkCongThuc (BR-FORK)', () => {
             (service as unknown as { layBanCaNhan(u: string, g: string): Promise<unknown> }).layBanCaNhan(userB, monGoc),
         ).resolves.toBeNull();
     }, 30000);
+
+    it('món có cặp độc trả kèm cảnh báo mức cao', async () => {
+        const mon = await prisma.recipe.create({
+            data: {
+                title: 'Chè sắn mật ong',
+                cookTimeMinutes: 10,
+                servings: 2,
+                authorId: userA,
+                status: 'APPROVED',
+                ingredients: {
+                    create: [
+                        { originalText: '200g bột sắn sống', quantity: 200, unit: 'g', sortOrder: 1 },
+                        { originalText: '50ml mật ong', quantity: 50, unit: 'ml', sortOrder: 2 },
+                    ],
+                },
+            },
+        });
+        const chiTiet = (await service.layChiTiet(mon.id, userA)) as unknown as {
+            canhBao: Array<{ muc: string }>;
+        };
+        expect(chiTiet.canhBao.length).toBeGreaterThan(0);
+        expect(chiTiet.canhBao[0].muc).toBe('cao');
+    }, 30000);
 });

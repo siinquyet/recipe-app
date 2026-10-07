@@ -18,6 +18,12 @@ export interface BuocNau {
   anhBuoc: string | null;
 }
 
+export interface CanhBaoDoc {
+  muc: string;
+  cap: [string, string];
+  lyDo: string;
+}
+
 export interface CongThuc {
   id: string;
   ten: string;
@@ -31,6 +37,7 @@ export interface CongThuc {
   nguyenLieu: NguyenLieu[];
   cacBuoc: BuocNau[];
   dinhDuong: { calo: number; protein: string; carb: string; chatBeo: string } | null;
+  canhBao?: CanhBaoDoc[];
   ngayTao: string;
 }
 

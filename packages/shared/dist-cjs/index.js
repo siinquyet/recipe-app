@@ -30,3 +30,5 @@ __exportStar(require("./trang-thai"), exports);
 __exportStar(require("./dinh-luong"), exports);
 // BR-MEAL/BR-SHOP: Ngày YYYY-MM-DD dùng chung
 __exportStar(require("./ngay"), exports);
+// BR-ANTOAN: Cảnh báo combo nguyên liệu kỵ nhau (offline, 3 nền tảng)
+__exportStar(require("./canh-bao-doc"), exports);

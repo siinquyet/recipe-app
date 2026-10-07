@@ -27,6 +27,12 @@ export interface TrangNguoiDung {
   tongSoTrang: number;
 }
 
+export interface CanhBaoDoc {
+  muc: string;
+  cap: [string, string];
+  lyDo: string;
+}
+
 export interface BaiAdmin {
   id: string;
   ten: string;
@@ -36,6 +42,7 @@ export interface BaiAdmin {
   khauPhan: number;
   trangThai: string;
   lyDoTuChoi: string | null;
+  canhBao?: CanhBaoDoc[];
   tacGia: { id: string; tenHienThi: string; email: string };
   ngayTao: string;
 }

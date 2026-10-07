@@ -59,6 +59,17 @@ export function ChoDuyet() {
                 <td className="border p-2 text-left">
                   <p className="font-semibold">{bai.ten}</p>
                   {bai.moTa ? <p className="mt-1 text-sm text-slate-500">{bai.moTa}</p> : null}
+                  {(bai.canhBao ?? []).map((cb) => (
+                    <p
+                      key={cb.cap.join('+')}
+                      className={`mt-1 text-left text-xs font-semibold ${
+                        cb.muc === 'cao' ? 'text-red-600' : 'text-amber-600'
+                      }`}
+                    >
+                      {cb.muc === 'cao' ? 'Cảnh báo độc: ' : 'Lưu ý combo: '}
+                      {cb.lyDo}
+                    </p>
+                  ))}
                 </td>
                 <td className="border p-2 text-left">
                   <p>{bai.tacGia.tenHienThi}</p>
