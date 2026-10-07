@@ -139,7 +139,10 @@ export function KeHoach() {
   const suaKhauPhan = useMutation({
     mutationFn: ({ monId, khauPhan }: { monId: string; khauPhan: number }) =>
       capNhatMonTrongKeHoach(keHoachId, monId, khauPhan),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan', keHoachId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'meal-plan', keHoachId] });
+      setDaDoiKhauPhan(true);
+    },
     onError: () => alert('[MEAL-01] Không sửa được, thử lại'),
   });
   const xoaMon = useMutation({
@@ -152,12 +155,15 @@ export function KeHoach() {
       taoDiChoTuKeHoach(keHoachId, undefined, undefined, cacNgay),
     onSuccess: (ds) => {
       queryClient.invalidateQueries({ queryKey: ['user', 'shopping'] });
+      setDaDoiKhauPhan(false);
       alert(`Đã tạo "${ds.ten}" — sang Đi chợ để xem!`);
     },
     onError: () => alert('[SHOP-01] Cần đăng nhập để tạo danh sách'),
   });
   // BR-SHOP: Tick chọn từng ngày T2..CN, null nghĩa là chọn hết (cả tuần)
   const [ngayDiChoTick, setNgayDiChoTick] = useState<string[] | null>(null);
+  // BR-SHOP: Khẩu phần đổi thì list đi chợ cũ không còn đúng — nhắc sinh lại
+  const [daDoiKhauPhan, setDaDoiKhauPhan] = useState(false);
 
   const ngayTrongTuan = useMemo(() => {
     if (!chiTiet.data) return [];
@@ -273,6 +279,11 @@ export function KeHoach() {
               }}
               dangTai={sinhDiCho.isPending}
             />
+            {daDoiKhauPhan ? (
+              <p className="mt-1 text-left text-sm text-amber-600">
+                Khẩu phần đã đổi — bấm đẩy sang đi chợ để sinh lại đúng số mới.
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -136,6 +136,8 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
   const [monMoiNgay, setMonMoiNgay] = useState<string | null>(null);
   // BR-SHOP: Tick chọn từng ngày T2..CN, null nghĩa là chọn hết (cả tuần)
   const [ngayDiCho, setNgayDiCho] = useState<string[] | null>(null);
+  // BR-SHOP: Khẩu phần đổi thì list đi chợ cũ không còn đúng — nhắc sinh lại
+  const [daDoiKhauPhan, setDaDoiKhauPhan] = useState(false);
 
   if (isLoading) return <TrangDangTai />;
   if (isError || !data) return <TrangLoi loi="Không tải được kế hoạch" />;
@@ -198,11 +200,21 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
             cacNgayDiCho.length === tatCaNgay.length
               ? { mealPlanId: data.id }
               : { mealPlanId: data.id, cacNgay: [...cacNgayDiCho].sort() };
-          taoDiCho.mutate(payload, { onSuccess: () => khiDong() });
+          taoDiCho.mutate(payload, {
+            onSuccess: () => {
+              setDaDoiKhauPhan(false);
+              khiDong();
+            },
+          });
         }}
         className="mt-2"
       />
       {taoDiCho.isError ? <CaptionText className="mt-1 text-red-500">Không tạo được danh sách đi chợ</CaptionText> : null}
+      {daDoiKhauPhan ? (
+        <CaptionText className="mt-1 text-amber-600">
+          Khẩu phần đã đổi — bấm đẩy sang đi chợ để sinh lại đúng số mới.
+        </CaptionText>
+      ) : null}
 
       <TitleText className="mt-6 text-xl">Lịch trình bữa ăn trong tuần</TitleText>
       {lichTuan.map((ngay) => {
@@ -231,7 +243,10 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
                               <Pressable
                                 accessibilityRole="button"
                                 accessibilityLabel="Giảm khẩu phần"
-                                onPress={() => suaMon.mutate({ monId: mon.id, payload: { khauPhan: Math.max(1, mon.khauPhan - 1) } })}
+                                onPress={() => suaMon.mutate(
+                                  { monId: mon.id, payload: { khauPhan: Math.max(1, mon.khauPhan - 1) } },
+                                  { onSuccess: () => setDaDoiKhauPhan(true) },
+                                )}
                                 className="h-7 w-7 items-center justify-center rounded-full border border-neutral-300 bg-white"
                               >
                                 <Text className="text-sm font-bold text-primary">−</Text>
@@ -240,7 +255,10 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
                               <Pressable
                                 accessibilityRole="button"
                                 accessibilityLabel="Tăng khẩu phần"
-                                onPress={() => suaMon.mutate({ monId: mon.id, payload: { khauPhan: Math.min(20, mon.khauPhan + 1) } })}
+                                onPress={() => suaMon.mutate(
+                                  { monId: mon.id, payload: { khauPhan: Math.min(20, mon.khauPhan + 1) } },
+                                  { onSuccess: () => setDaDoiKhauPhan(true) },
+                                )}
                                 className="h-7 w-7 items-center justify-center rounded-full bg-primary"
                               >
                                 <Text className="text-sm font-bold text-white">+</Text>
