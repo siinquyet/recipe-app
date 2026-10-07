@@ -54,7 +54,8 @@ const NhanDanhGia: FC<{ diem: number }> = ({ diem }) => (
 // BR-UI: Thẻ công thức 3 biến thể y mobile — badge sao, tên trái, Kcal • phút
 export const TheCongThuc: FC<TheCongThucProps> = ({ duLieu: ct, bienThe = 'large' }) => {
   const diem = 0;
-  const calo = ct.dinhDuong ? `${ct.dinhDuong.calo} Kcal` : '— Kcal';
+  // BR-DINHDUONG: Thiếu số chuẩn thì hiện ước tính cho đồng bộ mobile
+  const calo = ct.dinhDuong ? `${ct.dinhDuong.calo} Kcal` : ct.caloUocTinh ? `~${ct.caloUocTinh} Kcal*` : '— Kcal';
   const noiDung = (
     <>
       <div className={`relative w-full ${bienThe === 'large' ? 'h-28 w-28 shrink-0' : 'h-36'}`}>

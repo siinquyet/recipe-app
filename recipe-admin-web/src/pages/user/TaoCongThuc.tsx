@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Dialog } from '@headlessui/react';
 import { CheckCircleIcon, PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { uocTinhCalo } from '@cook/shared';
 import { NutBam } from '../../components/ui/NutBam';
 import { ONhapLieu } from '../../components/ui/ONhapLieu';
 import { DinhLuong } from '../../components/ui/DinhLuong';
@@ -9,6 +10,7 @@ import { NumberDisplay } from '../../components/ui/NumberDisplay';
 import { CaptionText } from '../../components/ui/VanBan';
 import { layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
 import { taiAnhLen } from '../../api/taiAnh';
+import { guiDuyetCongThucUser, taoCongThucUser } from '../../api/congThuc';
 
 const CAC_BUOC = ['Thông tin & Ảnh bìa', 'Nguyên liệu & Định lượng', 'Các bước & Mẹo', 'Dinh dưỡng & Kiểm tra'] as const;
 
@@ -16,6 +18,12 @@ interface DongNguyenLieu {
   ten: string;
   dinhLuong: number;
   donVi: string;
+}
+
+interface BuocNau {
+  noiDung: string;
+  // BR-UREC: Ảnh minh họa từng bước
+  anhBuoc?: string;
 }
 
 const TIEU_CHUAN = [
@@ -26,6 +34,7 @@ const TIEU_CHUAN = [
 
 // BR-UREC: Form 4 bước + xem trước + upload ảnh thật; gửi duyệt báo rõ backend chưa hỗ trợ
 export function TaoCongThuc() {
+  const navigate = useNavigate();
   const [buoc, setBuoc] = useState(0);
   const [ten, setTen] = useState('');
   const [moTa, setMoTa] = useState('');
@@ -34,9 +43,44 @@ export function TaoCongThuc() {
   const [thoiGianNau, setThoiGianNau] = useState('30');
   const [khauPhan, setKhauPhan] = useState('2');
   const [nguyenLieu, setNguyenLieu] = useState<DongNguyenLieu[]>([{ ten: '', dinhLuong: 0, donVi: 'g' }]);
-  const [cacBuoc, setCacBuoc] = useState<string[]>(['']);
+  const [cacBuoc, setCacBuoc] = useState<BuocNau[]>([{ noiDung: '' }]);
   const [calo, setCalo] = useState('');
   const [moModal, setMoModal] = useState(false);
+  const [dangGui, setDangGui] = useState(false);
+  const [loiGui, setLoiGui] = useState('');
+  // BR-DINHDUONG: Gợi ý calo ước tính từ nguyên liệu đã nhập — khỏi gõ tay
+  const caloGoiY = uocTinhCalo(
+    nguyenLieu.filter((d) => d.ten.trim()).map((d) => ({ ten: d.ten, dinhLuong: d.dinhLuong, donVi: d.donVi })),
+  );
+
+  // BR-UREC: Tạo thật qua API rồi gửi duyệt (đồng bộ mobile) thay vì báo chưa hỗ trợ
+  const guiDuyetThat = async () => {
+    setDangGui(true);
+    setLoiGui('');
+    try {
+      const mon = await taoCongThucUser({
+        ten: ten.trim(),
+        ...(moTa.trim() ? { moTa: moTa.trim() } : {}),
+        ...(anh ? { anhThumbnail: anh } : {}),
+        thoiGianNauPhut: Math.max(1, parseInt(thoiGianNau, 10) || 30),
+        khauPhan: Math.max(1, parseInt(khauPhan, 10) || 2),
+        nguyenLieu: nguyenLieu
+          .filter((d) => d.ten.trim())
+          .map((d) => ({ ten: d.ten.trim(), dinhLuong: d.dinhLuong, donVi: d.donVi })),
+        cacBuoc: cacBuoc
+          .filter((b) => b.noiDung.trim())
+          .map((b) => ({ noiDung: b.noiDung.trim(), ...(b.anhBuoc ? { anhBuoc: b.anhBuoc } : {}) })),
+        ...(calo.trim() ? { dinhDuong: { calo: parseInt(calo, 10) || 0, protein: 0, carb: 0, chatBeo: 0 } } : {}),
+      });
+      await guiDuyetCongThucUser(mon.id);
+      setMoModal(false);
+      navigate(`/cong-thuc/${mon.id}`);
+    } catch (e) {
+      setLoiGui(e instanceof Error ? e.message : '[UREC-01] Không gửi được, thử lại');
+    } finally {
+      setDangGui(false);
+    }
+  };
 
   const chonAnh = async (file: File | undefined) => {
     if (!file) return;
@@ -165,31 +209,57 @@ export function TaoCongThuc() {
             <div>
               <h2 className="font-serif text-2xl font-black text-ink">3. Các bước nấu</h2>
               {cacBuoc.map((b, i) => (
-                <div key={i} className="mt-3 flex gap-2">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-light font-serif font-black text-ink">
-                    {i + 1}
-                  </span>
-                  <textarea
-                    value={b}
-                    onChange={(e) => setCacBuoc((cu) => cu.map((c, j) => (j === i ? e.target.value : c)))}
-                    rows={2}
-                    placeholder={`Mô tả bước ${i + 1}...`}
-                    className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
-                    aria-label={`Bước ${i + 1}`}
-                  />
-                  <button
-                    type="button"
-                    aria-label="Xóa bước"
-                    onClick={() => setCacBuoc((cu) => cu.filter((_, j) => j !== i))}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-muted"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
+                <div key={i} className="mt-3">
+                  <div className="flex gap-2">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-light font-serif font-black text-ink">
+                      {i + 1}
+                    </span>
+                    <textarea
+                      value={b.noiDung}
+                      onChange={(e) =>
+                        setCacBuoc((cu) => cu.map((c, j) => (j === i ? { ...c, noiDung: e.target.value } : c)))
+                      }
+                      rows={2}
+                      placeholder={`Mô tả bước ${i + 1}...`}
+                      className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-accent"
+                      aria-label={`Bước ${i + 1}`}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Xóa bước"
+                      onClick={() => setCacBuoc((cu) => cu.filter((_, j) => j !== i))}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-muted"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="ml-11 mt-2 flex items-center gap-2">
+                    {b.anhBuoc ? (
+                      <img src={layUrlAnhWeb(b.anhBuoc)} alt="" className="h-16 w-16 rounded-xl object-cover" />
+                    ) : null}
+                    <label className="cursor-pointer rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm text-muted">
+                      {b.anhBuoc ? 'Đổi ảnh bước' : '+ Ảnh bước'}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          taiAnhLen(file)
+                            .then((url) =>
+                              setCacBuoc((cu) => cu.map((c, j) => (j === i ? { ...c, anhBuoc: url } : c))),
+                            )
+                            .catch(() => alert('[UP-01] Không tải ảnh được — cần đăng nhập'));
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               ))}
               <button
                 type="button"
-                onClick={() => setCacBuoc((cu) => [...cu, ''])}
+                onClick={() => setCacBuoc((cu) => [...cu, { noiDung: '' }])}
                 className="mt-3 flex items-center gap-1 text-sm font-semibold text-deepteal"
               >
                 <PlusIcon className="h-4 w-4" /> Thêm bước tiếp theo
@@ -201,14 +271,25 @@ export function TaoCongThuc() {
             <div>
               <h2 className="font-serif text-2xl font-black text-ink">4. Dinh dưỡng & Kiểm tra</h2>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <ONhapLieu nhan="Calo" giaTri={calo} khiDoi={setCalo} loai="number" />
+                <div>
+                  <ONhapLieu nhan="Calo" giaTri={calo} khiDoi={setCalo} loai="number" />
+                  {!calo.trim() && caloGoiY > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setCalo(String(caloGoiY))}
+                      className="mt-1 text-left text-xs font-semibold text-deepteal"
+                    >
+                      Dùng ước tính ~{caloGoiY} kcal từ nguyên liệu
+                    </button>
+                  ) : null}
+                </div>
                 <p className="rounded-xl bg-mist px-4 py-3 text-left text-sm">
                   <span className="block text-xs text-muted">Nguyên liệu</span>
                   <strong><NumberDisplay value={nguyenLieu.filter((d) => d.ten).length} unit="món" /></strong>
                 </p>
                 <p className="rounded-xl bg-mist px-4 py-3 text-left text-sm">
                   <span className="block text-xs text-muted">Số bước</span>
-                  <strong><NumberDisplay value={cacBuoc.filter((b) => b.trim()).length} unit="bước" /></strong>
+                  <strong><NumberDisplay value={cacBuoc.filter((b) => b.noiDung.trim()).length} unit="bước" /></strong>
                 </p>
               </div>
               {!ten.trim() ? (
@@ -287,14 +368,13 @@ export function TaoCongThuc() {
             <div className="mt-4 flex gap-2">
               <NutBam tieuDe="Quay lại chỉnh sửa thêm" bienThe="vien" className="flex-1" khiBam={() => setMoModal(false)} />
               <NutBam
-                tieuDe="Xác nhận gửi duyệt ngay"
+                tieuDe={dangGui ? 'Đang gửi...' : 'Xác nhận gửi duyệt ngay'}
                 className="flex-1"
-                khiBam={() => {
-                  setMoModal(false);
-                  alert('[UREC-01] Backend chưa hỗ trợ tạo công thức — bản nháp của bạn vẫn giữ trên form');
-                }}
+                voHieuHoa={dangGui}
+                khiBam={() => void guiDuyetThat()}
               />
             </div>
+            {loiGui ? <p className="mt-2 text-center text-sm text-red-600">{loiGui}</p> : null}
           </Dialog.Panel>
         </div>
       </Dialog>

@@ -204,3 +204,25 @@ export async function guiDuyetCongThucUser(id: string): Promise<CongThuc> {
   if (!body.success) throw nemLoi(body);
   return body.data;
 }
+
+export interface TaoCongThucPayload {
+  ten: string;
+  moTa?: string;
+  anhThumbnail?: string;
+  thoiGianNauPhut: number;
+  thoiGianChuanBiPhut?: number;
+  khauPhan: number;
+  // BR-UREC: Web nhập số (khác mobile đọc string) — backend nhận number
+  nguyenLieu: Array<{ ten: string; dinhLuong: number; donVi: string }>;
+  cacBuoc: Array<{ noiDung: string; anhBuoc?: string }>;
+  danhMucId?: string;
+  dinhDuong?: { calo: number; protein: number; carb: number; chatBeo: number };
+}
+
+// BR-UREC: Tạo công thức từ web (đồng bộ mobile) — backend trả DRAFT
+export async function taoCongThucUser(payload: TaoCongThucPayload): Promise<CongThuc> {
+  const res = await userApiClient.post('/recipes', payload);
+  const body = res.data as ApiEnvelope<CongThuc>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
