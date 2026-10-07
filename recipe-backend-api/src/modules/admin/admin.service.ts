@@ -124,8 +124,10 @@ export class AdminService {
 
     private async layBaiTheoTrangThai(trangThai: RecipeStatus | undefined, trang: number, kichThuoc: number) {
         // BR-ADM: Hàng chờ duyệt và toàn bộ bài viết — kèm tác giả để xét duyệt
+        // BR-FORK: Bản riêng tư không bao giờ vào hàng chờ admin
         const where: Prisma.RecipeWhereInput = {
             deletedAt: null,
+            riengTu: false,
             ...(trangThai ? { status: trangThai } : {}),
         };
         const [items, tongSoPhanTu] = await Promise.all([
@@ -243,7 +245,7 @@ export class AdminService {
     async hoanTacQuyetDinh(adminId: string, id: string) {
         const cu = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
-            select: { id: true, status: true },
+            select: { id: true, status: true, rejectionReason: true },
         });
         if (!cu) {
             throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
@@ -262,7 +264,7 @@ export class AdminService {
                     action: 'UPDATE',
                     entityType: 'Recipe',
                     entityId: id,
-                    oldData: { status: cu.status },
+                    oldData: { status: cu.status, rejectionReason: cu.rejectionReason },
                     newData: { status: 'PENDING', hoanTac: true },
                 },
             }),

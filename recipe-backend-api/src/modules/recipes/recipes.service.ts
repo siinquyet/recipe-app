@@ -264,10 +264,17 @@ export class RecipesService {
     async guiDuyet(id: string, userId: string) {
         const cu = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
-            select: { id: true, authorId: true, status: true },
+            select: { id: true, authorId: true, status: true, riengTu: true },
         });
         if (!cu) {
             throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        // BR-FORK: Bản riêng tư chỉ để nấu theo ý mình — không gửi duyệt công khai
+        if (cu.riengTu) {
+            throw new BadRequestException({
+                code: 'REC-07',
+                message: '[REC-07] Bản riêng tư không gửi duyệt được, hãy đăng món mới để chia sẻ',
+            });
         }
         if (cu.authorId !== userId) {
             throw new ForbiddenException({ code: 'REC-05', message: '[REC-05] Chỉ tác giả được gửi duyệt' });
@@ -312,7 +319,12 @@ export class RecipesService {
         // BR-FORK: Copy món cộng đồng thành bản riêng tư — món gốc không đổi, không vào hàng chờ duyệt
         const goc = await this.prisma.recipe.findFirst({
             where: { id: gocId, deletedAt: null, status: 'APPROVED', riengTu: false },
-            include: { ingredients: { orderBy: { sortOrder: 'asc' } }, steps: { orderBy: { stepOrder: 'asc' } } },
+            include: {
+                ingredients: { orderBy: { sortOrder: 'asc' } },
+                steps: { orderBy: { stepOrder: 'asc' } },
+                tags: { select: { id: true } },
+                nutrition: true,
+            },
         });
         if (!goc) {
             throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Chỉ fork được món cộng đồng đã duyệt' });
@@ -345,6 +357,19 @@ export class RecipesService {
                 status: RecipeStatus.DRAFT,
                 riengTu: true,
                 nguonGocId: goc.id,
+                // BR-FORK: Giữ phân loại/nhãn/dinh dưỡng như món gốc — người dùng chỉ sửa nội dung
+                categoryId: goc.categoryId,
+                tags: goc.tags.length > 0 ? { connect: goc.tags.map((t) => ({ id: t.id })) } : undefined,
+                nutrition: goc.nutrition
+                    ? {
+                          create: {
+                              calories: goc.nutrition.calories,
+                              protein: goc.nutrition.protein,
+                              carbs: goc.nutrition.carbs,
+                              fat: goc.nutrition.fat,
+                          },
+                      }
+                    : undefined,
                 ingredients: {
                     create: goc.ingredients.map((nl) => ({
                         originalText: nl.originalText,

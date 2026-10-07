@@ -43,6 +43,13 @@ describe('RecipesService.forkCongThuc (BR-FORK)', () => {
         ).resolves.toBeNull();
     }, 30000);
 
+    it('bản fork riêng tư không gửi duyệt được', async () => {
+        const banFork = (await (
+            service as unknown as { forkCongThuc(u: string, g: string): Promise<{ id: string }> }
+        ).forkCongThuc(userA, monGoc)) as { id: string };
+        await expect(service.guiDuyet(banFork.id, userA)).rejects.toThrow('[REC-07]');
+    }, 30000);
+
     it('món có cặp độc trả kèm cảnh báo mức cao', async () => {
         const mon = await prisma.recipe.create({
             data: {
