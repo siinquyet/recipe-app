@@ -3,6 +3,14 @@ import { MealType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { CapNhatKeHoachAnDto, CapNhatMonDto, MonMoiDto, TaoKeHoachAnDto } from './dto/meal-plan.dto';
 
+// BR-MEAL: Ngày YYYY-MM-DD theo giờ địa phương — toISOString() trả ngày UTC,
+// lệch 1 ngày với múi giờ VN (00:00+07 lưu thành 17:00Z hôm trước)
+function sangYyyyMmDd(ngay: Date): string {
+    const mm = String(ngay.getMonth() + 1).padStart(2, '0');
+    const dd = String(ngay.getDate()).padStart(2, '0');
+    return `${ngay.getFullYear()}-${mm}-${dd}`;
+}
+
 @Injectable()
 export class MealPlansService {
     constructor(private readonly prisma: PrismaService) {}
@@ -322,12 +330,12 @@ export class MealPlansService {
         return {
             id: mealPlan.id,
             ten: mealPlan.name,
-            ngayBatDau: mealPlan.startDate.toISOString().split('T')[0],
-            ngayKetThuc: mealPlan.endDate.toISOString().split('T')[0],
+            ngayBatDau: sangYyyyMmDd(mealPlan.startDate),
+            ngayKetThuc: sangYyyyMmDd(mealPlan.endDate),
             kichHoat: mealPlan.isActive,
             cacMon: mealPlan.items.map((item) => ({
                 id: item.id,
-                ngay: item.date.toISOString().split('T')[0],
+                ngay: sangYyyyMmDd(item.date),
                 loaiBuoiAn: item.mealType,
                 khauPhan: item.servings,
                 thuTu: item.sortOrder,
