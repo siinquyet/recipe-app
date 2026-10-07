@@ -23,6 +23,7 @@ import { kiemTraComboDoc } from '@cook/shared';
 import { dinhDangNgay, formatVn, parseVn } from '../../src/lib/utils/dinh-dang';
 import { MAU_SAC } from '../../src/constants/cau-hinh';
 import { layUrlAnh } from '../../src/lib/utils/anh';
+import { ApiError } from '../../src/lib/api/client';
 import { danhGiaCongThuc } from '../../src/lib/api/recipes';
 import { themMonVaoKeHoach } from '../../src/lib/api/mealPlans';
 import { khoaTruyVan } from '../../src/lib/queryClient';
@@ -243,7 +244,7 @@ export default function ManHinhChiTietCongThuc() {
   const queryClient = useQueryClient();
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
 
-  const { data, isLoading, isError, refetch } = useChiTietCongThuc(maCongThuc);
+  const { data, isLoading, isError, error, refetch } = useChiTietCongThuc(maCongThuc);
   // BR-FORK: Bản riêng tư của mình từ món này (có thì hiện nút xem, chưa thì hiện nút fork)
   const banCaNhan = useBanCaNhan(maCongThuc, !!nguoiDung);
   const forkBanRieng = useForkCongThuc();
@@ -314,12 +315,26 @@ export default function ManHinhChiTietCongThuc() {
   const [tabHienTai, setTabHienTai] = useState(0);
 
   if (isLoading) return <TrangDangTai />;
-  if (isError || !data)
+  // BR-UX: 404 (món đã xóa/chưa duyệt) báo rõ + về trang chủ, lỗi mạng thì thử lại
+  if (isError || !data) {
+    const maLoi = error instanceof ApiError ? error.maLoi : '';
+    const khongTonTai = maLoi === 'REC-04' || (error as Error | undefined)?.message?.includes('404');
     return (
       <SafeAreaView className="flex-1 bg-white">
-        <TrangLoi loi="Không tải được công thức" khiThuLai={() => refetch()} />
+        {khongTonTai ? (
+          <View className="flex-1 items-center justify-center px-6">
+            <TitleText canLe="giua">Món không tồn tại</TitleText>
+            <BodyText canLe="giua" className="mt-2 text-neutral-500">
+              Món này có thể đã bị xóa hoặc chưa được duyệt.
+            </BodyText>
+            <NutBam tieuDe="Về trang chủ" khiBam={() => router.replace('/(tabs)')} className="mt-4 px-8" />
+          </View>
+        ) : (
+          <TrangLoi loi="Không tải được công thức" khiThuLai={() => refetch()} />
+        )}
       </SafeAreaView>
     );
+  }
 
   const laTacGia = nguoiDung?.id === data.tacGia.id;
   const khauPhanHienTai = khauPhanChon ?? data.khauPhan;
