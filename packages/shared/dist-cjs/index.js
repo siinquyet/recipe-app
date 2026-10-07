@@ -32,3 +32,5 @@ __exportStar(require("./dinh-luong"), exports);
 __exportStar(require("./ngay"), exports);
 // BR-ANTOAN: Cảnh báo combo nguyên liệu kỵ nhau (offline, 3 nền tảng)
 __exportStar(require("./canh-bao-doc"), exports);
+// BR-DINHDUONG: Tự ước tính calo khi món thiếu dinh dưỡng
+__exportStar(require("./uoc-tinh-calo"), exports);

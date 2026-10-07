@@ -43,6 +43,23 @@ describe('RecipesService.forkCongThuc (BR-FORK)', () => {
         ).resolves.toBeNull();
     }, 30000);
 
+    it('món thiếu dinh dưỡng có calo ước tính', async () => {
+        const mon = await prisma.recipe.create({
+            data: {
+                title: 'Gà kho sả',
+                cookTimeMinutes: 20,
+                servings: 2,
+                authorId: userA,
+                status: 'APPROVED',
+                ingredients: {
+                    create: [{ originalText: '500g thịt gà', quantity: 500, unit: 'g', sortOrder: 1 }],
+                },
+            },
+        });
+        const chiTiet = (await service.layChiTiet(mon.id, userA)) as unknown as { caloUocTinh: number };
+        expect(chiTiet.caloUocTinh).toBeGreaterThan(0);
+    }, 30000);
+
     it('bản fork riêng tư không gửi duyệt được', async () => {
         const banFork = (await (
             service as unknown as { forkCongThuc(u: string, g: string): Promise<{ id: string }> }

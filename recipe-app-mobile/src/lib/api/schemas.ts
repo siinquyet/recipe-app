@@ -57,6 +57,8 @@ export const congThucSchema = z.object({
   nguyenLieu: z.array(nguyenLieuSchema),
   cacBuoc: z.array(buocNauAnSchema),
   dinhDuong: dinhDuongSchema.nullable(),
+  // BR-DINHDUONG: Calo ước tính khi món thiếu dinh dưỡng
+  caloUocTinh: z.number().optional(),
   ngayTao: z.string(),
   ngayCapNhat: z.string(),
 });

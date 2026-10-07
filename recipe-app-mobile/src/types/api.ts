@@ -60,6 +60,8 @@ export interface CongThuc {
   nguyenLieu: NguyenLieuCongThuc[];
   cacBuoc: BuocNauAn[];
   dinhDuong: DinhDuong | null;
+  // BR-DINHDUONG: Calo ước tính khi món thiếu dinh dưỡng
+  caloUocTinh?: number;
   ngayTao: string;
   ngayCapNhat: string;
 }

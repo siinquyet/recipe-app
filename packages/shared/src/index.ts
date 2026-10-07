@@ -23,3 +23,6 @@ export * from './ngay';
 
 // BR-ANTOAN: Cảnh báo combo nguyên liệu kỵ nhau (offline, 3 nền tảng)
 export * from './canh-bao-doc';
+
+// BR-DINHDUONG: Tự ước tính calo khi món thiếu dinh dưỡng
+export * from './uoc-tinh-calo';

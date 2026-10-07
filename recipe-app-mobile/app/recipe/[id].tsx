@@ -480,7 +480,13 @@ export default function ManHinhChiTietCongThuc() {
             <TheThongTin nhan="Khẩu phần" giaTri={`${formatVn(khauPhanHienTai)} người`} Icon={Users} />
             <TheThongTin
               nhan="Năng lượng"
-              giaTri={data.dinhDuong ? `${formatVn(data.dinhDuong.calo)} kcal` : '—'}
+              giaTri={
+                data.dinhDuong
+                  ? `${formatVn(data.dinhDuong.calo)} kcal`
+                  : data.caloUocTinh
+                    ? `~${formatVn(data.caloUocTinh)} kcal`
+                    : '—'
+              }
               Icon={Flame}
             />
           </View>

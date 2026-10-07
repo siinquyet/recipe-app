@@ -349,7 +349,7 @@ export function ChiTietCongThuc() {
     { nhan: 'Chuẩn bị', giaTri: `${ct.thoiGianChuanBiPhut ?? 0} phút` },
     { nhan: 'Chế biến', giaTri: `${ct.thoiGianNauPhut} phút` },
     { nhan: 'Khẩu phần', giaTri: `${khauPhanHien} người` },
-    { nhan: 'Năng lượng', giaTri: ct.dinhDuong ? `${ct.dinhDuong.calo} Kcal` : '—' },
+    { nhan: 'Năng lượng', giaTri: ct.dinhDuong ? `${ct.dinhDuong.calo} Kcal` : ct.caloUocTinh ? `~${ct.caloUocTinh} Kcal*` : '—' },
   ];
   const phanBo = tomTat.data?.phanBo ?? {};
   const tongCham = tomTat.data?.tongSoDanhGia ?? 0;
@@ -457,6 +457,9 @@ export function ChiTietCongThuc() {
           </div>
         ))}
       </div>
+      {!ct.dinhDuong && ct.caloUocTinh ? (
+        <p className="mt-1 text-left text-xs text-slate-400">* Năng lượng ước tính từ nguyên liệu, không phải số đo chuẩn.</p>
+      ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="rounded-40px bg-white p-5 shadow-magazine md:p-8">

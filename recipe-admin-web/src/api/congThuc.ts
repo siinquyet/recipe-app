@@ -38,6 +38,8 @@ export interface CongThuc {
   cacBuoc: BuocNau[];
   dinhDuong: { calo: number; protein: string; carb: string; chatBeo: string } | null;
   canhBao?: CanhBaoDoc[];
+  // BR-DINHDUONG: Calo ước tính khi món thiếu dinh dưỡng
+  caloUocTinh?: number;
   ngayTao: string;
 }
 

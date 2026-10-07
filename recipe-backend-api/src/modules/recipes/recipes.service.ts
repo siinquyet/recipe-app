@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { Prisma, RecipeStatus } from '@prisma/client';
-import { kiemTraComboDoc, type CanhBao } from '@cook/shared';
+import { kiemTraComboDoc, uocTinhCalo, type CanhBao } from '@cook/shared';
 import { CapNhatCongThucDto, TaoCongThucDto } from './dto/recipe.dto';
 
 interface ListParams {
@@ -494,9 +494,19 @@ export class RecipesService {
         },
     ) {
         // BR-ANTOAN: Gắn cảnh báo combo độc theo nguyên liệu — client hiện banner, không chặn đăng
-        const canhBao: CanhBao[] = extra?.ingredients
-            ? kiemTraComboDoc(extra.ingredients.map((i) => i.originalText))
-            : [];
+        const tenNguyenLieu = extra?.ingredients ? extra.ingredients.map((i) => i.originalText) : [];
+        const canhBao: CanhBao[] = extra?.ingredients ? kiemTraComboDoc(tenNguyenLieu) : [];
+        // BR-DINHDUONG: Tự ước tính calo khi món thiếu dinh dưỡng — client hiện kèm nhãn ước tính
+        const caloUocTinh =
+            extra?.ingredients && !extra?.nutrition
+                ? uocTinhCalo(
+                      extra.ingredients.map((i) => ({
+                          ten: i.originalText,
+                          dinhLuong: Number(i.quantity),
+                          donVi: i.unit,
+                      })),
+                  )
+                : 0;
         return {
             id: recipe.id,
             ten: recipe.title,
@@ -535,6 +545,7 @@ export class RecipesService {
                   }
                 : null,
             canhBao,
+            caloUocTinh,
             ngayTao: recipe.createdAt.toISOString(),
             ngayCapNhat: recipe.updatedAt.toISOString(),
         };
