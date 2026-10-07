@@ -43,6 +43,23 @@ describe('RecipesService.forkCongThuc (BR-FORK)', () => {
         ).resolves.toBeNull();
     }, 30000);
 
+    it('bước nấu giữ được ảnh minh họa', async () => {
+        const mon = await prisma.recipe.create({
+            data: {
+                title: 'Món có ảnh bước',
+                cookTimeMinutes: 10,
+                servings: 1,
+                authorId: userA,
+                status: 'APPROVED',
+                steps: { create: [{ stepOrder: 1, content: 'Ướp thịt', imageUrl: '/uploads/buoc-1.jpg' }] },
+            },
+        });
+        const chiTiet = (await service.layChiTiet(mon.id, userA)) as unknown as {
+            cacBuoc: Array<{ anhBuoc: string | null }>;
+        };
+        expect(chiTiet.cacBuoc[0].anhBuoc).toBe('/uploads/buoc-1.jpg');
+    }, 30000);
+
     it('món thiếu dinh dưỡng có calo ước tính', async () => {
         const mon = await prisma.recipe.create({
             data: {

@@ -25,6 +25,12 @@ export class BuocMoiDto {
     @IsString()
     @MinLength(1)
     noiDung!: string;
+
+    @ApiProperty({ example: '/uploads/buoc-1.jpg', required: false })
+    @IsOptional()
+    @IsString()
+    @MaxLength(500)
+    anhBuoc?: string;
 }
 
 export class DinhDuongMoiDto {

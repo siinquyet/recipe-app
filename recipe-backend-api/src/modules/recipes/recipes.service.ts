@@ -180,6 +180,7 @@ export class RecipesService {
                     create: dto.cacBuoc.map((b, i) => ({
                         stepOrder: i + 1,
                         content: b.noiDung,
+                        imageUrl: b.anhBuoc,
                     })),
                 },
             },
@@ -238,7 +239,7 @@ export class RecipesService {
             if (dto.cacBuoc) {
                 await tx.recipeStep.deleteMany({ where: { recipeId: id } });
                 await tx.recipeStep.createMany({
-                    data: dto.cacBuoc.map((b, i) => ({ recipeId: id, stepOrder: i + 1, content: b.noiDung })),
+                    data: dto.cacBuoc.map((b, i) => ({ recipeId: id, stepOrder: i + 1, content: b.noiDung, imageUrl: b.anhBuoc })),
                 });
             }
         });
