@@ -218,7 +218,10 @@ export function ChoDuyet() {
           </tbody>
         </table>
       )}
-      <div className="mt-4 flex gap-2">
+      <p className="mt-3 text-left text-sm text-slate-500">
+        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} bài
+      </p>
+      <div className="mt-2 flex gap-2">
         <button
           type="button"
           disabled={trang === 0}

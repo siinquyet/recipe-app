@@ -94,4 +94,14 @@ export class AdminController {
     layDashboard() {
         return this.adminService.layDashboard();
     }
+
+    // BR-05: Nhật ký kiểm toán — đọc audit (kể cả quyết định của máy)
+    @Get('nhat-ky')
+    layNhatKy(
+        @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
+        @Query('size', new DefaultValuePipe(20), ParseIntPipe) size: number,
+        @Query('action') action?: string,
+    ) {
+        return this.adminService.layNhatKy(page, Math.min(Math.max(size, 1), 50), action || undefined);
+    }
 }

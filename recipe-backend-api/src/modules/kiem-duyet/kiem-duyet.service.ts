@@ -31,7 +31,10 @@ const TU_CAM = ['cá độ', 'vay tiền', 'lừa đảo', '18+', 'sex', 'cờ b
 export function chamDiemBai(dauVao: DauVaoChamDiem): KetQuaChamDiem {
     let diem = 50;
     const lyDo: string[] = [];
-    const vanBan = `${dauVao.tieuDe} ${dauVao.moTa ?? ''}`.toLowerCase();
+    // BR-ADM-AUTO: Quét link/từ cấm trên toàn bộ chữ user nhập (tên, mô tả, nguyên liệu, bước)
+    const vanBan = [dauVao.tieuDe, dauVao.moTa ?? '', ...dauVao.nguyenLieu, ...dauVao.buoc]
+        .join(' ')
+        .toLowerCase();
 
     if (dauVao.tieuDe.trim().length >= 4) {
         diem += 5;

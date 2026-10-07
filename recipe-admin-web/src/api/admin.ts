@@ -166,6 +166,108 @@ export async function hoanTacQuyetDinh(id: string): Promise<void> {
   await apiClient.post(`/admin/recipes/${id}/hoan-tac`);
 }
 
+export interface BaoCao {
+  id: string;
+  lyDo: string;
+  trangThai: string;
+  ghiChuAdmin: string | null;
+  nguoiBaoCao: { id: string; email: string; tenHienThi: string };
+  congThuc: { id: string; ten: string } | null;
+  binhLuan: { id: string; noiDung: string } | null;
+  ngayTao: string;
+}
+
+export interface TrangBaoCao {
+  noiDung: BaoCao[];
+  tongSoPhanTu: number;
+  tongSoTrang: number;
+}
+
+// BR-SOC: Tố cáo vi phạm — admin xử lý tập trung
+export async function layBaoCao(trang = 0, kichThuoc = 20, trangThai?: string): Promise<TrangBaoCao> {
+  const res = await apiClient.get('/reports', {
+    params: { page: trang, size: kichThuoc, ...(trangThai ? { status: trangThai } : {}) },
+  });
+  const body = res.data as ApiEnvelope<TrangBaoCao>;
+  if (!body.success) throw nemLoi('ADM-00', body);
+  return body.data;
+}
+
+export async function xuLyBaoCao(id: string, trangThai: 'RESOLVED' | 'REJECTED', ghiChu?: string): Promise<void> {
+  await apiClient.patch(`/reports/${id}/resolve`, { trangThai, ...(ghiChu ? { ghiChu } : {}) });
+}
+
+export interface DongNhatKy {
+  id: string;
+  hanhDong: string;
+  loaiThucThe: string;
+  thucTheId: string;
+  duLieuCu: unknown;
+  duLieuMoi: unknown;
+  nguoiLam: { id: string; email: string; tenHienThi: string };
+  ngayTao: string;
+}
+
+export interface TrangNhatKy {
+  noiDung: DongNhatKy[];
+  tongSoPhanTu: number;
+  tongSoTrang: number;
+}
+
+// BR-05: Nhật ký kiểm toán — ai làm gì, khi nào
+export async function layNhatKy(trang = 0, kichThuoc = 20, hanhDong?: string): Promise<TrangNhatKy> {
+  const res = await apiClient.get('/admin/nhat-ky', {
+    params: { page: trang, size: kichThuoc, ...(hanhDong ? { action: hanhDong } : {}) },
+  });
+  const body = res.data as ApiEnvelope<TrangNhatKy>;
+  if (!body.success) throw nemLoi('ADM-00', body);
+  return body.data;
+}
+
+export interface DanhMuc {
+  id: string;
+  ten: string;
+  slug: string;
+  soBaiViet?: number;
+}
+
+export interface NhanBai {
+  id: string;
+  ten: string;
+  slug: string;
+}
+
+// BR-ADM: Danh mục + nhãn — admin quản lý để món gắn chuẩn
+export async function layDanhMuc(): Promise<DanhMuc[]> {
+  const res = await apiClient.get('/categories');
+  const body = res.data as ApiEnvelope<DanhMuc[]>;
+  if (!body.success) throw nemLoi('ADM-00', body);
+  return body.data;
+}
+
+export async function taoDanhMuc(ten: string): Promise<void> {
+  await apiClient.post('/categories', { ten });
+}
+
+export async function xoaDanhMuc(id: string): Promise<void> {
+  await apiClient.delete(`/categories/${id}`);
+}
+
+export async function layNhan(): Promise<NhanBai[]> {
+  const res = await apiClient.get('/tags');
+  const body = res.data as ApiEnvelope<NhanBai[]>;
+  if (!body.success) throw nemLoi('ADM-00', body);
+  return body.data;
+}
+
+export async function taoNhan(ten: string): Promise<void> {
+  await apiClient.post('/tags', { ten });
+}
+
+export async function xoaNhan(id: string): Promise<void> {
+  await apiClient.delete(`/tags/${id}`);
+}
+
 // BR-ADM: Quản lý người dùng
 export async function layNguoiDung(
   trang = 0,

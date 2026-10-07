@@ -326,6 +326,52 @@ export class AdminService {
         ]);
     }
 
+    // BR-05: Nhật ký kiểm toán — ai làm gì, với cái gì, khi nào (kể cả quyết định của máy)
+    async layNhatKy(trang: number, kichThuoc: number, hanhDong?: string) {
+        const HANH_DONG_HOP_LE = [
+            'CREATE',
+            'UPDATE',
+            'DELETE',
+            'APPROVE',
+            'REJECT',
+            'HIDE',
+            'UNHIDE',
+            'BAN_USER',
+            'ACTIVATE_USER',
+            'CHANGE_ROLE',
+            'SYNC_REFERENCE',
+            'RESOLVE_REPORT',
+        ];
+        if (hanhDong && !HANH_DONG_HOP_LE.includes(hanhDong)) {
+            throw new BadRequestException({ code: 'ADM-00', message: '[ADM-00] Hành động lọc không hợp lệ' });
+        }
+        const where = hanhDong ? { action: hanhDong as never } : {};
+        const [items, tongSoPhanTu] = await Promise.all([
+            this.prisma.auditLog.findMany({
+                where,
+                skip: trang * kichThuoc,
+                take: kichThuoc,
+                orderBy: { createdAt: 'desc' },
+                include: { user: { select: { id: true, email: true, displayName: true } } },
+            }),
+            this.prisma.auditLog.count({ where }),
+        ]);
+        return {
+            noiDung: items.map((n) => ({
+                id: n.id,
+                hanhDong: n.action,
+                loaiThucThe: n.entityType,
+                thucTheId: n.entityId,
+                duLieuCu: n.oldData,
+                duLieuMoi: n.newData,
+                nguoiLam: { id: n.user.id, email: n.user.email, tenHienThi: n.user.displayName },
+                ngayTao: n.createdAt.toISOString(),
+            })),
+            tongSoPhanTu,
+            tongSoTrang: Math.ceil(tongSoPhanTu / kichThuoc),
+        };
+    }
+
     async layDashboard() {
         // BR-ADM: Số liệu tổng quan cho trang quản trị
         const bayNgayTruoc = new Date();

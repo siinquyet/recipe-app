@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { formatVn } from '@cook/shared';
 import { doiRole, khoaNguoiDung, layNguoiDung, moKhoaNguoiDung } from '../../api/admin';
+import { NhanTrangThai } from '../../components/admin/NhanTrangThai';
 
 const KICH_THUOC = 20;
 const CAC_TRANG_THAI = ['', 'ACTIVE', 'BANNED'] as const;
@@ -103,6 +104,7 @@ export function NguoiDung() {
                 <td className="border p-2">
                   <select
                     value={nd.vaiTro}
+                    aria-label={`Đổi vai trò ${nd.email}`}
                     onChange={(e) => doi.mutate({ id: nd.id, role: e.target.value as 'USER' | 'ADMIN' })}
                     className="rounded border px-2 py-1 text-sm"
                   >
@@ -110,7 +112,9 @@ export function NguoiDung() {
                     <option value="ADMIN">ADMIN</option>
                   </select>
                 </td>
-                <td className="border p-2 text-left">{nd.trangThai}</td>
+                <td className="border p-2">
+                  <NhanTrangThai ma={nd.trangThai} />
+                </td>
                 <td className="border p-2 text-left">{format(new Date(nd.ngayTao), 'dd/MM/yyyy')}</td>
                 <td className="border p-2">
                   {nd.trangThai === 'BANNED' ? (
@@ -126,7 +130,11 @@ export function NguoiDung() {
                     <button
                       type="button"
                       disabled={khoa.isPending}
-                      onClick={() => khoa.mutate(nd.id)}
+                      onClick={() => {
+                        if (window.confirm(`Khóa tài khoản ${nd.email}? Người này sẽ không đăng nhập được.`)) {
+                          khoa.mutate(nd.id);
+                        }
+                      }}
                       className="rounded border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-600 disabled:opacity-50"
                     >
                       Khóa
@@ -137,7 +145,10 @@ export function NguoiDung() {
             ))}
         </tbody>
       </table>
-      <div className="mt-4 flex gap-2">
+      <p className="mt-3 text-left text-sm text-slate-500">
+        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} người
+      </p>
+      <div className="mt-2 flex gap-2">
         <button
           type="button"
           disabled={trang === 0}

@@ -1,16 +1,27 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { dangXuatAdmin } from '../api/admin';
+import { useQuery } from '@tanstack/react-query';
+import { formatVn } from '@cook/shared';
+import { dangXuatAdmin, layBaiChoDuyet } from '../api/admin';
 
 const MUC_ADMIN = [
   { den: '/admin', nhan: 'Tổng quan', het: true },
-  { den: '/admin/cho-duyet', nhan: 'Chờ duyệt', het: false },
+  { den: '/admin/cho-duyet', nhan: 'Chờ duyệt', het: false, badge: true },
+  { den: '/admin/to-cao', nhan: 'Tố cáo', het: false },
   { den: '/admin/cong-thuc', nhan: 'Công thức', het: false },
+  { den: '/admin/danh-muc', nhan: 'Danh mục', het: false },
   { den: '/admin/nguoi-dung', nhan: 'Người dùng', het: false },
+  { den: '/admin/nhat-ky', nhan: 'Nhật ký', het: false },
 ];
 
-// BR-ADM: Khung quản trị — sidebar điều hướng + nút đăng xuất
+// BR-ADM: Khung quản trị — sidebar điều hướng + badge chờ duyệt + nút đăng xuất
 export function AdminLayout() {
   const navigate = useNavigate();
+  // BR-ADM: Badge số bài chờ duyệt trên nav để không bỏ sót
+  const choDuyet = useQuery({
+    queryKey: ['admin', 'cho-duyet-dem'],
+    queryFn: () => layBaiChoDuyet(0, 1),
+    refetchInterval: 60_000,
+  });
 
   const thoat = () => {
     dangXuatAdmin();
@@ -33,18 +44,23 @@ export function AdminLayout() {
       </header>
       <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6">
         <nav className="flex w-44 shrink-0 flex-col gap-1">
-          {MUC_ADMIN.map(({ den, nhan, het }) => (
+          {MUC_ADMIN.map(({ den, nhan, het, badge }) => (
             <NavLink
               key={den}
               to={den}
               end={het}
               className={({ isActive }) =>
-                `rounded-xl px-4 py-2.5 text-left text-sm font-semibold ${
+                `flex items-center justify-between rounded-xl px-4 py-2.5 text-left text-sm font-semibold ${
                   isActive ? 'bg-ink text-white' : 'text-slate-600 hover:bg-white'
                 }`
               }
             >
-              {nhan}
+              <span>{nhan}</span>
+              {badge && (choDuyet.data?.tongSoPhanTu ?? 0) > 0 ? (
+                <span className="number-vn rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                  {formatVn(choDuyet.data?.tongSoPhanTu ?? 0)}
+                </span>
+              ) : null}
             </NavLink>
           ))}
         </nav>

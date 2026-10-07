@@ -36,4 +36,16 @@ describe('chamDiemBai (BR-ADM-AUTO)', () => {
         });
         expect(kq.nhan).toBe('giu-lai');
     });
+
+    it('spam giấu link trong nguyên liệu vẫn bắt được', () => {
+        const kq = chamDiemBai({
+            tieuDe: 'Món ngon',
+            moTa: 'ngon',
+            nguyenLieu: ['http://xem-them-qua'],
+            buoc: ['Bấm link nhận quà'],
+            tacGiaBiTuChoi: 0,
+            trungLap: false,
+        });
+        expect(kq.nhan).toBe('nen-tu-choi');
+    });
 });

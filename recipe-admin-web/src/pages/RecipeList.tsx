@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { formatVn, tenTrangThai } from '@cook/shared';
 import { anBai, hienBai, layTatCaBai } from '../api/admin';
+import { NhanTrangThai } from '../components/admin/NhanTrangThai';
 
 const KICH_THUOC = 20;
 const CAC_TRANG_THAI = ['', 'DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'HIDDEN'] as const;
@@ -76,7 +77,9 @@ export function RecipeList() {
               </td>
               <td className="number-vn border p-2">{formatVn(ct.thoiGianNauPhut)}</td>
               <td className="number-vn border p-2">{formatVn(ct.khauPhan)}</td>
-              <td className="border p-2 text-left">{tenTrangThai(ct.trangThai)}</td>
+              <td className="border p-2">
+                <NhanTrangThai ma={ct.trangThai} />
+              </td>
               <td className="border p-2 text-left">{format(new Date(ct.ngayTao), 'dd/MM/yyyy')}</td>
               <td className="border p-2">
                 {ct.trangThai === 'HIDDEN' ? (
@@ -103,7 +106,10 @@ export function RecipeList() {
           ))}
         </tbody>
       </table>
-      <div className="mt-4 flex gap-2">
+      <p className="mt-3 text-left text-sm text-slate-500">
+        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} món
+      </p>
+      <div className="mt-2 flex gap-2">
         <button
           type="button"
           disabled={trang === 0}

@@ -5,8 +5,11 @@ import { RequireAdmin, RequireAuth } from '../layouts/RequireAuth';
 import { RecipeList } from '../pages/RecipeList';
 import { BangDieuKhien } from '../pages/admin/BangDieuKhien';
 import { ChoDuyet } from '../pages/admin/ChoDuyet';
+import { DanhMuc } from '../pages/admin/DanhMuc';
 import { DangNhapAdmin } from '../pages/admin/DangNhapAdmin';
 import { NguoiDung } from '../pages/admin/NguoiDung';
+import { NhatKy } from '../pages/admin/NhatKy';
+import { ToCao } from '../pages/admin/ToCao';
 import { TrangChu } from '../pages/user/TrangChu';
 import { TimKiem } from '../pages/user/TimKiem';
 import { ChiTietCongThuc } from '../pages/user/ChiTietCongThuc';
@@ -62,8 +65,11 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <BangDieuKhien /> },
           { path: 'cho-duyet', element: <ChoDuyet /> },
+          { path: 'to-cao', element: <ToCao /> },
           { path: 'cong-thuc', element: <RecipeList /> },
+          { path: 'danh-muc', element: <DanhMuc /> },
           { path: 'nguoi-dung', element: <NguoiDung /> },
+          { path: 'nhat-ky', element: <NhatKy /> },
         ],
       },
     ],
