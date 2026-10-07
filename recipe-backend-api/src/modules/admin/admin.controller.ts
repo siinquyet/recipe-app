@@ -73,6 +73,18 @@ export class AdminController {
         return this.adminService.hienBai(req.user.id, id);
     }
 
+    // BR-ADM-AUTO: Chạy pipeline kiểm duyệt tự động trên hàng chờ
+    @Post('recipes/kiem-duyet-tu-dong')
+    chayKiemDuyetTuDong(@Req() req: { user: { id: string } }) {
+        return this.adminService.chayKiemDuyetTuDong(req.user.id);
+    }
+
+    // BR-ADM-AUTO: Hoàn tác quyết định (kể cả của máy) về lại chờ duyệt
+    @Post('recipes/:id/hoan-tac')
+    hoanTacQuyetDinh(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+        return this.adminService.hoanTacQuyetDinh(req.user.id, id);
+    }
+
     @Delete('comments/:id')
     xoaBinhLuan(@Param('id') id: string, @Req() req: { user: { id: string } }) {
         return this.adminService.xoaBinhLuan(req.user.id, id);

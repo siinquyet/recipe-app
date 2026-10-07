@@ -3,12 +3,17 @@ import { Prisma, RecipeStatus } from '@prisma/client';
 import { kiemTraComboDoc } from '@cook/shared';
 import { PrismaService } from '../../common/prisma.service';
 import { TuChoiBaiDto } from './dto/admin.dto';
+import { chamDiemBai, CHE_DO_TU_DONG } from '../kiem-duyet/kiem-duyet.service';
+import { KiemDuyetService } from '../kiem-duyet/kiem-duyet.service';
 
 const TRANG_THAI_HOP_LE: RecipeStatus[] = ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'HIDDEN'];
 
 @Injectable()
 export class AdminService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly kiemDuyet: KiemDuyetService,
+    ) {}
 
     async layNguoiDung(trang: number, kichThuoc: number, tuKhoa?: string, trangThai?: string) {
         // BR-ADM: Tìm theo email/tên, lọc ACTIVE/BANNED, kèm số bài đã đăng
@@ -129,25 +134,57 @@ export class AdminService {
                 skip: trang * kichThuoc,
                 take: kichThuoc,
                 orderBy: { createdAt: 'desc' },
-                include: { author: true, ingredients: { select: { originalText: true } } },
+                include: {
+                    author: true,
+                    ingredients: { select: { originalText: true } },
+                    steps: { select: { content: true } },
+                },
             }),
             this.prisma.recipe.count({ where }),
         ]);
+        // BR-ADM-AUTO: Gộp 2 query tra lịch sử + trùng lặp cho cả trang (tránh N+1)
+        const tacGiaIds = [...new Set(items.map((r) => r.authorId))];
+        const [lichSuTuChoi, baiTrungTieuDe] = await Promise.all([
+            this.prisma.recipe.groupBy({
+                by: ['authorId'],
+                where: { authorId: { in: tacGiaIds }, status: 'REJECTED', deletedAt: null },
+                _count: { _all: true },
+            }),
+            this.prisma.recipe.findMany({
+                where: { deletedAt: null, riengTu: false, title: { in: items.map((r) => r.title) } },
+                select: { id: true, title: true },
+            }),
+        ]);
+        const demTuChoi = new Map(lichSuTuChoi.map((x) => [x.authorId, x._count._all]));
         return {
-            noiDung: items.map((r) => ({
-                id: r.id,
-                ten: r.title,
-                moTa: r.description,
-                anhThumbnail: r.thumbnailUrl,
-                thoiGianNauPhut: r.cookTimeMinutes,
-                khauPhan: r.servings,
-                trangThai: r.status,
-                lyDoTuChoi: r.rejectionReason,
-                // BR-ANTOAN: Kèm cảnh báo combo độc để admin thấy ngay khi duyệt
-                canhBao: kiemTraComboDoc(r.ingredients.map((nl) => nl.originalText)),
-                tacGia: { id: r.author.id, tenHienThi: r.author.displayName, email: r.author.email },
-                ngayTao: r.createdAt.toISOString(),
-            })),
+            noiDung: items.map((r) => {
+                const goiY = chamDiemBai({
+                    tieuDe: r.title,
+                    moTa: r.description,
+                    nguyenLieu: r.ingredients.map((nl) => nl.originalText),
+                    buoc: r.steps.map((b) => b.content),
+                    tacGiaBiTuChoi: demTuChoi.get(r.authorId) ?? 0,
+                    trungLap: baiTrungTieuDe.some((t) => t.title === r.title && t.id !== r.id),
+                });
+                return {
+                    id: r.id,
+                    ten: r.title,
+                    moTa: r.description,
+                    anhThumbnail: r.thumbnailUrl,
+                    thoiGianNauPhut: r.cookTimeMinutes,
+                    khauPhan: r.servings,
+                    trangThai: r.status,
+                    lyDoTuChoi: r.rejectionReason,
+                    // BR-ANTOAN: Kèm cảnh báo combo độc để admin thấy ngay khi duyệt
+                    canhBao: kiemTraComboDoc(r.ingredients.map((nl) => nl.originalText)),
+                    // BR-ADM-AUTO: Điểm + nhãn gợi ý (chế độ gợi ý: admin vẫn bấm tay)
+                    diemTuDong: goiY.diem,
+                    nhanGoiY: goiY.nhan,
+                    lyDoGoiY: goiY.lyDo,
+                    tacGia: { id: r.author.id, tenHienThi: r.author.displayName, email: r.author.email },
+                    ngayTao: r.createdAt.toISOString(),
+                };
+            }),
             tongSoPhanTu,
             tongSoTrang: Math.ceil(tongSoPhanTu / kichThuoc),
         };
@@ -170,6 +207,66 @@ export class AdminService {
 
     async hienBai(adminId: string, id: string) {
         await this.doiTrangThaiBai(adminId, id, 'APPROVED', undefined, 'UNHIDE');
+        return { thanhCong: true };
+    }
+
+    // BR-ADM-AUTO: Chạy pipeline trên toàn bộ hàng chờ — chế độ gợi ý chỉ đếm nhãn,
+    // bật CHE_DO_TU_DONG mới tự duyệt/từ chối + audit
+    async chayKiemDuyetTuDong(adminId: string) {
+        const cho = await this.prisma.recipe.findMany({
+            where: { deletedAt: null, status: 'PENDING', riengTu: false },
+            select: { id: true },
+        });
+        const ketQua = { tong: cho.length, daDuyet: 0, daTuChoi: 0, giuLai: 0 };
+        for (const bai of cho) {
+            const goiY = await this.kiemDuyet.goiYChoBai(bai.id);
+            if (!CHE_DO_TU_DONG) {
+                if (goiY.nhan === 'giu-lai') ketQua.giuLai += 1;
+                continue;
+            }
+            if (goiY.nhan === 'nen-duyet') {
+                await this.doiTrangThaiBai(adminId, bai.id, 'APPROVED', undefined, 'APPROVE', { diem: goiY.diem });
+                ketQua.daDuyet += 1;
+            } else if (goiY.nhan === 'nen-tu-choi') {
+                await this.doiTrangThaiBai(adminId, bai.id, 'REJECTED', `[AUTO] ${goiY.lyDo.join('; ')}`, 'REJECT', {
+                    diem: goiY.diem,
+                });
+                ketQua.daTuChoi += 1;
+            } else {
+                ketQua.giuLai += 1;
+            }
+        }
+        return { ...ketQua, cheDoTuDong: CHE_DO_TU_DONG };
+    }
+
+    // BR-ADM-AUTO: Hoàn tác quyết định (kể cả của máy) — đưa bài về lại PENDING
+    async hoanTacQuyetDinh(adminId: string, id: string) {
+        const cu = await this.prisma.recipe.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, status: true },
+        });
+        if (!cu) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy công thức' });
+        }
+        if (cu.status !== 'APPROVED' && cu.status !== 'REJECTED') {
+            throw new BadRequestException({
+                code: 'ADM-06',
+                message: '[ADM-06] Chỉ hoàn tác được bài đã duyệt hoặc đã từ chối',
+            });
+        }
+        await this.prisma.$transaction([
+            this.prisma.recipe.update({ where: { id }, data: { status: 'PENDING', rejectionReason: null } }),
+            this.prisma.auditLog.create({
+                data: {
+                    userId: adminId,
+                    action: 'UPDATE',
+                    entityType: 'Recipe',
+                    entityId: id,
+                    oldData: { status: cu.status },
+                    newData: { status: 'PENDING', hoanTac: true },
+                },
+            }),
+        ]);
         return { thanhCong: true };
     }
 
@@ -198,6 +295,7 @@ export class AdminService {
         trangThai: RecipeStatus,
         lyDo: string | undefined,
         hanhDong: 'APPROVE' | 'REJECT' | 'HIDE' | 'UNHIDE',
+        tuDong?: { diem: number },
     ) {
         const cu = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
@@ -219,7 +317,8 @@ export class AdminService {
                     entityType: 'Recipe',
                     entityId: id,
                     oldData: { status: cu.status },
-                    newData: { status: trangThai },
+                    // BR-ADM-AUTO: Ghi dấu quyết định của máy + điểm để tra lại
+                    newData: { status: trangThai, ...(tuDong ? { tuDong: true, diem: tuDong.diem } : {}) },
                 },
             }),
         ]);

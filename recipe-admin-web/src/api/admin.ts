@@ -33,6 +33,12 @@ export interface CanhBaoDoc {
   lyDo: string;
 }
 
+export interface GoiYKiemDuyet {
+  diemTuDong?: number;
+  nhanGoiY?: 'nen-duyet' | 'giu-lai' | 'nen-tu-choi';
+  lyDoGoiY?: string[];
+}
+
 export interface BaiAdmin {
   id: string;
   ten: string;
@@ -43,6 +49,10 @@ export interface BaiAdmin {
   trangThai: string;
   lyDoTuChoi: string | null;
   canhBao?: CanhBaoDoc[];
+  // BR-ADM-AUTO: Điểm + nhãn gợi ý từ pipeline (chế độ gợi ý: admin vẫn bấm tay)
+  diemTuDong?: number;
+  nhanGoiY?: GoiYKiemDuyet['nhanGoiY'];
+  lyDoGoiY?: string[];
   tacGia: { id: string; tenHienThi: string; email: string };
   ngayTao: string;
 }
@@ -130,6 +140,30 @@ export async function anBai(id: string): Promise<void> {
 
 export async function hienBai(id: string): Promise<void> {
   await apiClient.post(`/admin/recipes/${id}/unhide`);
+}
+
+// BR-ADM-AUTO: Chạy pipeline kiểm duyệt trên hàng chờ + hoàn tác quyết định
+export async function chayKiemDuyetTuDong(): Promise<{
+  tong: number;
+  daDuyet: number;
+  daTuChoi: number;
+  giuLai: number;
+  cheDoTuDong: boolean;
+}> {
+  const res = await apiClient.post('/admin/recipes/kiem-duyet-tu-dong');
+  const body = res.data as ApiEnvelope<{
+    tong: number;
+    daDuyet: number;
+    daTuChoi: number;
+    giuLai: number;
+    cheDoTuDong: boolean;
+  }>;
+  if (!body.success) throw nemLoi('ADM-00', body);
+  return body.data;
+}
+
+export async function hoanTacQuyetDinh(id: string): Promise<void> {
+  await apiClient.post(`/admin/recipes/${id}/hoan-tac`);
 }
 
 // BR-ADM: Quản lý người dùng
