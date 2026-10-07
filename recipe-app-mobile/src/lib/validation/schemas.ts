@@ -32,6 +32,8 @@ export const nguyenLieuMoiSchema = z.object({
 
 export const buocMoiSchema = z.object({
   noiDung: z.string().min(1, 'REC-00 Nội dung bước không được trống'),
+  // BR-UREC: Ảnh minh họa từng bước — tùy chọn, upload qua /uploads
+  anhBuoc: z.string().max(500).optional(),
 });
 
 export const taoCongThucSchema = z.object({

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { layUrlAnh } from '../../src/lib/utils/anh';
 import { useAuthStore } from '../../src/stores/authStore';
 import { BottomSheet } from '../../src/components/ui/BottomSheet';
 import { Chip } from '../../src/components/ui/Chip';
@@ -97,9 +99,25 @@ function ChonMonChoNgay({
               key={ct.id}
               accessibilityRole="button"
               onPress={() => setCongThucChon(ct.id)}
-              className={`rounded-xl border px-3 py-2 ${congThucChon === ct.id ? 'border-primary bg-accent-light' : 'border-neutral-200'}`}
+              className={`flex-row items-center gap-2 rounded-xl border px-3 py-2 ${congThucChon === ct.id ? 'border-primary bg-accent-light' : 'border-neutral-200'}`}
             >
-              <BodyText soDongToiDa={1}>{ct.ten}</BodyText>
+              {ct.anhThumbnail ? (
+                <Image
+                  source={{ uri: layUrlAnh(ct.anhThumbnail) }}
+                  style={{ width: 40, height: 40, borderRadius: 10 }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-cream">
+                  <Text className="text-sm font-bold text-accent-dark">
+                    {ct.ten.trim().charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View className="min-w-0 flex-1">
+                <BodyText soDongToiDa={1}>{ct.ten}</BodyText>
+                <CaptionText soDongToiDa={1}>{ct.tacGia.tenHienThi}</CaptionText>
+              </View>
             </Pressable>
           ))
         )}

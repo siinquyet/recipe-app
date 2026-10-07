@@ -133,6 +133,9 @@ const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLie
       <Text className="text-left font-serif text-sm font-bold text-primary" numberOfLines={2}>
         {duLieu.tenMon}
       </Text>
+      <View className="mt-1">
+        <HangTacGia duLieu={duLieu} />
+      </View>
       <View className="mt-1.5">
         <ThongTinNgan duLieu={duLieu} />
       </View>

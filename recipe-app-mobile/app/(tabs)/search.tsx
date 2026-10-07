@@ -2,7 +2,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react-native';
+import { layUrlAnh } from '../../src/lib/utils/anh';
 import { DanhSachCongThuc } from '../../src/components/recipe/DanhSachCongThuc';
 import { BottomSheet } from '../../src/components/ui/BottomSheet';
 import { Chip } from '../../src/components/ui/Chip';
@@ -191,15 +193,29 @@ export default function ManHinhTimKiem() {
                 onPress={() => router.push(`/recipe/${ct.id}`)}
                 className="flex-row items-center gap-3 rounded-xl px-3 py-2"
               >
+                {ct.anhThumbnail ? (
+                  <Image
+                    source={{ uri: layUrlAnh(ct.anhThumbnail) }}
+                    style={{ width: 44, height: 44, borderRadius: 12 }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View className="h-11 w-11 items-center justify-center rounded-xl bg-cream">
+                    <Text className="text-base font-bold text-accent-dark">
+                      {ct.ten.trim().charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
                 <View className="min-w-0 flex-1">
                   <Text className="text-left text-sm font-medium text-primary" numberOfLines={1}>
                     {ct.ten}
                   </Text>
-                  {ct.nguyenLieu.length > 0 ? (
-                    <Text className="text-left text-xs text-neutral-500" numberOfLines={1}>
-                      Nguyên liệu: {ct.nguyenLieu.slice(0, 3).map((nl) => nl.ten).join(', ')}
-                    </Text>
-                  ) : null}
+                  <Text className="text-left text-xs text-neutral-500" numberOfLines={1}>
+                    {ct.tacGia.tenHienThi}
+                    {ct.nguyenLieu.length > 0
+                      ? ` • ${ct.nguyenLieu.slice(0, 3).map((nl) => nl.ten).join(', ')}`
+                      : ''}
+                  </Text>
                 </View>
                 <ArrowRight size={16} color="#97A2B0" />
               </Pressable>

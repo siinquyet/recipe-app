@@ -93,6 +93,22 @@ export default function ManHinhTaoCongThuc() {
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
   const [loiAnh, setLoiAnh] = useState<string | null>(null);
   const anhXemTruoc = watch('anhThumbnail') ?? '';
+  // BR-UREC: Ảnh minh họa từng bước nấu
+  const [buocDangTaiAnh, setBuocDangTaiAnh] = useState<number | null>(null);
+  const cacBuocXem = watch('cacBuoc');
+
+  // BR-UREC: Chọn ảnh từ thư viện → upload binary → lưu URL vào bước tương ứng
+  const chonAnhBuoc = async (chiSo: number) => {
+    const ketQua = await launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (ketQua.canceled || ketQua.assets.length === 0) return;
+    setBuocDangTaiAnh(chiSo);
+    try {
+      const url = await taiAnhLen(ketQua.assets[0].uri);
+      setValue(`cacBuoc.${chiSo}.anhBuoc`, url, { shouldValidate: true });
+    } finally {
+      setBuocDangTaiAnh(null);
+    }
+  };
 
   // BR-UREC: Chọn ảnh từ thư viện → upload binary → lưu URL vào form
   const chonAnh = async () => {
@@ -127,16 +143,21 @@ export default function ManHinhTaoCongThuc() {
           dinhLuong: parseFloat(String(nl.dinhLuong)) || 0,
           donVi: nl.donVi,
         })),
-        cacBuoc: chiTiet.data.cacBuoc.map((b) => ({ noiDung: b.noiDung })),
+        cacBuoc: chiTiet.data.cacBuoc.map((b) => ({ noiDung: b.noiDung, anhBuoc: b.anhBuoc ?? '' })),
       });
     }
   }, [cheDoSua, chiTiet.data, reset]);
 
   const guiDi = handleSubmit(async (duLieu) => {
+    // BR-UREC: Ảnh bước trống thì bỏ để DB lưu null thay vì chuỗi rỗng
+    const payload = {
+      ...duLieu,
+      cacBuoc: duLieu.cacBuoc.map((b) => ({ ...b, anhBuoc: b.anhBuoc || undefined })),
+    };
     if (cheDoSua) {
-      await capNhat.mutateAsync(duLieu);
+      await capNhat.mutateAsync(payload);
     } else {
-      await taoMoi.mutateAsync(duLieu);
+      await taoMoi.mutateAsync(payload);
     }
     router.back();
   });
@@ -261,9 +282,25 @@ export default function ManHinhTaoCongThuc() {
                 <ONhapLieu nhan={`Bước ${i + 1}`} giaTri={value} khiDoi={onChange} loi={errors.cacBuoc?.[i]?.noiDung?.message} />
               )}
             />
-            {dsBuoc.fields.length > 1 ? (
-              <NutBam tieuDe="Xóa bước" bienThe="mo" khiBam={() => dsBuoc.remove(i)} className="self-end px-2 py-1" />
+            {cacBuocXem?.[i]?.anhBuoc ? (
+              <Image
+                source={{ uri: layUrlAnh(cacBuocXem[i].anhBuoc as string) }}
+                style={{ width: '100%', height: 120, borderRadius: 12, marginTop: 8 }}
+                contentFit="cover"
+              />
             ) : null}
+            <View className="mt-1 flex-row gap-2">
+              <NutBam
+                tieuDe={cacBuocXem?.[i]?.anhBuoc ? 'Đổi ảnh bước' : '+ Ảnh bước'}
+                bienThe="mo"
+                dangTai={buocDangTaiAnh === i}
+                khiBam={() => void chonAnhBuoc(i)}
+                className="px-2 py-1"
+              />
+              {dsBuoc.fields.length > 1 ? (
+                <NutBam tieuDe="Xóa bước" bienThe="mo" khiBam={() => dsBuoc.remove(i)} className="px-2 py-1" />
+              ) : null}
+            </View>
           </View>
         ))}
 

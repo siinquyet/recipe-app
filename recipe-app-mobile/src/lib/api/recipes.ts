@@ -26,6 +26,8 @@ export interface NguyenLieuMoi {
 
 export interface BuocMoi {
   noiDung: string;
+  // BR-UREC: Ảnh minh họa từng bước
+  anhBuoc?: string;
 }
 
 export interface TaoCongThucPayload {
