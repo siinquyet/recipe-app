@@ -111,6 +111,23 @@ export async function guiDuyetCongThuc(id: string): Promise<CongThuc> {
   return congThucSchema.parse(duLieu);
 }
 
+// BR-FORK: Fork riêng tư món cộng đồng — món gốc giữ nguyên, không qua duyệt
+export async function forkCongThuc(id: string): Promise<CongThuc> {
+  const duLieu = await goiApi(
+    apiClient.post(`recipes/${id}/fork`).json<ApiResponse<CongThuc>>(),
+  );
+  return congThucSchema.parse(duLieu);
+}
+
+// BR-FORK: Bản riêng tư của chính mình từ món cộng đồng (null nếu chưa fork)
+export async function layBanCaNhan(id: string): Promise<CongThuc | null> {
+  const duLieu = await goiApi(
+    apiClient.get(`recipes/${id}/ban-ca-nhan`).json<ApiResponse<CongThuc | null>>(),
+  );
+  if (!duLieu) return null;
+  return congThucSchema.parse(duLieu);
+}
+
 // BR-SOC: Yêu thích / đánh giá / bình luận
 export async function themYeuThich(id: string): Promise<void> {
   await goiApi(apiClient.post(`recipes/${id}/favorite`).json<ApiResponse<unknown>>());

@@ -2,7 +2,9 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { ApiError } from '../lib/api/client';
 import {
   capNhatCongThuc,
+  forkCongThuc,
   guiDuyetCongThuc,
+  layBanCaNhan,
   layBinhLuan,
   layChiTietCongThuc,
   layCongThucTuongTu,
@@ -42,6 +44,26 @@ export function useCongThucTuongTu(id: string) {
     queryKey: khoaTruyVan.congThuc.tuongTu(id),
     queryFn: () => layCongThucTuongTu(id),
     enabled: id.length > 0,
+  });
+}
+
+// BR-FORK: Bản riêng tư của chính mình (null nếu chưa fork)
+export function useBanCaNhan(id: string, daDangNhap: boolean) {
+  return useQuery({
+    queryKey: khoaTruyVan.congThuc.banCaNhan(id),
+    queryFn: () => layBanCaNhan(id),
+    enabled: id.length > 0 && daDangNhap,
+  });
+}
+
+// BR-FORK: Fork 1 chạm rồi sang màn sửa bản riêng tư
+export function useForkCongThuc() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (gocId: string) => forkCongThuc(gocId),
+    onSuccess: (_banFork, gocId) => {
+      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.banCaNhan(gocId) });
+    },
   });
 }
 

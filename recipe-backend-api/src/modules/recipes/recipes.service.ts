@@ -31,6 +31,7 @@ export class RecipesService {
             where: {
                 deletedAt: null,
                 status: RecipeStatus.APPROVED,
+                riengTu: false,
                 id: { not: id },
                 OR: [
                     { categoryId: recipe.categoryId },
@@ -54,6 +55,8 @@ export class RecipesService {
         const laChinhChu = params.tacGiaId !== undefined && params.tacGiaId === params.nguoiXemId;
         const where = {
             deletedAt: null,
+            // BR-FORK: Bản riêng tư không lọt vào list của người khác
+            ...(laChinhChu ? {} : { riengTu: false }),
             ...(laChinhChu ? {} : { status: RecipeStatus.APPROVED }),
             ...(params.tacGiaId ? { authorId: params.tacGiaId } : {}),
             ...(params.tuKhoa
@@ -98,6 +101,7 @@ export class RecipesService {
         const where = {
             deletedAt: null,
             status: RecipeStatus.APPROVED,
+            riengTu: false,
             AND: ds.map((ten) => ({ ingredients: { some: { originalText: { contains: ten } } } })),
         };
         const [items, tongSoPhanTu] = await Promise.all([
@@ -303,6 +307,90 @@ export class RecipesService {
         return this.layChiTiet(id, userId);
     }
 
+    async forkCongThuc(userId: string, gocId: string) {
+        // BR-FORK: Copy món cộng đồng thành bản riêng tư — món gốc không đổi, không vào hàng chờ duyệt
+        const goc = await this.prisma.recipe.findFirst({
+            where: { id: gocId, deletedAt: null, status: 'APPROVED', riengTu: false },
+            include: { ingredients: { orderBy: { sortOrder: 'asc' } }, steps: { orderBy: { stepOrder: 'asc' } } },
+        });
+        if (!goc) {
+            throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Chỉ fork được món cộng đồng đã duyệt' });
+        }
+        const daCo = await this.prisma.recipe.findFirst({
+            where: { nguonGocId: gocId, authorId: userId, riengTu: true, deletedAt: null },
+            include: {
+                author: true,
+                ingredients: { orderBy: { sortOrder: 'asc' } },
+                steps: { orderBy: { stepOrder: 'asc' } },
+                nutrition: true,
+            },
+        });
+        if (daCo) {
+            return this.toCongThuc(daCo, daCo.author, {
+                ingredients: daCo.ingredients,
+                steps: daCo.steps,
+                nutrition: daCo.nutrition,
+            });
+        }
+        const banFork = await this.prisma.recipe.create({
+            data: {
+                title: goc.title,
+                description: goc.description,
+                thumbnailUrl: goc.thumbnailUrl,
+                cookTimeMinutes: goc.cookTimeMinutes,
+                prepTimeMinutes: goc.prepTimeMinutes,
+                servings: goc.servings,
+                authorId: userId,
+                status: RecipeStatus.DRAFT,
+                riengTu: true,
+                nguonGocId: goc.id,
+                ingredients: {
+                    create: goc.ingredients.map((nl) => ({
+                        originalText: nl.originalText,
+                        quantity: nl.quantity,
+                        unit: nl.unit,
+                        sortOrder: nl.sortOrder,
+                    })),
+                },
+                steps: {
+                    create: goc.steps.map((b) => ({ stepOrder: b.stepOrder, content: b.content })),
+                },
+            },
+            include: {
+                author: true,
+                ingredients: { orderBy: { sortOrder: 'asc' } },
+                steps: { orderBy: { stepOrder: 'asc' } },
+                nutrition: true,
+            },
+        });
+        return this.toCongThuc(banFork, banFork.author, {
+            ingredients: banFork.ingredients,
+            steps: banFork.steps,
+            nutrition: banFork.nutrition,
+        });
+    }
+
+    async layBanCaNhan(userId: string, gocId: string) {
+        // BR-FORK: Bản riêng tư chỉ chủ thấy — người khác nhận null
+        const banFork = await this.prisma.recipe.findFirst({
+            where: { nguonGocId: gocId, authorId: userId, riengTu: true, deletedAt: null },
+            include: {
+                author: true,
+                ingredients: { orderBy: { sortOrder: 'asc' } },
+                steps: { orderBy: { stepOrder: 'asc' } },
+                nutrition: true,
+            },
+        });
+        if (!banFork) {
+            return null;
+        }
+        return this.toCongThuc(banFork, banFork.author, {
+            ingredients: banFork.ingredients,
+            steps: banFork.steps,
+            nutrition: banFork.nutrition,
+        });
+    }
+
     async layChiTiet(id: string, nguoiXemId?: string) {
         const recipe = await this.prisma.recipe.findFirst({
             where: { id, deletedAt: null },
@@ -315,6 +403,14 @@ export class RecipesService {
         });
 
         if (!recipe) {
+            throw new NotFoundException({
+                code: 'REC-04',
+                message: '[REC-04] Không tìm thấy công thức',
+            });
+        }
+
+        // BR-FORK: Bản riêng tư chỉ chủ mở được — kể cả admin cũng 404
+        if (recipe.riengTu && recipe.authorId !== nguoiXemId) {
             throw new NotFoundException({
                 code: 'REC-04',
                 message: '[REC-04] Không tìm thấy công thức',

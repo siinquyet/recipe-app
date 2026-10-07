@@ -28,11 +28,13 @@ import { khoaTruyVan } from '../../src/lib/queryClient';
 import { useAuthStore } from '../../src/stores/authStore';
 import type { BinhLuan } from '../../src/types/api';
 import {
+  useBanCaNhan,
   useBinhLuan,
   useChiTietCongThuc,
   useChuyenDoiYeuThich,
   useCongThucTuongTu,
   useDanhSachYeuThich,
+  useForkCongThuc,
   usePhanHoi,
   useSuaBinhLuan,
   useTaoBinhLuan,
@@ -241,6 +243,9 @@ export default function ManHinhChiTietCongThuc() {
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
 
   const { data, isLoading, isError, refetch } = useChiTietCongThuc(maCongThuc);
+  // BR-FORK: Bản riêng tư của mình từ món này (có thì hiện nút xem, chưa thì hiện nút fork)
+  const banCaNhan = useBanCaNhan(maCongThuc, !!nguoiDung);
+  const forkBanRieng = useForkCongThuc();
   const tuongTu = useCongThucTuongTu(maCongThuc);
   const dsBinhLuan = useBinhLuan(maCongThuc);
   // BR-SOC: Trạng thái yêu thích đồng bộ server (suy từ danh sách đã lưu)
@@ -485,6 +490,30 @@ export default function ManHinhChiTietCongThuc() {
                 khiBam={() => xoaCongThuc.mutate(maCongThuc, { onSuccess: () => router.back() })}
                 className="flex-1"
               />
+            </View>
+          ) : nguoiDung ? (
+            // BR-FORK: Món người khác — fork 1 chạm sang bản riêng tư rồi mở luôn để sửa
+            <View className="mt-3 flex-row gap-2">
+              {banCaNhan.data ? (
+                <NutBam
+                  tieuDe="Xem bản của tôi"
+                  bienThe="phu"
+                  khiBam={() => router.push(`/recipe/${banCaNhan.data?.id ?? ''}`)}
+                  className="flex-1"
+                />
+              ) : (
+                <NutBam
+                  tieuDe="Sửa theo ý tôi"
+                  bienThe="phu"
+                  dangTai={forkBanRieng.isPending}
+                  khiBam={() =>
+                    forkBanRieng.mutate(maCongThuc, {
+                      onSuccess: (banFork) => router.push(`/recipe/${banFork.id}`),
+                    })
+                  }
+                  className="flex-1"
+                />
+              )}
             </View>
           ) : null}
         </View>

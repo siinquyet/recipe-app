@@ -157,6 +157,8 @@ model Recipe {
   source          RecipeSource  @default(LOCAL)
   externalId      String?       // ID ngoài nếu source = EXTERNAL
   rejectionReason String?
+  nguonGocId      String?       // BR-FORK: món cộng đồng đã fork ra bản này
+  riengTu         Boolean       @default(false) // BR-FORK: bản riêng tư chỉ chủ thấy, không public
   categoryId      String?
   category        Category?     @relation(fields: [categoryId], references: [id])
   tags            Tag[]
@@ -175,6 +177,8 @@ model Recipe {
   @@index([authorId])
   @@index([status])
   @@index([source])
+  @@index([nguonGocId])
+  @@index([riengTu])
   @@index([categoryId])
   @@index([createdAt])
   @@index([title])

@@ -16,6 +16,8 @@ export const khoaTruyVan = {
     danhSach: (thamSo: object) => ['cong-thuc', 'danh-sach', thamSo] as const,
     chiTiet: (id: string) => ['cong-thuc', 'chi-tiet', id] as const,
     tuongTu: (id: string) => ['cong-thuc', 'tuong-tu', id] as const,
+    // BR-FORK: Bản riêng tư của chính mình từ món cộng đồng
+    banCaNhan: (id: string) => ['cong-thuc', 'ban-ca-nhan', id] as const,
   },
   keHoachAn: {
     danhSach: () => ['ke-hoach-an', 'danh-sach'] as const,

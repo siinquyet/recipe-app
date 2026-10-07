@@ -43,6 +43,19 @@ export class RecipesController {
         return this.recipesService.layTuongTu(id);
     }
 
+    // BR-FORK: Fork riêng tư — món gốc giữ nguyên, không vào hàng chờ duyệt
+    @UseGuards(JwtAuthGuard)
+    @Post(':id/fork')
+    fork(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+        return this.recipesService.forkCongThuc(req.user.id, id);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':id/ban-ca-nhan')
+    layBanCaNhan(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+        return this.recipesService.layBanCaNhan(req.user.id, id);
+    }
+
     @Get(':id')
     @UseGuards(OptionalJwtGuard)
     layChiTiet(@Param('id') id: string, @Req() req: { user?: { id: string } }) {

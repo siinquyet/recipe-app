@@ -88,6 +88,22 @@ export async function layCongThucTuongTuUser(id: string): Promise<TrangCongThuc>
   return body.data;
 }
 
+// BR-FORK: Fork riêng tư món cộng đồng — món gốc giữ nguyên, không qua duyệt
+export async function forkCongThucUser(id: string): Promise<CongThuc> {
+  const res = await userApiClient.post(`/recipes/${id}/fork`);
+  const body = res.data as ApiEnvelope<CongThuc>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
+// BR-FORK: Bản riêng tư của chính mình từ món cộng đồng (null nếu chưa fork)
+export async function layBanCaNhanUser(id: string): Promise<CongThuc | null> {
+  const res = await userApiClient.get(`/recipes/${id}/ban-ca-nhan`);
+  const body = res.data as ApiEnvelope<CongThuc | null>;
+  if (!body.success) throw nemLoi(body);
+  return body.data;
+}
+
 // BR-SOC: Toggle yêu thích theo đúng API mobile
 export async function themYeuThichUser(id: string): Promise<void> {
   await userApiClient.post(`/recipes/${id}/favorite`);

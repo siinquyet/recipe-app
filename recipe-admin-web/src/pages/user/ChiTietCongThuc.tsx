@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ChevronLeftIcon, HeartIcon, StarIcon } from '@heroicons/react/24/outline';
@@ -12,6 +12,8 @@ import { TheCongThuc, layUrlAnhWeb } from '../../components/recipe/TheCongThuc';
 import {
   baoCaoViPham,
   danhGiaCongThucUser,
+  forkCongThucUser,
+  layBanCaNhanUser,
   layBinhLuanUser,
   layChiTietCongThucUser,
   layCongThucTuongTuUser,
@@ -210,6 +212,7 @@ function TheBinhLuan({
 // BR-REC + BR-SOC: Chi tiết mẫu Stitch — scale khẩu phần client, tim/sao/bình luận API thật
 export function ChiTietCongThuc() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const nguoiDung = useAuthStore((s) => s.nguoiDung);
   const [tab, setTab] = useState<(typeof CAC_TAB)[number]>(CAC_TAB[0]);
@@ -263,6 +266,21 @@ export function ChiTietCongThuc() {
     enabled: !!nguoiDung,
   });
   const yeuThich = (dsLuu.data?.noiDung ?? []).some((ct) => ct.id === id);
+
+  // BR-FORK: Bản riêng tư của mình từ món này (có thì xem, chưa thì fork 1 chạm)
+  const banCaNhan = useQuery({
+    queryKey: ['user', 'recipe', id, 'ban-ca-nhan'],
+    queryFn: () => layBanCaNhanUser(id ?? ''),
+    enabled: !!id && !!nguoiDung,
+  });
+  const forkBanRieng = useMutation({
+    mutationFn: () => forkCongThucUser(id ?? ''),
+    onSuccess: (banFork) => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'recipe', id, 'ban-ca-nhan'] });
+      navigate(`/cong-thuc/${banFork.id}`);
+    },
+    onError: () => alert('[REC-04] Chỉ fork được món cộng đồng đã duyệt'),
+  });
 
   const chuyenTim = useMutation({
     mutationFn: () => (yeuThich ? xoaYeuThichUser(id ?? '') : themYeuThichUser(id ?? '')),
@@ -383,6 +401,25 @@ export function ChiTietCongThuc() {
             >
               Báo cáo
             </button>
+          ) : null}
+          {nguoiDung && nguoiDung.id !== ct.tacGia.id ? (
+            banCaNhan.data ? (
+              <Link
+                to={`/cong-thuc/${banCaNhan.data.id}`}
+                className="rounded-full bg-accent-light/60 px-4 py-2 text-sm font-semibold text-ink"
+              >
+                Xem bản của tôi
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled={forkBanRieng.isPending}
+                onClick={() => forkBanRieng.mutate()}
+                className="rounded-full bg-accent-light/60 px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+              >
+                Sửa theo ý tôi
+              </button>
+            )
           ) : null}
         </span>
       </div>
