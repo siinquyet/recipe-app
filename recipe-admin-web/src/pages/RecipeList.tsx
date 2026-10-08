@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { formatVn, tenTrangThai } from '@cook/shared';
+import { formatVn } from '@cook/shared';
 import { anBai, hienBai, layTatCaBai } from '../api/admin';
 import { NhanTrangThai } from '../components/admin/NhanTrangThai';
+import {
+  BangAdmin,
+  ChipLoc,
+  ODuLieu,
+  OTieuDe,
+  PhanTrang,
+  TheAdmin,
+  TieuDeTrang,
+} from '../components/admin/KhungAdmin';
 
 const KICH_THUOC = 20;
 const CAC_TRANG_THAI = ['', 'DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'HIDDEN'] as const;
@@ -37,96 +46,88 @@ export function RecipeList() {
 
   return (
     <div>
-      <h1 className="text-left text-2xl font-bold">Công thức ({formatVn(data.tongSoPhanTu)})</h1>
+      <TieuDeTrang tieuDe={`Công thức (${formatVn(data.tongSoPhanTu)})`} moTa="Ẩn bài vi phạm 1 chạm" />
       <div className="mt-3 flex flex-wrap gap-2">
         {CAC_TRANG_THAI.map((tt) => (
-          <button
+          <ChipLoc
             key={tt}
-            type="button"
-            onClick={() => {
+            chon={trangThai === tt}
+            khiBam={() => {
               setTrangThai(tt);
               setTrang(0);
             }}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-              trangThai === tt ? 'bg-ink text-white' : 'bg-white text-slate-600'
-            }`}
           >
-            {tt === '' ? 'Tất cả' : tenTrangThai(tt)}
-          </button>
+            {tt === '' ? 'Tất cả' : tt === 'DRAFT' ? 'Nháp' : tt === 'PENDING' ? 'Chờ duyệt' : tt === 'APPROVED' ? 'Đã duyệt' : tt === 'REJECTED' ? 'Đã từ chối' : 'Đang ẩn'}
+          </ChipLoc>
         ))}
       </div>
-      <table className="mt-4 w-full border-collapse bg-white">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2 text-left">STT</th>
-            <th className="border p-2 text-left">Tên món</th>
-            <th className="border p-2 text-right">Nấu (phút)</th>
-            <th className="border p-2 text-right">Khẩu phần</th>
-            <th className="border p-2 text-left">Trạng thái</th>
-            <th className="border p-2 text-left">Ngày tạo</th>
-            <th className="border p-2 text-left">Ẩn/Hiện</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.noiDung.map((ct, i) => (
-            <tr key={ct.id} className="border-t">
-              <td className="number-vn border p-2">{trang * KICH_THUOC + i + 1}</td>
-              <td className="border p-2 text-left">
-                <p className="font-semibold">{ct.ten}</p>
-                <p className="text-sm text-slate-500">{ct.tacGia.tenHienThi}</p>
-              </td>
-              <td className="number-vn border p-2">{formatVn(ct.thoiGianNauPhut)}</td>
-              <td className="number-vn border p-2">{formatVn(ct.khauPhan)}</td>
-              <td className="border p-2">
-                <NhanTrangThai ma={ct.trangThai} />
-              </td>
-              <td className="border p-2 text-left">{format(new Date(ct.ngayTao), 'dd/MM/yyyy')}</td>
-              <td className="border p-2">
-                {ct.trangThai === 'HIDDEN' ? (
-                  <button
-                    type="button"
-                    disabled={hien.isPending}
-                    onClick={() => hien.mutate(ct.id)}
-                    className="rounded bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    Hiện
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={an.isPending}
-                    onClick={() => an.mutate(ct.id)}
-                    className="rounded border px-3 py-1.5 text-sm font-semibold text-slate-600 disabled:opacity-50"
-                  >
-                    Ẩn
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="mt-3 text-left text-sm text-slate-500">
-        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} món
-      </p>
-      <div className="mt-2 flex gap-2">
-        <button
-          type="button"
-          disabled={trang === 0}
-          onClick={() => setTrang((t) => Math.max(0, t - 1))}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Trước
-        </button>
-        <button
-          type="button"
-          disabled={trang + 1 >= data.tongSoTrang}
-          onClick={() => setTrang((t) => t + 1)}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+      {data.noiDung.length === 0 ? (
+        <TheAdmin>
+          <p className="text-left text-muted">Không có món nào.</p>
+        </TheAdmin>
+      ) : (
+        <TheAdmin className="p-2 md:p-3">
+          <BangAdmin
+            tieuDeCot={
+              <>
+                <OTieuDe>STT</OTieuDe>
+                <OTieuDe>Tên món</OTieuDe>
+                <OTieuDe className="text-right">Nấu (phút)</OTieuDe>
+                <OTieuDe className="text-right">Khẩu phần</OTieuDe>
+                <OTieuDe>Trạng thái</OTieuDe>
+                <OTieuDe>Ngày tạo</OTieuDe>
+                <OTieuDe>Ẩn/Hiện</OTieuDe>
+              </>
+            }
+            hang={data.noiDung.map((ct, i) => (
+              <tr key={ct.id}>
+                <ODuLieu className="number-vn">{trang * KICH_THUOC + i + 1}</ODuLieu>
+                <ODuLieu>
+                  <p className="font-serif font-bold text-ink">{ct.ten}</p>
+                  <p className="text-xs text-muted">{ct.tacGia.tenHienThi}</p>
+                </ODuLieu>
+                <ODuLieu className="number-vn">{formatVn(ct.thoiGianNauPhut)}</ODuLieu>
+                <ODuLieu className="number-vn">{formatVn(ct.khauPhan)}</ODuLieu>
+                <ODuLieu>
+                  <NhanTrangThai ma={ct.trangThai} />
+                </ODuLieu>
+                <ODuLieu className="text-sm">{format(new Date(ct.ngayTao), 'dd/MM/yyyy')}</ODuLieu>
+                <ODuLieu>
+                  {ct.trangThai === 'HIDDEN' ? (
+                    <button
+                      type="button"
+                      disabled={hien.isPending}
+                      onClick={() => hien.mutate(ct.id)}
+                      className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
+                    >
+                      Hiện
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={an.isPending}
+                      onClick={() => {
+                        if (window.confirm(`Ẩn món “${ct.ten}”? Người dùng sẽ không thấy nữa.`)) an.mutate(ct.id);
+                      }}
+                      className="rounded-xl border-[1.5px] border-ink/20 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mist disabled:opacity-50"
+                    >
+                      Ẩn
+                    </button>
+                  )}
+                </ODuLieu>
+              </tr>
+            ))}
+          />
+        </TheAdmin>
+      )}
+      <PhanTrang
+        trang={trang}
+        tongTrang={data.tongSoTrang}
+        tongSo={data.tongSoPhanTu}
+        donVi="món"
+        lui={() => setTrang((t) => Math.max(0, t - 1))}
+        toi={() => setTrang((t) => t + 1)}
+      />
     </div>
   );
 }

@@ -4,9 +4,22 @@ import { format } from 'date-fns';
 import { formatVn } from '@cook/shared';
 import { doiRole, khoaNguoiDung, layNguoiDung, moKhoaNguoiDung } from '../../api/admin';
 import { NhanTrangThai } from '../../components/admin/NhanTrangThai';
+import {
+  BangAdmin,
+  ChipLoc,
+  ODuLieu,
+  OTieuDe,
+  PhanTrang,
+  TheAdmin,
+  TieuDeTrang,
+} from '../../components/admin/KhungAdmin';
 
 const KICH_THUOC = 20;
-const CAC_TRANG_THAI = ['', 'ACTIVE', 'BANNED'] as const;
+const CAC_TRANG_THAI = [
+  { ma: '', nhan: 'Tất cả' },
+  { ma: 'ACTIVE', nhan: 'Đang hoạt động' },
+  { ma: 'BANNED', nhan: 'Bị khóa' },
+] as const;
 
 // BR-ADM: Quản lý người dùng — tìm kiếm, lọc trạng thái, khóa/mở, đổi role
 export function NguoiDung() {
@@ -47,7 +60,7 @@ export function NguoiDung() {
 
   return (
     <div>
-      <h1 className="text-left text-2xl font-bold">Người dùng ({formatVn(data.tongSoPhanTu)})</h1>
+      <TieuDeTrang tieuDe={`Người dùng (${formatVn(data.tongSoPhanTu)})`} moTa="Khóa vi phạm, phân quyền điều hành" />
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           value={tuKhoa}
@@ -56,73 +69,76 @@ export function NguoiDung() {
             if (e.key === 'Enter') tim();
           }}
           placeholder="Tìm email, tên..."
-          className="w-56 rounded-xl border px-3 py-2 text-sm"
+          aria-label="Tìm người dùng"
+          className="w-56 rounded-xl border-[1.5px] border-muted/40 bg-white px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-accent"
         />
         <button
           type="button"
           onClick={tim}
-          className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.01]"
         >
           Tìm
         </button>
         {CAC_TRANG_THAI.map((tt) => (
-          <button
-            key={tt}
-            type="button"
-            onClick={() => {
-              setTrangThai(tt);
+          <ChipLoc
+            key={tt.ma}
+            chon={trangThai === tt.ma}
+            khiBam={() => {
+              setTrangThai(tt.ma);
               setTrang(0);
             }}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-              trangThai === tt ? 'bg-ink text-white' : 'bg-white text-slate-600'
-            }`}
           >
-            {tt === '' ? 'Tất cả' : tt === 'ACTIVE' ? 'Đang hoạt động' : 'Bị khóa'}
-          </button>
+            {tt.nhan}
+          </ChipLoc>
         ))}
       </div>
-      <table className="mt-4 w-full border-collapse bg-white">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2 text-left">STT</th>
-            <th className="border p-2 text-left">Email</th>
-            <th className="border p-2 text-left">Tên</th>
-            <th className="border p-2 text-right">Bài viết</th>
-            <th className="border p-2 text-left">Role</th>
-            <th className="border p-2 text-left">Trạng thái</th>
-            <th className="border p-2 text-left">Ngày tạo</th>
-            <th className="border p-2 text-left">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.noiDung.map((nd, i) => (
-              <tr key={nd.id} className="border-t">
-                <td className="number-vn border p-2">{trang * KICH_THUOC + i + 1}</td>
-                <td className="border p-2 text-left">{nd.email}</td>
-                <td className="border p-2 text-left">{nd.tenHienThi}</td>
-                <td className="number-vn border p-2">{formatVn(nd.soBaiViet)}</td>
-                <td className="border p-2">
+      {data.noiDung.length === 0 ? (
+        <TheAdmin>
+          <p className="text-left text-muted">Không tìm thấy ai.</p>
+        </TheAdmin>
+      ) : (
+        <TheAdmin className="p-2 md:p-3">
+          <BangAdmin
+            tieuDeCot={
+              <>
+                <OTieuDe>STT</OTieuDe>
+                <OTieuDe>Email</OTieuDe>
+                <OTieuDe>Tên</OTieuDe>
+                <OTieuDe className="text-right">Bài viết</OTieuDe>
+                <OTieuDe>Role</OTieuDe>
+                <OTieuDe>Trạng thái</OTieuDe>
+                <OTieuDe>Ngày tạo</OTieuDe>
+                <OTieuDe>Thao tác</OTieuDe>
+              </>
+            }
+            hang={data.noiDung.map((nd, i) => (
+              <tr key={nd.id}>
+                <ODuLieu className="number-vn">{trang * KICH_THUOC + i + 1}</ODuLieu>
+                <ODuLieu className="text-sm text-ink">{nd.email}</ODuLieu>
+                <ODuLieu className="text-sm font-semibold text-ink">{nd.tenHienThi}</ODuLieu>
+                <ODuLieu className="number-vn">{formatVn(nd.soBaiViet)}</ODuLieu>
+                <ODuLieu>
                   <select
                     value={nd.vaiTro}
                     aria-label={`Đổi vai trò ${nd.email}`}
                     onChange={(e) => doi.mutate({ id: nd.id, role: e.target.value as 'USER' | 'ADMIN' })}
-                    className="rounded border px-2 py-1 text-sm"
+                    className="rounded-xl border-[1.5px] border-muted/40 bg-white px-2.5 py-1.5 text-sm font-semibold text-ink outline-none focus:border-accent"
                   >
                     <option value="USER">USER</option>
                     <option value="ADMIN">ADMIN</option>
                   </select>
-                </td>
-                <td className="border p-2">
+                </ODuLieu>
+                <ODuLieu>
                   <NhanTrangThai ma={nd.trangThai} />
-                </td>
-                <td className="border p-2 text-left">{format(new Date(nd.ngayTao), 'dd/MM/yyyy')}</td>
-                <td className="border p-2">
+                </ODuLieu>
+                <ODuLieu className="text-sm">{format(new Date(nd.ngayTao), 'dd/MM/yyyy')}</ODuLieu>
+                <ODuLieu>
                   {nd.trangThai === 'BANNED' ? (
                     <button
                       type="button"
                       disabled={moKhoa.isPending}
                       onClick={() => moKhoa.mutate(nd.id)}
-                      className="rounded bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                      className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
                     >
                       Mở khóa
                     </button>
@@ -135,37 +151,25 @@ export function NguoiDung() {
                           khoa.mutate(nd.id);
                         }
                       }}
-                      className="rounded border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-600 disabled:opacity-50"
+                      className="rounded-xl border-[1.5px] border-danger/40 bg-white px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/5 disabled:opacity-50"
                     >
                       Khóa
                     </button>
                   )}
-                </td>
+                </ODuLieu>
               </tr>
             ))}
-        </tbody>
-      </table>
-      <p className="mt-3 text-left text-sm text-slate-500">
-        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} người
-      </p>
-      <div className="mt-2 flex gap-2">
-        <button
-          type="button"
-          disabled={trang === 0}
-          onClick={() => setTrang((t) => Math.max(0, t - 1))}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Trước
-        </button>
-        <button
-          type="button"
-          disabled={trang + 1 >= data.tongSoTrang}
-          onClick={() => setTrang((t) => t + 1)}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+          />
+        </TheAdmin>
+      )}
+      <PhanTrang
+        trang={trang}
+        tongTrang={data.tongSoTrang}
+        tongSo={data.tongSoPhanTu}
+        donVi="người"
+        lui={() => setTrang((t) => Math.max(0, t - 1))}
+        toi={() => setTrang((t) => t + 1)}
+      />
     </div>
   );
 }

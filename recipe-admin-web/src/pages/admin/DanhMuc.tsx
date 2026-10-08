@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { formatVn } from '@cook/shared';
 import { layDanhMuc, layNhan, taoDanhMuc, taoNhan, xoaDanhMuc, xoaNhan } from '../../api/admin';
+import { TieuDeTrang } from '../../components/admin/KhungAdmin';
 
 function KhoiThem({ nhan, goiY, khiThem, dangThem }: {
   nhan: string;
@@ -11,7 +13,7 @@ function KhoiThem({ nhan, goiY, khiThem, dangThem }: {
   const [ten, setTen] = useState('');
   return (
     <form
-      className="mt-3 flex gap-2"
+      className="mt-4 flex gap-2"
       onSubmit={(e) => {
         e.preventDefault();
         if (!ten.trim()) return;
@@ -24,12 +26,12 @@ function KhoiThem({ nhan, goiY, khiThem, dangThem }: {
         onChange={(e) => setTen(e.target.value)}
         placeholder={goiY}
         aria-label={nhan}
-        className="w-64 rounded-xl border px-3 py-2 text-sm"
+        className="w-full rounded-xl border-[1.5px] border-muted/40 bg-white px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-accent"
       />
       <button
         type="submit"
         disabled={dangThem || !ten.trim()}
-        className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="shrink-0 rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
       >
         Thêm
       </button>
@@ -73,25 +75,27 @@ export function DanhMuc() {
 
   return (
     <div>
-      <h1 className="text-left text-2xl font-bold">Danh mục & Nhãn</h1>
-      <div className="mt-4 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="text-left text-lg font-bold">Danh mục ({danhMuc.data?.length ?? 0})</h2>
+      <TieuDeTrang tieuDe="Danh mục & Nhãn" moTa="Phân loại chuẩn để món gắn đúng" />
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <section className="rounded-40px bg-white p-5 shadow-magazine md:p-6">
+          <h2 className="text-left font-serif text-xl font-bold text-ink">
+            Danh mục ({formatVn(danhMuc.data?.length ?? 0)})
+          </h2>
           {danhMuc.isError ? (
             <p className="mt-2 text-left text-sm text-red-600">Không tải được</p>
           ) : (
             <ul className="mt-2">
               {(danhMuc.data ?? []).map((d) => (
-                <li key={d.id} className="flex items-center justify-between border-b py-2 last:border-0">
+                <li key={d.id} className="flex items-center justify-between border-b border-mist py-2.5 last:border-0">
                   <div className="text-left">
-                    <p className="text-sm font-semibold">{d.ten}</p>
-                    <p className="font-mono text-xs text-slate-500">{d.slug}</p>
+                    <p className="text-sm font-semibold text-ink">{d.ten}</p>
+                    <p className="font-mono text-xs text-muted">{d.slug}</p>
                   </div>
                   <button
                     type="button"
                     disabled={xoaDM.isPending}
                     onClick={() => xacNhanXoa(d.ten, () => xoaDM.mutate(d.id))}
-                    className="rounded border border-red-300 px-3 py-1 text-sm font-semibold text-red-600 disabled:opacity-50"
+                    className="rounded-xl border-[1.5px] border-danger/40 px-3 py-1.5 text-sm font-semibold text-danger transition hover:bg-danger/5 disabled:opacity-50"
                   >
                     Xóa
                   </button>
@@ -101,23 +105,25 @@ export function DanhMuc() {
           )}
           <KhoiThem nhan="Tên danh mục" goiY="VD: Món khai vị" khiThem={(t) => themDM.mutate(t)} dangThem={themDM.isPending} />
         </section>
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="text-left text-lg font-bold">Nhãn ({nhan.data?.length ?? 0})</h2>
+        <section className="rounded-40px bg-white p-5 shadow-magazine md:p-6">
+          <h2 className="text-left font-serif text-xl font-bold text-ink">
+            Nhãn ({formatVn(nhan.data?.length ?? 0)})
+          </h2>
           {nhan.isError ? (
             <p className="mt-2 text-left text-sm text-red-600">Không tải được</p>
           ) : (
             <ul className="mt-2">
               {(nhan.data ?? []).map((t) => (
-                <li key={t.id} className="flex items-center justify-between border-b py-2 last:border-0">
+                <li key={t.id} className="flex items-center justify-between border-b border-mist py-2.5 last:border-0">
                   <div className="text-left">
-                    <p className="text-sm font-semibold">{t.ten}</p>
-                    <p className="font-mono text-xs text-slate-500">{t.slug}</p>
+                    <p className="text-sm font-semibold text-ink">{t.ten}</p>
+                    <p className="font-mono text-xs text-muted">{t.slug}</p>
                   </div>
                   <button
                     type="button"
                     disabled={goNhan.isPending}
                     onClick={() => xacNhanXoa(t.ten, () => goNhan.mutate(t.id))}
-                    className="rounded border border-red-300 px-3 py-1 text-sm font-semibold text-red-600 disabled:opacity-50"
+                    className="rounded-xl border-[1.5px] border-danger/40 px-3 py-1.5 text-sm font-semibold text-danger transition hover:bg-danger/5 disabled:opacity-50"
                   >
                     Xóa
                   </button>

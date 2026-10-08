@@ -11,27 +11,44 @@ import {
   tuChoiBai,
   type BaiAdmin,
 } from '../../api/admin';
+import {
+  BangAdmin,
+  ChipLoc,
+  NutDuyet,
+  NutTuChoi,
+  ODuLieu,
+  OTieuDe,
+  PhanTrang,
+  TheAdmin,
+  TieuDeTrang,
+} from '../../components/admin/KhungAdmin';
 
 const KICH_THUOC = 20;
 
 type Tab = 'cho' | 'da-duyet' | 'da-tu-choi';
 
 const NHAN_GOI_Y: Record<string, { nhan: string; mau: string }> = {
-  'nen-duyet': { nhan: 'Nên duyệt', mau: 'text-teal-700' },
-  'giu-lai': { nhan: 'Giữ lại xem tay', mau: 'text-amber-600' },
-  'nen-tu-choi': { nhan: 'Nên từ chối', mau: 'text-red-600' },
+  'nen-duyet': { nhan: 'Nên duyệt', mau: 'text-deepteal' },
+  'giu-lai': { nhan: 'Giữ lại xem tay', mau: 'text-amber-700' },
+  'nen-tu-choi': { nhan: 'Nên từ chối', mau: 'text-danger' },
 };
+
+const TABS: Array<{ ma: Tab; nhan: string }> = [
+  { ma: 'cho', nhan: 'Chờ duyệt' },
+  { ma: 'da-duyet', nhan: 'Đã duyệt' },
+  { ma: 'da-tu-choi', nhan: 'Đã từ chối' },
+];
 
 function CotGoiY({ bai }: { bai: BaiAdmin }) {
   const goiY = bai.nhanGoiY ? NHAN_GOI_Y[bai.nhanGoiY] : null;
-  if (!goiY) return <span className="text-slate-400">—</span>;
+  if (!goiY) return <span className="text-muted">—</span>;
   return (
     <div className="text-left">
       <p className={`text-sm font-bold ${goiY.mau}`}>
         {goiY.nhan} ({formatVn(bai.diemTuDong ?? 0)}đ)
       </p>
       {(bai.lyDoGoiY ?? []).map((lyDo) => (
-        <p key={lyDo} className="text-xs text-slate-500">
+        <p key={lyDo} className="text-xs text-muted">
           • {lyDo}
         </p>
       ))}
@@ -56,6 +73,7 @@ export function ChoDuyet() {
   });
   const lamMoi = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', 'cho-duyet'] });
+    queryClient.invalidateQueries({ queryKey: ['admin', 'cho-duyet-dem'] });
     queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
   };
   const duyet = useMutation({ mutationFn: duyetBai, onSuccess: lamMoi });
@@ -100,64 +118,56 @@ export function ChoDuyet() {
 
   return (
     <div>
-      <h1 className="text-left text-2xl font-bold">
-        {tieuDe} ({formatVn(data.tongSoPhanTu)})
-      </h1>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {(
-          [
-            { ma: 'cho', nhan: 'Chờ duyệt' },
-            { ma: 'da-duyet', nhan: 'Đã duyệt' },
-            { ma: 'da-tu-choi', nhan: 'Đã từ chối' },
-          ] as Array<{ ma: Tab; nhan: string }>
-        ).map((t) => (
+      <TieuDeTrang
+        tieuDe={`${tieuDe} (${formatVn(data.tongSoPhanTu)})`}
+        moTa="Duyệt 1 chạm, từ chối cần ghi lý do"
+        benPhai={
           <button
-            key={t.ma}
             type="button"
-            onClick={() => doiTab(t.ma)}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-              tab === t.ma ? 'bg-teal-600 text-white' : 'bg-white text-slate-600'
-            }`}
+            disabled={chayTuDong.isPending}
+            onClick={() => chayTuDong.mutate()}
+            className="rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
           >
-            {t.nhan}
+            Chạy kiểm duyệt
           </button>
+        }
+      />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {TABS.map((t) => (
+          <ChipLoc key={t.ma} chon={tab === t.ma} khiBam={() => doiTab(t.ma)}>
+            {t.nhan}
+          </ChipLoc>
         ))}
-        <button
-          type="button"
-          disabled={chayTuDong.isPending}
-          onClick={() => chayTuDong.mutate()}
-          className="rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          Chạy kiểm duyệt
-        </button>
       </div>
-      {ketQuaChay ? <p className="mt-2 text-left text-sm text-slate-600">{ketQuaChay}</p> : null}
+      {ketQuaChay ? <p className="mt-2 text-left text-sm text-muted">{ketQuaChay}</p> : null}
       {data.noiDung.length === 0 ? (
-        <p className="mt-4 text-left text-slate-500">Không có bài nào.</p>
+        <TheAdmin>
+          <p className="text-left text-muted">Không có bài nào.</p>
+        </TheAdmin>
       ) : (
-        <table className="mt-4 w-full border-collapse bg-white">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">STT</th>
-              <th className="border p-2 text-left">Tên món</th>
-              <th className="border p-2 text-left">Tác giả</th>
-              <th className="border p-2 text-left">Gợi ý máy</th>
-              <th className="border p-2 text-left">Ngày gửi</th>
-              <th className="border p-2 text-left">Xử lý</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.noiDung.map((bai, i) => (
-              <tr key={bai.id} className="border-t align-top">
-                <td className="number-vn border p-2">{trang * KICH_THUOC + i + 1}</td>
-                <td className="border p-2 text-left">
-                  <p className="font-semibold">{bai.ten}</p>
-                  {bai.moTa ? <p className="mt-1 text-sm text-slate-500">{bai.moTa}</p> : null}
+        <TheAdmin className="p-2 md:p-3">
+          <BangAdmin
+            tieuDeCot={
+              <>
+                <OTieuDe>STT</OTieuDe>
+                <OTieuDe>Tên món</OTieuDe>
+                <OTieuDe>Tác giả</OTieuDe>
+                <OTieuDe>Gợi ý máy</OTieuDe>
+                <OTieuDe>Ngày gửi</OTieuDe>
+                <OTieuDe>Xử lý</OTieuDe>
+              </>
+            }
+            hang={data.noiDung.map((bai, i) => (
+              <tr key={bai.id}>
+                <ODuLieu className="number-vn">{trang * KICH_THUOC + i + 1}</ODuLieu>
+                <ODuLieu>
+                  <p className="font-serif font-bold text-ink">{bai.ten}</p>
+                  {bai.moTa ? <p className="mt-1 text-xs text-muted">{bai.moTa}</p> : null}
                   {(bai.canhBao ?? []).map((cb) => (
                     <p
                       key={cb.cap.join('+')}
                       className={`mt-1 text-left text-xs font-semibold ${
-                        cb.muc === 'cao' ? 'text-red-600' : 'text-amber-600'
+                        cb.muc === 'cao' ? 'text-danger' : 'text-amber-700'
                       }`}
                     >
                       {cb.muc === 'cao' ? 'Cảnh báo độc: ' : 'Lưu ý combo: '}
@@ -165,80 +175,57 @@ export function ChoDuyet() {
                     </p>
                   ))}
                   {bai.lyDoTuChoi ? (
-                    <p className="mt-1 text-left text-xs text-slate-500">Lý do từ chối: {bai.lyDoTuChoi}</p>
+                    <p className="mt-1 text-left text-xs text-muted">Lý do từ chối: {bai.lyDoTuChoi}</p>
                   ) : null}
-                </td>
-                <td className="border p-2 text-left">
-                  <p>{bai.tacGia.tenHienThi}</p>
-                  <p className="text-sm text-slate-500">{bai.tacGia.email}</p>
-                </td>
-                <td className="border p-2">
+                </ODuLieu>
+                <ODuLieu>
+                  <p className="text-sm font-semibold text-ink">{bai.tacGia.tenHienThi}</p>
+                  <p className="text-xs text-muted">{bai.tacGia.email}</p>
+                </ODuLieu>
+                <ODuLieu>
                   <CotGoiY bai={bai} />
-                </td>
-                <td className="border p-2 text-left">{format(new Date(bai.ngayTao), 'dd/MM/yyyy')}</td>
-                <td className="border p-2">
+                </ODuLieu>
+                <ODuLieu className="text-sm">{format(new Date(bai.ngayTao), 'dd/MM/yyyy')}</ODuLieu>
+                <ODuLieu>
                   {tab === 'cho' ? (
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        disabled={duyet.isPending}
-                        onClick={() => duyet.mutate(bai.id)}
-                        className="rounded bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-                      >
-                        Duyệt
-                      </button>
+                    <div className="flex min-w-44 flex-col gap-2">
+                      <NutDuyet tat={duyet.isPending} khiBam={() => duyet.mutate(bai.id)} />
                       <input
                         value={lyDo[bai.id] ?? ''}
                         onChange={(e) => setLyDo((cu) => ({ ...cu, [bai.id]: e.target.value }))}
                         placeholder="Lý do từ chối..."
-                        className="w-44 rounded border px-2 py-1.5 text-sm"
+                        aria-label={`Lý do từ chối ${bai.ten}`}
+                        className="rounded-xl border-[1.5px] border-muted/40 px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
                       />
-                      <button
-                        type="button"
-                        disabled={tuChoi.isPending || !(lyDo[bai.id] ?? '').trim()}
-                        onClick={() => tuChoi.mutate({ id: bai.id, reason: (lyDo[bai.id] ?? '').trim() })}
-                        className="rounded border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-600 disabled:opacity-50"
-                      >
-                        Từ chối
-                      </button>
+                      <NutTuChoi
+                        tat={tuChoi.isPending || !(lyDo[bai.id] ?? '').trim()}
+                        khiBam={() => tuChoi.mutate({ id: bai.id, reason: (lyDo[bai.id] ?? '').trim() })}
+                      />
                     </div>
                   ) : (
                     <button
                       type="button"
                       disabled={hoanTac.isPending}
                       onClick={() => hoanTac.mutate(bai.id)}
-                      className="rounded border border-amber-400 px-3 py-1.5 text-sm font-semibold text-amber-700 disabled:opacity-50"
+                      className="rounded-xl border-[1.5px] border-accent bg-accent-light/40 px-4 py-2 text-sm font-semibold text-ink transition hover:bg-accent-light/70 disabled:opacity-50"
                     >
                       Hoàn tác
                     </button>
                   )}
-                </td>
+                </ODuLieu>
               </tr>
             ))}
-          </tbody>
-        </table>
+          />
+        </TheAdmin>
       )}
-      <p className="mt-3 text-left text-sm text-slate-500">
-        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} bài
-      </p>
-      <div className="mt-2 flex gap-2">
-        <button
-          type="button"
-          disabled={trang === 0}
-          onClick={() => setTrang((t) => Math.max(0, t - 1))}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Trước
-        </button>
-        <button
-          type="button"
-          disabled={trang + 1 >= data.tongSoTrang}
-          onClick={() => setTrang((t) => t + 1)}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+      <PhanTrang
+        trang={trang}
+        tongTrang={data.tongSoTrang}
+        tongSo={data.tongSoPhanTu}
+        donVi="bài"
+        lui={() => setTrang((t) => Math.max(0, t - 1))}
+        toi={() => setTrang((t) => t + 1)}
+      />
     </div>
   );
 }

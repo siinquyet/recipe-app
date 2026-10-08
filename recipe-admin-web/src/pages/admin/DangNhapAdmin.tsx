@@ -29,40 +29,45 @@ export function DangNhapAdmin() {
 
   return (
     <div className="mx-auto max-w-md px-6 pb-8 pt-16">
-      <h1 className="text-left text-2xl font-black">Bếp Nhà · Quản trị</h1>
-      <p className="mt-1 text-left text-sm text-slate-500">Đăng nhập tài khoản ADMIN để điều hành</p>
-      <label className="mt-6 block text-left text-sm font-semibold" htmlFor="admin-email">
-        Email
-      </label>
-      <input
-        id="admin-email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="admin@gmail.com"
-        className="mt-1 w-full rounded-xl border px-3 py-2.5 text-sm"
-      />
-      <label className="mt-4 block text-left text-sm font-semibold" htmlFor="admin-mat-khau">
-        Mật khẩu
-      </label>
-      <input
-        id="admin-mat-khau"
-        type="password"
-        value={matKhau}
-        onChange={(e) => setMatKhau(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') gui();
-        }}
-        className="mt-1 w-full rounded-xl border px-3 py-2.5 text-sm"
-      />
-      {loi ? <p className="mt-2 text-left text-sm text-red-600">{loi}</p> : null}
-      <button
-        type="button"
-        disabled={dangTai}
-        onClick={gui}
-        className="mt-6 w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
-      >
-        {dangTai ? 'Đang đăng nhập...' : 'Đăng nhập'}
-      </button>
+      <div className="rounded-40px bg-white p-8 shadow-magazine">
+        <p className="inline-block rounded-full bg-accent-light/60 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-ink">
+          Quản trị
+        </p>
+        <h1 className="mt-3 text-left font-serif text-3xl font-black tracking-tight text-ink">Bếp Nhà · Quản trị</h1>
+        <p className="mt-1 text-left text-sm text-muted">Đăng nhập tài khoản ADMIN để điều hành</p>
+        <label className="mt-6 block text-left text-sm font-semibold text-ink" htmlFor="admin-email">
+          Email
+        </label>
+        <input
+          id="admin-email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="admin@gmail.com"
+          className="mt-1 w-full rounded-xl border-[1.5px] border-muted/40 bg-white px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-accent focus:outline-2 focus:outline-accent-light"
+        />
+        <label className="mt-4 block text-left text-sm font-semibold text-ink" htmlFor="admin-mat-khau">
+          Mật khẩu
+        </label>
+        <input
+          id="admin-mat-khau"
+          type="password"
+          value={matKhau}
+          onChange={(e) => setMatKhau(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') gui();
+          }}
+          className="mt-1 w-full rounded-xl border-[1.5px] border-muted/40 bg-white px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-accent focus:outline-2 focus:outline-accent-light"
+        />
+        {loi ? <p className="mt-2 text-left text-sm font-semibold text-danger">{loi}</p> : null}
+        <button
+          type="button"
+          disabled={dangTai}
+          onClick={gui}
+          className="mt-6 w-full rounded-xl bg-ink px-4 py-3.5 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
+        >
+          {dangTai ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </button>
+      </div>
     </div>
   );
 }

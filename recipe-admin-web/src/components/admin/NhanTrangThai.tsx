@@ -2,16 +2,16 @@ import type { FC } from 'react';
 import { tenTrangThai } from '@cook/shared';
 
 const MAU: Record<string, string> = {
-  APPROVED: 'bg-teal-100 text-teal-800',
-  ACTIVE: 'bg-teal-100 text-teal-800',
-  RESOLVED: 'bg-teal-100 text-teal-800',
-  PENDING: 'bg-amber-100 text-amber-800',
-  DRAFT: 'bg-slate-200 text-slate-700',
-  REJECTED: 'bg-red-100 text-red-700',
-  BANNED: 'bg-red-100 text-red-700',
-  HIDDEN: 'bg-slate-200 text-slate-600',
+  APPROVED: 'bg-deepteal text-white',
+  ACTIVE: 'bg-accent-light/60 text-ink',
+  RESOLVED: 'bg-deepteal text-white',
+  PENDING: 'bg-cream text-ink',
+  DRAFT: 'bg-mist text-slate-600',
+  REJECTED: 'bg-danger/10 text-danger',
+  BANNED: 'bg-danger/10 text-danger',
+  HIDDEN: 'bg-mist text-slate-500',
   ADMIN: 'bg-ink text-white',
-  USER: 'bg-slate-200 text-slate-700',
+  USER: 'bg-mist text-slate-600',
 };
 
 const NHAN_VI: Record<string, string> = {

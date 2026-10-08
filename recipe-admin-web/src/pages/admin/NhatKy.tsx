@@ -4,6 +4,15 @@ import { format } from 'date-fns';
 import { formatVn } from '@cook/shared';
 import { layNhatKy } from '../../api/admin';
 import { NhanTrangThai } from '../../components/admin/NhanTrangThai';
+import {
+  BangAdmin,
+  ChipLoc,
+  ODuLieu,
+  OTieuDe,
+  PhanTrang,
+  TheAdmin,
+  TieuDeTrang,
+} from '../../components/admin/KhungAdmin';
 
 const KICH_THUOC = 20;
 const CAC_HANH_DONG = [
@@ -51,97 +60,78 @@ export function NhatKy() {
 
   return (
     <div>
-      <h1 className="text-left text-2xl font-bold">Nhật ký ({formatVn(data.tongSoPhanTu)})</h1>
+      <TieuDeTrang tieuDe={`Nhật ký (${formatVn(data.tongSoPhanTu)})`} moTa="Mọi thao tác điều hành, kể cả của máy" />
       <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => {
+        <ChipLoc
+          chon={hanhDong === ''}
+          khiBam={() => {
             setHanhDong('');
             setTrang(0);
           }}
-          className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-            hanhDong === '' ? 'bg-ink text-white' : 'bg-white text-slate-600'
-          }`}
         >
           Tất cả
-        </button>
+        </ChipLoc>
         {CAC_HANH_DONG.filter((h) => h !== '').map((h) => (
-          <button
+          <ChipLoc
             key={h}
-            type="button"
-            onClick={() => {
+            chon={hanhDong === h}
+            khiBam={() => {
               setHanhDong(h);
               setTrang(0);
             }}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-              hanhDong === h ? 'bg-ink text-white' : 'bg-white text-slate-600'
-            }`}
           >
             <NhanTrangThai ma={h} />
-          </button>
+          </ChipLoc>
         ))}
       </div>
       {data.noiDung.length === 0 ? (
-        <p className="mt-4 text-left text-slate-500">Chưa có hoạt động nào.</p>
+        <TheAdmin>
+          <p className="text-left text-muted">Chưa có hoạt động nào.</p>
+        </TheAdmin>
       ) : (
-        <table className="mt-4 w-full border-collapse bg-white">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">STT</th>
-              <th className="border p-2 text-left">Hành động</th>
-              <th className="border p-2 text-left">Người làm</th>
-              <th className="border p-2 text-left">Đối tượng</th>
-              <th className="border p-2 text-left">Thay đổi</th>
-              <th className="border p-2 text-left">Thời gian</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.noiDung.map((dong, i) => (
-              <tr key={dong.id} className="border-t align-top">
-                <td className="number-vn border p-2">{trang * KICH_THUOC + i + 1}</td>
-                <td className="border p-2">
+        <TheAdmin className="p-2 md:p-3">
+          <BangAdmin
+            tieuDeCot={
+              <>
+                <OTieuDe>STT</OTieuDe>
+                <OTieuDe>Hành động</OTieuDe>
+                <OTieuDe>Người làm</OTieuDe>
+                <OTieuDe>Đối tượng</OTieuDe>
+                <OTieuDe>Thay đổi</OTieuDe>
+                <OTieuDe>Thời gian</OTieuDe>
+              </>
+            }
+            hang={data.noiDung.map((dong, i) => (
+              <tr key={dong.id}>
+                <ODuLieu className="number-vn">{trang * KICH_THUOC + i + 1}</ODuLieu>
+                <ODuLieu>
                   <NhanTrangThai ma={dong.hanhDong} />
-                </td>
-                <td className="border p-2 text-left text-sm">
-                  <p>{dong.nguoiLam.tenHienThi}</p>
-                  <p className="text-slate-500">{dong.nguoiLam.email}</p>
-                </td>
-                <td className="border p-2 text-left font-mono text-xs">
+                </ODuLieu>
+                <ODuLieu>
+                  <p className="text-sm font-semibold text-ink">{dong.nguoiLam.tenHienThi}</p>
+                  <p className="text-xs text-muted">{dong.nguoiLam.email}</p>
+                </ODuLieu>
+                <ODuLieu className="font-mono text-xs text-ink">
                   {dong.loaiThucThe}/{dong.thucTheId.slice(0, 8)}…
-                </td>
-                <td className="border p-2 text-left font-mono text-xs text-slate-600">
+                </ODuLieu>
+                <ODuLieu className="font-mono text-xs text-muted">
                   <p>− {tomTatDuLieu(dong.duLieuCu)}</p>
                   <p>+ {tomTatDuLieu(dong.duLieuMoi)}</p>
-                </td>
-                <td className="border p-2 text-left text-sm">
-                  {format(new Date(dong.ngayTao), 'HH:mm dd/MM/yyyy')}
-                </td>
+                </ODuLieu>
+                <ODuLieu className="text-sm">{format(new Date(dong.ngayTao), 'HH:mm dd/MM/yyyy')}</ODuLieu>
               </tr>
             ))}
-          </tbody>
-        </table>
+          />
+        </TheAdmin>
       )}
-      <p className="mt-3 text-left text-sm text-slate-500">
-        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} dòng
-      </p>
-      <div className="mt-2 flex gap-2">
-        <button
-          type="button"
-          disabled={trang === 0}
-          onClick={() => setTrang((t) => Math.max(0, t - 1))}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Trước
-        </button>
-        <button
-          type="button"
-          disabled={trang + 1 >= data.tongSoTrang}
-          onClick={() => setTrang((t) => t + 1)}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+      <PhanTrang
+        trang={trang}
+        tongTrang={data.tongSoTrang}
+        tongSo={data.tongSoPhanTu}
+        donVi="dòng"
+        lui={() => setTrang((t) => Math.max(0, t - 1))}
+        toi={() => setTrang((t) => t + 1)}
+      />
     </div>
   );
 }

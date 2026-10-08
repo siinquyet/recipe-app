@@ -5,9 +5,23 @@ import { format } from 'date-fns';
 import { formatVn } from '@cook/shared';
 import { layBaoCao, xuLyBaoCao } from '../../api/admin';
 import { NhanTrangThai } from '../../components/admin/NhanTrangThai';
+import {
+  BangAdmin,
+  ChipLoc,
+  ODuLieu,
+  OTieuDe,
+  PhanTrang,
+  TheAdmin,
+  TieuDeTrang,
+} from '../../components/admin/KhungAdmin';
 
 const KICH_THUOC = 20;
-const CAC_TRANG_THAI = ['', 'PENDING', 'RESOLVED', 'REJECTED'] as const;
+const CAC_TRANG_THAI = [
+  { ma: '', nhan: 'Tất cả' },
+  { ma: 'PENDING', nhan: 'Chờ xử lý' },
+  { ma: 'RESOLVED', nhan: 'Đã xử lý' },
+  { ma: 'REJECTED', nhan: 'Đã bác' },
+] as const;
 
 // BR-SOC: Tố cáo vi phạm — lọc trạng thái, xử lý kèm ghi chú, link sang món/bình luận gốc
 export function ToCao() {
@@ -43,78 +57,78 @@ export function ToCao() {
 
   return (
     <div>
-      <h1 className="text-left text-2xl font-bold">Tố cáo ({formatVn(data.tongSoPhanTu)})</h1>
+      <TieuDeTrang tieuDe={`Tố cáo (${formatVn(data.tongSoPhanTu)})`} moTa="Báo cáo vi phạm từ cộng đồng" />
       <div className="mt-3 flex flex-wrap gap-2">
         {CAC_TRANG_THAI.map((tt) => (
-          <button
-            key={tt}
-            type="button"
-            onClick={() => {
-              setTrangThai(tt);
+          <ChipLoc
+            key={tt.ma}
+            chon={trangThai === tt.ma}
+            khiBam={() => {
+              setTrangThai(tt.ma);
               setTrang(0);
             }}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-              trangThai === tt ? 'bg-ink text-white' : 'bg-white text-slate-600'
-            }`}
           >
-            {tt === '' ? 'Tất cả' : tt === 'PENDING' ? 'Chờ xử lý' : tt === 'RESOLVED' ? 'Đã xử lý' : 'Đã bác'}
-          </button>
+            {tt.nhan}
+          </ChipLoc>
         ))}
       </div>
       {data.noiDung.length === 0 ? (
-        <p className="mt-4 text-left text-slate-500">Không có tố cáo nào.</p>
+        <TheAdmin>
+          <p className="text-left text-muted">Không có tố cáo nào.</p>
+        </TheAdmin>
       ) : (
-        <table className="mt-4 w-full border-collapse bg-white">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">STT</th>
-              <th className="border p-2 text-left">Đối tượng</th>
-              <th className="border p-2 text-left">Lý do</th>
-              <th className="border p-2 text-left">Người báo cáo</th>
-              <th className="border p-2 text-left">Trạng thái</th>
-              <th className="border p-2 text-left">Ngày báo</th>
-              <th className="border p-2 text-left">Xử lý</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.noiDung.map((bc, i) => (
-              <tr key={bc.id} className="border-t align-top">
-                <td className="number-vn border p-2">{trang * KICH_THUOC + i + 1}</td>
-                <td className="border p-2 text-left">
+        <TheAdmin className="p-2 md:p-3">
+          <BangAdmin
+            tieuDeCot={
+              <>
+                <OTieuDe>STT</OTieuDe>
+                <OTieuDe>Đối tượng</OTieuDe>
+                <OTieuDe>Lý do</OTieuDe>
+                <OTieuDe>Người báo cáo</OTieuDe>
+                <OTieuDe>Trạng thái</OTieuDe>
+                <OTieuDe>Ngày báo</OTieuDe>
+                <OTieuDe>Xử lý</OTieuDe>
+              </>
+            }
+            hang={data.noiDung.map((bc, i) => (
+              <tr key={bc.id}>
+                <ODuLieu className="number-vn">{trang * KICH_THUOC + i + 1}</ODuLieu>
+                <ODuLieu>
                   {bc.congThuc ? (
                     <Link to={`/cong-thuc/${bc.congThuc.id}`} className="font-semibold text-deepteal hover:underline">
                       Món: {bc.congThuc.ten}
                     </Link>
                   ) : bc.binhLuan ? (
-                    <p className="text-sm">Bình luận: “{bc.binhLuan.noiDung}”</p>
+                    <p className="text-sm text-ink">Bình luận: “{bc.binhLuan.noiDung}”</p>
                   ) : (
-                    <p className="text-sm text-slate-400">—</p>
+                    <p className="text-sm text-muted">—</p>
                   )}
-                </td>
-                <td className="border p-2 text-left text-sm">{bc.lyDo}</td>
-                <td className="border p-2 text-left text-sm">
-                  <p>{bc.nguoiBaoCao.tenHienThi}</p>
-                  <p className="text-slate-500">{bc.nguoiBaoCao.email}</p>
-                </td>
-                <td className="border p-2">
+                </ODuLieu>
+                <ODuLieu className="text-sm font-semibold text-ink">{bc.lyDo}</ODuLieu>
+                <ODuLieu>
+                  <p className="text-sm font-semibold text-ink">{bc.nguoiBaoCao.tenHienThi}</p>
+                  <p className="text-xs text-muted">{bc.nguoiBaoCao.email}</p>
+                </ODuLieu>
+                <ODuLieu>
                   <NhanTrangThai ma={bc.trangThai} />
-                  {bc.ghiChuAdmin ? <p className="mt-1 text-xs text-slate-500">{bc.ghiChuAdmin}</p> : null}
-                </td>
-                <td className="border p-2 text-left text-sm">{format(new Date(bc.ngayTao), 'dd/MM/yyyy')}</td>
-                <td className="border p-2">
+                  {bc.ghiChuAdmin ? <p className="mt-1 text-xs text-muted">{bc.ghiChuAdmin}</p> : null}
+                </ODuLieu>
+                <ODuLieu className="text-sm">{format(new Date(bc.ngayTao), 'dd/MM/yyyy')}</ODuLieu>
+                <ODuLieu>
                   {bc.trangThai === 'PENDING' ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex min-w-44 flex-col gap-2">
                       <input
                         value={ghiChu[bc.id] ?? ''}
                         onChange={(e) => setGhiChu((cu) => ({ ...cu, [bc.id]: e.target.value }))}
                         placeholder="Ghi chú xử lý..."
-                        className="w-44 rounded border px-2 py-1.5 text-sm"
+                        aria-label={`Ghi chú ${bc.lyDo}`}
+                        className="rounded-xl border-[1.5px] border-muted/40 px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
                       />
                       <button
                         type="button"
                         disabled={xuLy.isPending}
                         onClick={() => xuLy.mutate({ id: bc.id, ketQua: 'RESOLVED' })}
-                        className="rounded bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                        className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
                       >
                         Xác nhận vi phạm
                       </button>
@@ -122,41 +136,28 @@ export function ToCao() {
                         type="button"
                         disabled={xuLy.isPending}
                         onClick={() => xuLy.mutate({ id: bc.id, ketQua: 'REJECTED' })}
-                        className="rounded border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-600 disabled:opacity-50"
+                        className="rounded-xl border-[1.5px] border-ink/20 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mist disabled:opacity-50"
                       >
                         Bác báo cáo
                       </button>
                     </div>
                   ) : (
-                    <span className="text-sm text-slate-400">Đã xong</span>
+                    <span className="text-sm text-muted">Đã xong</span>
                   )}
-                </td>
+                </ODuLieu>
               </tr>
             ))}
-          </tbody>
-        </table>
+          />
+        </TheAdmin>
       )}
-      <p className="mt-3 text-left text-sm text-slate-500">
-        Trang {data.tongSoTrang === 0 ? 0 : trang + 1}/{formatVn(data.tongSoTrang)} • {formatVn(data.tongSoPhanTu)} tố cáo
-      </p>
-      <div className="mt-2 flex gap-2">
-        <button
-          type="button"
-          disabled={trang === 0}
-          onClick={() => setTrang((t) => Math.max(0, t - 1))}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Trước
-        </button>
-        <button
-          type="button"
-          disabled={trang + 1 >= data.tongSoTrang}
-          onClick={() => setTrang((t) => t + 1)}
-          className="rounded border px-4 py-2 disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+      <PhanTrang
+        trang={trang}
+        tongTrang={data.tongSoTrang}
+        tongSo={data.tongSoPhanTu}
+        donVi="tố cáo"
+        lui={() => setTrang((t) => Math.max(0, t - 1))}
+        toi={() => setTrang((t) => t + 1)}
+      />
     </div>
   );
 }
