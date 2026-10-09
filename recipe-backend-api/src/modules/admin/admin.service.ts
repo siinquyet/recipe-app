@@ -63,12 +63,16 @@ export class AdminService {
     }
 
     private async doiTrangThaiNguoiDung(adminId: string, id: string, trangThai: string, hanhDong: 'BAN_USER' | 'ACTIVATE_USER') {
-        const cu = await this.prisma.user.findUnique({ where: { id }, select: { id: true, status: true } });
+        const cu = await this.prisma.user.findUnique({ where: { id }, select: { id: true, role: true, status: true } });
         if (!cu) {
             throw new NotFoundException({ code: 'ADM-04', message: '[ADM-04] Không tìm thấy người dùng' });
         }
         if (adminId === id) {
             throw new BadRequestException({ code: 'ADM-05', message: '[ADM-05] Không tự khóa/mở chính mình' });
+        }
+        // BR-ADM: Khóa admin cuối thì hệ mất quản trị — chặn trước khi ghi
+        if (cu.role === 'ADMIN' && cu.status === 'ACTIVE' && trangThai !== 'ACTIVE') {
+            await this.damBaoConAdmin(id);
         }
         // BR-05: Gộp đổi trạng thái + audit vào transaction để rollback khi lỗi
         await this.prisma.$transaction([
@@ -86,13 +90,30 @@ export class AdminService {
         ]);
     }
 
+    private async damBaoConAdmin(truId: string) {
+        // BR-ADM: Bất biến hệ quản trị — luôn còn ít nhất 1 ADMIN đang ACTIVE
+        const conLai = await this.prisma.user.count({
+            where: { id: { not: truId }, role: 'ADMIN', status: 'ACTIVE' },
+        });
+        if (conLai === 0) {
+            throw new BadRequestException({
+                code: 'ADM-07',
+                message: '[ADM-07] Không thể gỡ admin cuối cùng — hệ cần ít nhất 1 quản trị',
+            });
+        }
+    }
+
     async doiRole(adminId: string, id: string, role: 'USER' | 'ADMIN') {
-        const cu = await this.prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+        const cu = await this.prisma.user.findUnique({ where: { id }, select: { id: true, role: true, status: true } });
         if (!cu) {
             throw new NotFoundException({ code: 'ADM-04', message: '[ADM-04] Không tìm thấy người dùng' });
         }
         if (adminId === id) {
             throw new BadRequestException({ code: 'ADM-05', message: '[ADM-05] Không tự đổi role chính mình' });
+        }
+        // BR-ADM: Hạ cấp admin cuối thì hệ mất quản trị — chặn trước khi ghi
+        if (cu.role === 'ADMIN' && cu.status === 'ACTIVE' && role !== 'ADMIN') {
+            await this.damBaoConAdmin(id);
         }
         // BR-05: Gộp đổi role + audit vào transaction để rollback khi lỗi
         await this.prisma.$transaction([
