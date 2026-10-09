@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { TaoDanhGiaDto } from './dto/rating.dto';
 
@@ -17,8 +17,14 @@ export class RatingsService {
                 message: '[REC-04] Không tìm thấy công thức',
             });
         }
-        // BR-UREC: Chỉ chấm được bài công khai (chủ bài xem nháp không chấm)
-        if (recipe.status !== 'APPROVED' && recipe.authorId !== userId) {
+        // BR-SOC: Chỉ chấm được bài công khai của người khác — cấm tự buff điểm
+        if (recipe.authorId === userId) {
+            throw new BadRequestException({
+                code: 'SOC-04',
+                message: '[SOC-04] Không tự chấm điểm bài của mình',
+            });
+        }
+        if (recipe.status !== 'APPROVED') {
             throw new NotFoundException({
                 code: 'REC-04',
                 message: '[REC-04] Không tìm thấy công thức',
@@ -53,8 +59,9 @@ export class RatingsService {
 
     async tomTat(recipeId: string) {
         // BR-SOC-05: Chặn trả 0/0 cho id ma, báo 404 đúng Docs
+        // BR-SOC: Điểm bài chưa công khai cũng ẩn như nội dung
         const tonTai = await this.prisma.recipe.findFirst({
-            where: { id: recipeId, deletedAt: null },
+            where: { id: recipeId, deletedAt: null, status: 'APPROVED' },
             select: { id: true },
         });
         if (!tonTai) {

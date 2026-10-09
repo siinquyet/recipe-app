@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 
 @Injectable()
@@ -25,9 +26,17 @@ export class FavoritesService {
             return { daThem: true };
         }
 
-        await this.prisma.favorite.create({
-            data: { userId, recipeId },
-        });
+        try {
+            await this.prisma.favorite.create({
+                data: { userId, recipeId },
+            });
+        } catch (e) {
+            // BR-SOC: Bấm thích 2 lần cùng lúc — unique DB thắng, coi như đã thích
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                return { daThem: true };
+            }
+            throw e;
+        }
 
         return { daThem: true };
     }

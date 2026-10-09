@@ -8,10 +8,18 @@ export class BaoCaoService {
     constructor(private readonly prisma: PrismaService) {}
 
     async taoMoi(userId: string, dto: TaoBaoCaoDto) {
-        if (!dto.recipeId && !dto.recipeReferenceId && !dto.commentId) {
+        const mucTieu = [dto.recipeId, dto.recipeReferenceId, dto.commentId].filter(Boolean);
+        if (mucTieu.length === 0) {
             throw new BadRequestException({
                 code: 'REP-00',
                 message: '[REP-00] Phải chỉ rõ bài viết hoặc bình luận bị tố cáo',
+            });
+        }
+        // BR-SOC: Một tố cáo đúng một mục tiêu để admin biết xử lý cái nào
+        if (mucTieu.length > 1) {
+            throw new BadRequestException({
+                code: 'REP-00',
+                message: '[REP-00] Mỗi tố cáo chỉ nhắm một bài viết hoặc bình luận',
             });
         }
         // BR-SOC-10: Chặn FK rò 500, trả 404 khi id mục tiêu không tồn tại
