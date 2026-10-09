@@ -102,6 +102,17 @@ export class CommentsService {
     }
 
     async capNhat(userId: string, recipeId: string, id: string, dto: TaoBinhLuanDto) {
+        // BR-SOC: Món đã xóa thì đóng băng toàn bộ — đọc đã 404 nên ghi cũng chặn
+        const mon = await this.prisma.recipe.findFirst({
+            where: { id: recipeId, deletedAt: null },
+            select: { id: true },
+        });
+        if (!mon) {
+            throw new NotFoundException({
+                code: 'REC-04',
+                message: '[REC-04] Không tìm thấy công thức',
+            });
+        }
         const cu = await this.prisma.comment.findFirst({
             where: { id, recipeId, deletedAt: null },
             select: { id: true, userId: true },
@@ -127,6 +138,17 @@ export class CommentsService {
     }
 
     async xoa(userId: string, recipeId: string, id: string) {
+        // BR-SOC: Món đã xóa thì đóng băng toàn bộ — đọc đã 404 nên ghi cũng chặn
+        const mon = await this.prisma.recipe.findFirst({
+            where: { id: recipeId, deletedAt: null },
+            select: { id: true },
+        });
+        if (!mon) {
+            throw new NotFoundException({
+                code: 'REC-04',
+                message: '[REC-04] Không tìm thấy công thức',
+            });
+        }
         const cu = await this.prisma.comment.findFirst({
             where: { id, recipeId, deletedAt: null },
             select: { id: true, userId: true },

@@ -35,4 +35,9 @@ export class XuLyBaoCaoDto {
     @IsString()
     @MaxLength(500)
     ghiChu?: string;
+
+    @ApiProperty({ example: 'AN_BAI', enum: ['KHONG', 'AN_BAI', 'XOA_BINH_LUAN'], required: false })
+    @IsOptional()
+    @IsIn(['KHONG', 'AN_BAI', 'XOA_BINH_LUAN'], { message: 'ADM-00 Hành động xử lý không hợp lệ' })
+    hanhDong?: 'KHONG' | 'AN_BAI' | 'XOA_BINH_LUAN';
 }

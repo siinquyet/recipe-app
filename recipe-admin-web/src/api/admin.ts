@@ -193,8 +193,19 @@ export async function layBaoCao(trang = 0, kichThuoc = 20, trangThai?: string): 
   return body.data;
 }
 
-export async function xuLyBaoCao(id: string, trangThai: 'RESOLVED' | 'REJECTED', ghiChu?: string): Promise<void> {
-  await apiClient.patch(`/reports/${id}/resolve`, { trangThai, ...(ghiChu ? { ghiChu } : {}) });
+export type HanhDongXuLy = 'KHONG' | 'AN_BAI' | 'XOA_BINH_LUAN';
+
+export async function xuLyBaoCao(
+  id: string,
+  trangThai: 'RESOLVED' | 'REJECTED',
+  ghiChu?: string,
+  hanhDong?: HanhDongXuLy,
+): Promise<void> {
+  await apiClient.patch(`/reports/${id}/resolve`, {
+    trangThai,
+    ...(ghiChu ? { ghiChu } : {}),
+    ...(hanhDong && hanhDong !== 'KHONG' ? { hanhDong } : {}),
+  });
 }
 
 export interface DongNhatKy {

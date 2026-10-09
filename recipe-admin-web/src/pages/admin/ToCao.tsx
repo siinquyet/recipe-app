@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { formatVn } from '@cook/shared';
-import { layBaoCao, xuLyBaoCao } from '../../api/admin';
+import { layBaoCao, xuLyBaoCao, type HanhDongXuLy } from '../../api/admin';
 import { NhanTrangThai } from '../../components/admin/NhanTrangThai';
 import {
   BangAdmin,
@@ -28,6 +28,7 @@ export function ToCao() {
   const [trang, setTrang] = useState(0);
   const [trangThai, setTrangThai] = useState<string>('');
   const [ghiChu, setGhiChu] = useState<Record<string, string>>({});
+  const [hanhDong, setHanhDong] = useState<Record<string, HanhDongXuLy>>({});
   const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin', 'bao-cao', trang, trangThai],
@@ -39,7 +40,7 @@ export function ToCao() {
   };
   const xuLy = useMutation({
     mutationFn: ({ id, ketQua }: { id: string; ketQua: 'RESOLVED' | 'REJECTED' }) =>
-      xuLyBaoCao(id, ketQua, ghiChu[id]?.trim() || undefined),
+      xuLyBaoCao(id, ketQua, ghiChu[id]?.trim() || undefined, hanhDong[id]),
     onSuccess: lamMoi,
     onError: (e) => alert(e instanceof Error ? e.message : '[REP-04] Không xử lý được'),
   });
@@ -132,6 +133,16 @@ export function ToCao() {
                       >
                         Xác nhận vi phạm
                       </button>
+                      <select
+                        value={hanhDong[bc.id] ?? 'KHONG'}
+                        onChange={(e) => setHanhDong((cu) => ({ ...cu, [bc.id]: e.target.value as HanhDongXuLy }))}
+                        aria-label="Hành động kèm theo"
+                        className="rounded-xl border-[1.5px] border-muted/40 bg-white px-2.5 py-2 text-sm font-semibold text-ink outline-none focus:border-accent"
+                      >
+                        <option value="KHONG">Chỉ đóng tố cáo</option>
+                        {bc.congThuc ? <option value="AN_BAI">Ẩn luôn bài viết</option> : null}
+                        {bc.binhLuan ? <option value="XOA_BINH_LUAN">Xóa luôn bình luận</option> : null}
+                      </select>
                       <button
                         type="button"
                         disabled={xuLy.isPending}

@@ -99,16 +99,38 @@ export class BaoCaoService {
     }
 
     async xuLy(adminId: string, id: string, dto: XuLyBaoCaoDto) {
-        const cu = await this.prisma.report.findUnique({ where: { id }, select: { id: true, status: true } });
+        const cu = await this.prisma.report.findUnique({
+            where: { id },
+            select: { id: true, status: true, recipeId: true, commentId: true },
+        });
         if (!cu) {
             throw new NotFoundException({ code: 'REP-04', message: '[REP-04] Không tìm thấy báo cáo' });
+        }
+        // BR-SOC: Xác nhận vi phạm thì xử luôn nội dung (ẩn bài/xóa mềm bình luận),
+        // bác báo cáo thì chỉ đóng, không động vào nội dung, không set resolvedAt
+        const hanhDong = dto.trangThai === 'RESOLVED' ? (dto.hanhDong ?? 'KHONG') : 'KHONG';
+        if (hanhDong === 'AN_BAI' && !cu.recipeId) {
+            throw new BadRequestException({ code: 'REP-00', message: '[REP-00] Tố cáo này không nhắm bài viết' });
+        }
+        if (hanhDong === 'XOA_BINH_LUAN' && !cu.commentId) {
+            throw new BadRequestException({ code: 'REP-00', message: '[REP-00] Tố cáo này không nhắm bình luận' });
         }
         // BR-SOC-10: Gộp đổi trạng thái + ghi audit vào transaction để rollback khi lỗi
         await this.prisma.$transaction([
             this.prisma.report.update({
                 where: { id },
-                data: { status: dto.trangThai, adminNote: dto.ghiChu, resolvedAt: new Date() },
+                data: {
+                    status: dto.trangThai,
+                    adminNote: dto.ghiChu,
+                    resolvedAt: dto.trangThai === 'RESOLVED' ? new Date() : null,
+                },
             }),
+            ...(hanhDong === 'AN_BAI' && cu.recipeId
+                ? [this.prisma.recipe.update({ where: { id: cu.recipeId }, data: { status: 'HIDDEN' } })]
+                : []),
+            ...(hanhDong === 'XOA_BINH_LUAN' && cu.commentId
+                ? [this.prisma.comment.update({ where: { id: cu.commentId }, data: { deletedAt: new Date() } })]
+                : []),
             this.prisma.auditLog.create({
                 data: {
                     userId: adminId,
@@ -116,7 +138,7 @@ export class BaoCaoService {
                     entityType: 'Report',
                     entityId: id,
                     oldData: { status: cu.status },
-                    newData: { status: dto.trangThai },
+                    newData: { status: dto.trangThai, hanhDong },
                 },
             }),
         ]);
