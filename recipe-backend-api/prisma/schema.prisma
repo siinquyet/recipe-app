@@ -395,7 +395,8 @@ model MealPlanItem {
   
   @@index([mealPlanId])
   @@index([date, mealType])
-  @@unique([mealPlanId, date, mealType, sortOrder])
+  // BR-MEAL-04: 1 buổi đúng 1 món — unique DB chặn trùng kể cả request song song
+  @@unique([mealPlanId, date, mealType])
 }
 
 model ShoppingList {

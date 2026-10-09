@@ -6,6 +6,8 @@ export interface MonTrongKeHoach {
   loaiBuoiAn: string;
   khauPhan: number;
   congThuc: { id: string; ten: string; anhThumbnail: string | null } | null;
+  // BR-MEAL: Món tham chiếu ngoài hiển thị tên riêng
+  monThamChieu: { id: string; ten: string; anhThumbnail: string | null } | null;
 }
 export interface KeHoachAn {
   id: string;

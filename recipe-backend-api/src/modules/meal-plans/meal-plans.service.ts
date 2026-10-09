@@ -63,6 +63,7 @@ export class MealPlansService {
                     ? {
                           create: dto.cacMon.map((mon, i) => ({
                               recipeId: mon.congThucId,
+                              recipeReferenceId: mon.thamChieuId,
                               date: new Date(mon.ngay),
                               mealType: mon.buoiAn as MealType,
                               servings: mon.khauPhan,
@@ -81,7 +82,12 @@ export class MealPlansService {
         // BR-MEAL: Join công thức để mobile hiển thị tên + ảnh, không chỉ recipeId
         const mealPlan = await this.prisma.mealPlan.findUnique({
             where: { id },
-            include: { items: { include: { recipe: { include: { author: true } } }, orderBy: { sortOrder: 'asc' } } },
+            include: {
+                items: {
+                    include: { recipe: { include: { author: true } }, recipeReference: true },
+                    orderBy: { sortOrder: 'asc' },
+                },
+            },
         });
 
         if (!mealPlan) {
@@ -112,6 +118,25 @@ export class MealPlansService {
                 message: '[MEAL-00] Ngày bắt đầu phải trước ngày kết thúc',
             });
         }
+        // BR-MEAL: Thu hẹp khoảng lấn món cũ thì chặn — dời/xóa món đó trước
+        if (dto.ngayBatDau !== undefined || dto.ngayKetThuc !== undefined) {
+            const batDauMoi = new Date(ngayBatDau);
+            batDauMoi.setHours(0, 0, 0, 0);
+            const ketThucMoi = new Date(ngayKetThuc);
+            ketThucMoi.setHours(0, 0, 0, 0);
+            const ngoaiKhoang = await this.prisma.mealPlanItem.count({
+                where: {
+                    mealPlanId: id,
+                    OR: [{ date: { lt: batDauMoi } }, { date: { gt: ketThucMoi } }],
+                },
+            });
+            if (ngoaiKhoang > 0) {
+                throw new BadRequestException({
+                    code: 'MEAL-06',
+                    message: `[MEAL-06] Còn ${ngoaiKhoang} món ngoài khoảng mới — dời hoặc xóa trước`,
+                });
+            }
+        }
         await this.prisma.mealPlan.update({
             where: { id },
             data: {
@@ -133,9 +158,10 @@ export class MealPlansService {
     async themMon(userId: string, keHoachId: string, dto: MonMoiDto) {
         // BR-MEAL-04: Chỉ món APPROVED, ngày trong khoảng kế hoạch, 1 buổi 1 món
         const plan = await this.layCuaNguoiDung(userId, keHoachId);
+        this.kiemTraMotMon(dto.congThucId, dto.thamChieuId);
         if (dto.congThucId) {
             const congThuc = await this.prisma.recipe.findFirst({
-                where: { id: dto.congThucId, deletedAt: null, status: 'APPROVED' },
+                where: { id: dto.congThucId, deletedAt: null, status: 'APPROVED', riengTu: false },
                 select: { id: true },
             });
             if (!congThuc) {
@@ -265,13 +291,23 @@ export class MealPlansService {
         const ketThuc = new Date(`${ngayKetThuc}T00:00:00`);
         const daThay = new Set<string>();
         for (const mon of cacMon) {
+            this.kiemTraMotMon(mon.congThucId, mon.thamChieuId);
             if (mon.congThucId) {
                 const congThuc = await this.prisma.recipe.findFirst({
-                    where: { id: mon.congThucId, deletedAt: null, status: 'APPROVED' },
+                    where: { id: mon.congThucId, deletedAt: null, status: 'APPROVED', riengTu: false },
                     select: { id: true },
                 });
                 if (!congThuc) {
                     throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Chỉ thêm được món đã duyệt' });
+                }
+            }
+            if (mon.thamChieuId) {
+                const thamChieu = await this.prisma.recipeReference.findUnique({
+                    where: { id: mon.thamChieuId },
+                    select: { id: true },
+                });
+                if (!thamChieu) {
+                    throw new NotFoundException({ code: 'REC-04', message: '[REC-04] Không tìm thấy món tham chiếu' });
                 }
             }
             const ngayAn = new Date(`${mon.ngay}T00:00:00`);
@@ -289,6 +325,16 @@ export class MealPlansService {
                 });
             }
             daThay.add(khoa);
+        }
+    }
+
+    private kiemTraMotMon(congThucId?: string, thamChieuId?: string) {
+        // BR-MEAL-04: Mỗi món đúng 1 công thức — không món ma, không 2 nguồn cùng lúc
+        if (!!congThucId === !!thamChieuId) {
+            throw new BadRequestException({
+                code: 'MEAL-08',
+                message: '[MEAL-08] Mỗi món đúng 1 công thức (món nhà hoặc món tham chiếu)',
+            });
         }
     }
 
@@ -325,6 +371,12 @@ export class MealPlansService {
                 title: string;
                 thumbnailUrl: string | null;
             } | null;
+            recipeReferenceId?: string | null;
+            recipeReference?: {
+                id: string;
+                title: string;
+                imageUrl: string | null;
+            } | null;
         }>;
     }) {
         return {
@@ -341,6 +393,9 @@ export class MealPlansService {
                 thuTu: item.sortOrder,
                 congThuc: item.recipe
                     ? { id: item.recipe.id, ten: item.recipe.title, anhThumbnail: item.recipe.thumbnailUrl }
+                    : null,
+                monThamChieu: item.recipeReference
+                    ? { id: item.recipeReference.id, ten: item.recipeReference.title, anhThumbnail: item.recipeReference.imageUrl }
                     : null,
             })),
         };

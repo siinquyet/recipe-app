@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -27,6 +27,7 @@ export class MonMoiDto {
     @ApiProperty({ example: 2 })
     @IsInt()
     @Min(1)
+    @Max(100, { message: 'MEAL-00 Khẩu phần tối đa 100 người' })
     khauPhan!: number;
 }
 
@@ -77,6 +78,7 @@ export class CapNhatMonDto {
     @IsOptional()
     @IsInt()
     @Min(1, { message: 'MEAL-00 Khẩu phần tối thiểu 1' })
+    @Max(100, { message: 'MEAL-00 Khẩu phần tối đa 100 người' })
     khauPhan?: number;
 
     @ApiProperty({ example: '2026-09-03', required: false })

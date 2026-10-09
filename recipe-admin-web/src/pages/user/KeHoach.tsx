@@ -392,6 +392,8 @@ export function KeHoach() {
                             <Link to={`/cong-thuc/${m.congThuc.id}`} className="mt-0.5 block text-left text-xs font-semibold text-ink hover:underline">
                               {m.congThuc.ten}
                             </Link>
+                          ) : m.monThamChieu ? (
+                            <p className="mt-0.5 text-left text-xs font-semibold text-ink">{m.monThamChieu.ten}</p>
                           ) : (
                             <p className="text-left text-xs text-muted">Món tự do</p>
                           )}

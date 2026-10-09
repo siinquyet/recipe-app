@@ -254,7 +254,7 @@ function ChiTietKeHoach({ keHoachId, khiDong }: { keHoachId: string; khiDong: ()
                             {buoi.nhan}
                           </Text>
                           <BodyText soDongToiDa={1} className="mt-0.5 text-xs font-semibold">
-                            {mon.congThuc?.ten ?? 'Món đã xóa'}
+                            {mon.congThuc?.ten ?? mon.monThamChieu?.ten ?? 'Món đã xóa'}
                           </BodyText>
                           <View className="mt-1 flex-row items-center justify-between">
                             <View className="flex-row items-center gap-2">

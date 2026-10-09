@@ -87,6 +87,8 @@ export interface MonTrongKeHoach {
   khauPhan: number;
   thuTu: number;
   congThuc: CongThucTomTat | null;
+  // BR-MEAL: Món tham chiếu ngoài hiển thị tên riêng, không lẫn "Món đã xóa"
+  monThamChieu: CongThucTomTat | null;
 }
 
 // BR-MEAL: Món trong kế hoạch chỉ mang tên + ảnh, đủ để hiển thị lịch tuần
