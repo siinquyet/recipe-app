@@ -124,6 +124,27 @@ describe('unit-conversion.ts - Unit conversion & aggregation (BR-03, BR-04)', ()
       expect(key).toContain('unmapped_');
       expect(result.get(key)?.quantity).toBe(800);
     });
+
+    it('không gộp quả với lát dù cùng nhóm COUNT', () => {
+      const items = [
+        { internalIngredientId: 'ing-1', originalText: '2 quả cà chua', quantity: 2, unit: 'quả' },
+        { internalIngredientId: 'ing-1', originalText: '3 lát cà chua', quantity: 3, unit: 'lát' },
+      ];
+      const result = aggregateQuantities(items);
+      expect(result.size).toBe(2);
+    });
+
+    it('món thứ 3 cùng đơn vị được cộng dồn, không ghi đè', () => {
+      const items = [
+        { internalIngredientId: 'ing-1', originalText: '500g thịt bò', quantity: 500, unit: 'g' },
+        { internalIngredientId: 'ing-1', originalText: '2 cái thịt bò', quantity: 2, unit: 'cái' },
+        { internalIngredientId: 'ing-1', originalText: '3 cái thịt bò', quantity: 3, unit: 'cái' },
+      ];
+      const result = aggregateQuantities(items);
+      expect(result.size).toBe(2);
+      expect(result.get('ing-1_cái')?.quantity).toBe(5);
+      expect(result.get('ing-1_cái')?.originalTexts).toHaveLength(2);
+    });
   });
 
   describe('scaleQuantity (BR-04)', () => {

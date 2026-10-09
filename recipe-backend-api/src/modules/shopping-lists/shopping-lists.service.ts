@@ -193,7 +193,8 @@ export class ShoppingListsService {
             throw new BadRequestException({ code: 'SHOP-00', message: '[SHOP-00] Từ ngày phải trước đến ngày' });
         }
         for (const item of plan.items) {
-            if (!item.recipe) continue;
+            // BR-SHOP: Bỏ món đã xóa/rớt duyệt — đồng nhất với điều kiện lúc thêm vào kế hoạch
+            if (!item.recipe || item.recipe.deletedAt || item.recipe.status !== 'APPROVED') continue;
             const ngayMon = new Date(item.date);
             ngayMon.setHours(0, 0, 0, 0);
             if (ngayChon.size > 0) {
@@ -240,7 +241,7 @@ export class ShoppingListsService {
     // BR-SHOP: Sinh danh sách đi chợ từ 1 công thức (mobile nút "Thêm hết vào giỏ")
     async taoTuCongThuc(userId: string, congThucId: string, khauPhan?: number) {
         const recipe = await this.prisma.recipe.findFirst({
-            where: { id: congThucId, deletedAt: null, status: 'APPROVED' },
+            where: { id: congThucId, deletedAt: null, status: 'APPROVED', riengTu: false },
             include: { ingredients: { orderBy: { sortOrder: 'asc' } } },
         });
         if (!recipe) {

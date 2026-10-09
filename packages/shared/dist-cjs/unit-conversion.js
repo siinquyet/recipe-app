@@ -77,7 +77,11 @@ function aggregateQuantities(items) {
         const key = item.internalIngredientId || `unmapped_${item.originalText}`;
         const existing = groups.get(key);
         if (existing) {
-            if (canConvert(existing.unit, item.unit)) {
+            // BR-03: Đơn vị đếm chỉ gộp khi y hệt nhau (quả ≠ lát);
+            // khối lượng/thể tích gộp được khi quy đổi chuẩn (g↔kg, ml↔l)
+            const cungDonVi = existing.unit === item.unit;
+            const quyDoiDuoc = canConvert(existing.unit, item.unit) && getUnitInfo(existing.unit)?.category !== 'COUNT';
+            if (cungDonVi || quyDoiDuoc) {
                 const base1 = convertToBase(existing.quantity, existing.unit);
                 const base2 = convertToBase(item.quantity, item.unit);
                 const newBase = base1.value + base2.value;
@@ -86,9 +90,16 @@ function aggregateQuantities(items) {
                 existing.originalTexts.push(item.originalText);
             }
             else {
-                // Không quy đổi được - tách dòng riêng
+                // Không gộp được - tách dòng riêng, cộng dồn nếu dòng đó đã có
                 const newKey = `${key}_${item.unit}`;
-                groups.set(newKey, { quantity: item.quantity, unit: item.unit, originalTexts: [item.originalText] });
+                const tach = groups.get(newKey);
+                if (tach) {
+                    tach.quantity += item.quantity;
+                    tach.originalTexts.push(item.originalText);
+                }
+                else {
+                    groups.set(newKey, { quantity: item.quantity, unit: item.unit, originalTexts: [item.originalText] });
+                }
             }
         }
         else {
