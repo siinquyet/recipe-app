@@ -32,7 +32,8 @@ export class AdminService {
                 skip: trang * kichThuoc,
                 take: kichThuoc,
                 orderBy: { createdAt: 'desc' },
-                include: { _count: { select: { recipes: true } } },
+                // BR-ADM: Chỉ đếm bài còn hiển thị, loại bài đã xóa mềm
+                include: { _count: { select: { recipes: { where: { deletedAt: null } } } } },
             }),
             this.prisma.user.count({ where }),
         ]);
@@ -397,11 +398,11 @@ export class AdminService {
         // BR-ADM: Số liệu tổng quan cho trang quản trị
         const bayNgayTruoc = new Date();
         bayNgayTruoc.setDate(bayNgayTruoc.getDate() - 7);
-        const [tongNguoiDung, dangHoatDong, choDuyet, daDuyet, ungVienTop, tangNguoiDung, tangBai, tuongTac] =
+        const [tongNguoiDung, nguoiTuongTac, choDuyet, daDuyet, ungVienTop, tangNguoiDung, tangBai, tuongTac] =
             await Promise.all([
                 this.prisma.user.count(),
-                // BR-ADM: Hoạt động = có tài khoản tạo trong 7 ngày qua (chưa tracking hành vi)
-                this.prisma.user.count({ where: { status: 'ACTIVE', createdAt: { gte: bayNgayTruoc } } }),
+                // BR-ADM: Hoạt động thật = có tài khoản mới HOẶC đăng/chấm/bình luận trong 7 ngày
+                this.demNguoiHoatDong(bayNgayTruoc),
                 this.prisma.recipe.count({ where: { deletedAt: null, status: 'PENDING' } }),
                 this.prisma.recipe.count({ where: { deletedAt: null, status: 'APPROVED' } }),
                 this.prisma.recipe.findMany({
@@ -434,7 +435,7 @@ export class AdminService {
             .slice(0, 5);
         return {
             tongNguoiDung,
-            dangHoatDong,
+            dangHoatDong: nguoiTuongTac,
             baiChoDuyet: choDuyet,
             baiDaDuyet: daDuyet,
             topDanhGia,
@@ -442,6 +443,21 @@ export class AdminService {
             tangTruongCongThuc: tangBai,
             tuongTac: { tongYeuThich: tuongTac[0], tongDanhGia: tuongTac[1], tongBinhLuan: tuongTac[2] },
         };
+    }
+
+    private async demNguoiHoatDong(tuNgay: Date): Promise<number> {
+        // BR-ADM: User hoạt động = tạo tài khoản, đăng bài, chấm hoặc bình luận từ mốc ngày
+        const [moi, dangBai, cham, binhLuan] = await Promise.all([
+            this.prisma.user.findMany({ where: { createdAt: { gte: tuNgay } }, select: { id: true } }),
+            this.prisma.recipe.groupBy({ by: ['authorId'], where: { createdAt: { gte: tuNgay }, deletedAt: null } }),
+            this.prisma.rating.groupBy({ by: ['userId'], where: { createdAt: { gte: tuNgay } } }),
+            this.prisma.comment.groupBy({ by: ['userId'], where: { createdAt: { gte: tuNgay }, deletedAt: null } }),
+        ]);
+        const tapHop = new Set<string>(moi.map((u) => u.id));
+        for (const r of dangBai) tapHop.add(r.authorId);
+        for (const r of cham) tapHop.add(r.userId);
+        for (const r of binhLuan) tapHop.add(r.userId);
+        return tapHop.size;
     }
 
     private async thongKeTheoNgay(loai: 'user' | 'recipe'): Promise<Array<{ ngay: string; soLuong: number }>> {
