@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../common/prisma.service';
 
@@ -16,6 +17,8 @@ export interface AuthTokens {
 export interface JwtPayload {
     sub: string;
     email: string;
+    // BR-AUTH: Phiên bản token — đổi mật khẩu thì refresh cũ hết hiệu lực
+    phienBan?: number;
 }
 
 @Injectable()
@@ -27,7 +30,9 @@ export class AuthService {
     ) {}
 
     async dangKy(email: string, matKhau: string, tenHienThi: string): Promise<AuthTokens> {
-        const tonTai = await this.prisma.user.findUnique({ where: { email } });
+        // BR-AUTH: Chuẩn hóa email để Abc@X.vn và abc@x.vn là một tài khoản
+        const emailChuan = email.trim().toLowerCase();
+        const tonTai = await this.prisma.user.findUnique({ where: { email: emailChuan } });
         if (tonTai) {
             throw new ConflictException({
                 code: 'AUTH-01',
@@ -36,22 +41,25 @@ export class AuthService {
         }
 
         const passwordHash = await bcrypt.hash(matKhau, BCRYPT_COST);
-        await this.prisma.user.create({
-            data: { email, passwordHash, displayName: tenHienThi, role: 'USER', status: 'ACTIVE' },
-        });
-
-        const user = await this.prisma.user.findUnique({ where: { email } });
-        if (!user) {
-            throw new BadRequestException({
-                code: 'AUTH-00',
-                message: '[AUTH-00] Không thể tạo tài khoản',
+        try {
+            const user = await this.prisma.user.create({
+                data: { email: emailChuan, passwordHash, displayName: tenHienThi, role: 'USER', status: 'ACTIVE' },
             });
+            return this.taoTokens(user.id, user.email, user.tokenVersion);
+        } catch (e) {
+            // BR-AUTH: Đăng ký đồng thời cùng email — unique DB thắng, trả 409 thay vì 500
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                throw new ConflictException({
+                    code: 'AUTH-01',
+                    message: '[AUTH-01] Email đã được sử dụng',
+                });
+            }
+            throw e;
         }
-        return this.taoTokens(user.id, user.email);
     }
 
     async dangNhap(email: string, matKhau: string): Promise<AuthTokens> {
-        const user = await this.prisma.user.findUnique({ where: { email } });
+        const user = await this.prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
         if (!user) {
             throw new UnauthorizedException({
                 code: 'AUTH-02',
@@ -75,7 +83,7 @@ export class AuthService {
             });
         }
 
-        return this.taoTokens(user.id, user.email);
+        return this.taoTokens(user.id, user.email, user.tokenVersion);
     }
 
     async lamMoiToken(refreshToken: string): Promise<AuthTokens> {
@@ -98,8 +106,15 @@ export class AuthService {
                 message: '[AUTH-03] Tài khoản không hợp lệ',
             });
         }
+        // BR-AUTH: Refresh issued trước lần đổi mật khẩu gần nhất thì hết hiệu lực
+        if (payload.phienBan !== undefined && payload.phienBan !== user.tokenVersion) {
+            throw new UnauthorizedException({
+                code: 'AUTH-03',
+                message: '[AUTH-03] Phiên đăng nhập đã hết hiệu lực, vui lòng đăng nhập lại',
+            });
+        }
 
-        return this.taoTokens(user.id, user.email);
+        return this.taoTokens(user.id, user.email, user.tokenVersion);
     }
 
     async layThongTinNguoiDung(userId: string) {
@@ -142,12 +157,19 @@ export class AuthService {
                 message: '[AUTH-06] Mật khẩu cũ không đúng',
             });
         }
+        if (matKhauCu === matKhauMoi) {
+            throw new BadRequestException({
+                code: 'AUTH-07',
+                message: '[AUTH-07] Mật khẩu mới phải khác mật khẩu cũ',
+            });
+        }
         const passwordHash = await bcrypt.hash(matKhauMoi, BCRYPT_COST);
-        await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+        // BR-AUTH: Tăng phiên bản token để thu hồi mọi refresh token đã cấp trước đó
+        await this.prisma.user.update({ where: { id: userId }, data: { passwordHash, tokenVersion: { increment: 1 } } });
         return { thanhCong: true };
     }
 
-    private async taoTokens(userId: string, email: string): Promise<AuthTokens> {
+    private async taoTokens(userId: string, email: string, phienBan = 0): Promise<AuthTokens> {
         const payload: JwtPayload = { sub: userId, email };
 
         const accessToken = await this.jwt.signAsync(payload, {
@@ -155,7 +177,7 @@ export class AuthService {
             expiresIn: '15m',
         });
 
-        const refreshToken = await this.jwt.signAsync(payload, {
+        const refreshToken = await this.jwt.signAsync({ ...payload, phienBan }, {
             secret: this.config.get<string>('JWT_REFRESH_SECRET'),
             expiresIn: '7d',
         });

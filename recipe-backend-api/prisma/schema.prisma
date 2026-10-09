@@ -102,6 +102,7 @@ model User {
   recipes       Recipe[]
   preferences   UserPreferences?
   favorites     Favorite[]
+  tokenVersion  Int           @default(0) // BR-AUTH: Tăng khi đổi mật khẩu để thu hồi refresh token cũ
   ratings       Rating[]
   comments      Comment[]
   reports       Report[]

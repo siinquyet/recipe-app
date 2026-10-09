@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from '../../common/jwt.strategy';
@@ -10,9 +10,16 @@ import { JwtStrategy } from '../../common/jwt.strategy';
     imports: [
         ConfigModule,
         PassportModule.register({ defaultStrategy: 'jwt' }),
-        JwtModule.register({
-            secret: process.env.JWT_SECRET || 'fallback-secret',
-            signOptions: { expiresIn: '15m' },
+        JwtModule.registerAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) => {
+                const secret = config.get<string>('JWT_SECRET');
+                if (!secret) {
+                    throw new Error('[AUTH-00] Thiếu JWT_SECRET — không khởi động với secret mặc định');
+                }
+                return { secret, signOptions: { expiresIn: '15m' } };
+            },
         }),
     ],
     providers: [AuthService, JwtStrategy],
