@@ -47,6 +47,12 @@ export interface DinhDuong {
   chatBeo: string | number;
 }
 
+export interface BanGocCongThuc {
+  id: string;
+  ten: string;
+  tacGia: string;
+}
+
 export interface CongThuc {
   id: string;
   ten: string;
@@ -56,6 +62,10 @@ export interface CongThuc {
   thoiGianChuanBiPhut: number | null;
   khauPhan: number;
   trangThai: string;
+  // BR-FORK: Món fork mang nguồn gốc để hiện huy hiệu cho người xem
+  nguonGoc?: BanGocCongThuc | null;
+  // BR-SOC: Lượt yêu thích để card và chi tiết hiện số tim
+  luotYeuThich?: number;
   tacGia: NguoiDung;
   nguyenLieu: NguyenLieuCongThuc[];
   cacBuoc: BuocNauAn[];

@@ -1,5 +1,11 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '../lib/api/client';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ApiError } from "../lib/api/client";
+import { guiBaoCao, type GuiBaoCaoPayload } from "../lib/api/bao-cao";
 import {
   capNhatCongThuc,
   forkCongThuc,
@@ -19,9 +25,12 @@ import {
   xoaBinhLuan,
   xoaCongThuc,
   xoaYeuThich,
-} from '../lib/api/recipes';
-import type { TaoCongThucPayload, ThamSoDanhSachCongThuc } from '../lib/api/recipes';
-import { khoaTruyVan } from '../lib/queryClient';
+} from "../lib/api/recipes";
+import type {
+  TaoCongThucPayload,
+  ThamSoDanhSachCongThuc,
+} from "../lib/api/recipes";
+import { khoaTruyVan } from "../lib/queryClient";
 
 export function useDanhSachCongThuc(thamSo: ThamSoDanhSachCongThuc) {
   return useQuery({
@@ -62,7 +71,9 @@ export function useForkCongThuc() {
   return useMutation({
     mutationFn: (gocId: string) => forkCongThuc(gocId),
     onSuccess: (_banFork, gocId) => {
-      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.banCaNhan(gocId) });
+      queryClient.invalidateQueries({
+        queryKey: khoaTruyVan.congThuc.banCaNhan(gocId),
+      });
     },
   });
 }
@@ -71,17 +82,20 @@ export function useTaoCongThuc() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: TaoCongThucPayload) => taoCongThuc(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cong-thuc'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cong-thuc"] }),
   });
 }
 
 export function useCapNhatCongThuc(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<TaoCongThucPayload>) => capNhatCongThuc(id, payload),
+    mutationFn: (payload: Partial<TaoCongThucPayload>) =>
+      capNhatCongThuc(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'danh-sach'] });
+      queryClient.invalidateQueries({
+        queryKey: khoaTruyVan.congThuc.chiTiet(id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["cong-thuc", "danh-sach"] });
     },
   });
 }
@@ -90,11 +104,11 @@ export function useXoaCongThuc() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => xoaCongThuc(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cong-thuc'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cong-thuc"] }),
     // BR-UX: Bấm 2 lần (lần 2 đã mất → 404) vẫn coi như xong
     onError: (loi: unknown) => {
       if (loi instanceof ApiError && loi.status === 404) {
-        queryClient.invalidateQueries({ queryKey: ['cong-thuc'] });
+        queryClient.invalidateQueries({ queryKey: ["cong-thuc"] });
       }
     },
   });
@@ -106,8 +120,10 @@ export function useGuiDuyet() {
   return useMutation({
     mutationFn: (id: string) => guiDuyetCongThuc(id),
     onSuccess: (_duLieu, id) => {
-      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'danh-sach'] });
+      queryClient.invalidateQueries({
+        queryKey: khoaTruyVan.congThuc.chiTiet(id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["cong-thuc", "danh-sach"] });
     },
   });
 }
@@ -117,9 +133,18 @@ export function useChuyenDoiYeuThich(id: string, dangYeuThich: boolean) {
   return useMutation({
     mutationFn: () => (dangYeuThich ? xoaYeuThich(id) : themYeuThich(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'danh-sach'] });
+      queryClient.invalidateQueries({
+        queryKey: khoaTruyVan.congThuc.chiTiet(id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["cong-thuc", "danh-sach"] });
     },
+  });
+}
+
+// BR-SOC: Gửi tố cáo món ăn/bình luận về hàng chờ admin
+export function useGuiBaoCao() {
+  return useMutation({
+    mutationFn: (payload: GuiBaoCaoPayload) => guiBaoCao(payload),
   });
 }
 
@@ -128,8 +153,12 @@ export function useTaoBinhLuan(id: string) {
   return useMutation({
     mutationFn: (noiDung: string) => taoBinhLuan(id, noiDung),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: khoaTruyVan.congThuc.chiTiet(id) });
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', id] });
+      queryClient.invalidateQueries({
+        queryKey: khoaTruyVan.congThuc.chiTiet(id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cong-thuc", "binh-luan", id],
+      });
     },
   });
 }
@@ -137,7 +166,7 @@ export function useTaoBinhLuan(id: string) {
 // BR-SOC: Danh sách bình luận thật của công thức (thay mock)
 export function useBinhLuan(id: string, page = 0, size = 20) {
   return useQuery({
-    queryKey: ['cong-thuc', 'binh-luan', id, page, size],
+    queryKey: ["cong-thuc", "binh-luan", id, page, size],
     queryFn: () => layBinhLuan(id, page, size),
     enabled: id.length > 0,
     placeholderData: keepPreviousData,
@@ -147,7 +176,7 @@ export function useBinhLuan(id: string, page = 0, size = 20) {
 // BR-SOC: Tổng quan đánh giá thật (trung bình + phân bổ sao)
 export function useTomTatDanhGia(id: string) {
   return useQuery({
-    queryKey: ['cong-thuc', 'danh-gia', id],
+    queryKey: ["cong-thuc", "danh-gia", id],
     queryFn: () => layTomTatDanhGia(id),
     enabled: id.length > 0,
   });
@@ -156,7 +185,7 @@ export function useTomTatDanhGia(id: string) {
 // BR-SOC: Replies, sửa/xóa bình luận của chính mình
 export function usePhanHoi(recipeId: string, commentId: string | null) {
   return useQuery({
-    queryKey: ['cong-thuc', 'binh-luan', recipeId, 'phan-hoi', commentId],
+    queryKey: ["cong-thuc", "binh-luan", recipeId, "phan-hoi", commentId],
     queryFn: () => layPhanHoi(recipeId, commentId as string),
     enabled: !!commentId && recipeId.length > 0,
   });
@@ -165,10 +194,17 @@ export function usePhanHoi(recipeId: string, commentId: string | null) {
 export function useSuaBinhLuan(recipeId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ commentId, noiDung }: { commentId: string; noiDung: string }) =>
-      suaBinhLuan(recipeId, commentId, noiDung),
+    mutationFn: ({
+      commentId,
+      noiDung,
+    }: {
+      commentId: string;
+      noiDung: string;
+    }) => suaBinhLuan(recipeId, commentId, noiDung),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+      queryClient.invalidateQueries({
+        queryKey: ["cong-thuc", "binh-luan", recipeId],
+      });
     },
   });
 }
@@ -178,11 +214,15 @@ export function useXoaBinhLuan(recipeId: string) {
   return useMutation({
     mutationFn: (commentId: string) => xoaBinhLuan(recipeId, commentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+      queryClient.invalidateQueries({
+        queryKey: ["cong-thuc", "binh-luan", recipeId],
+      });
     },
     onError: (loi: unknown) => {
       if (loi instanceof ApiError && loi.status === 404) {
-        queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
+        queryClient.invalidateQueries({
+          queryKey: ["cong-thuc", "binh-luan", recipeId],
+        });
       }
     },
   });
@@ -194,9 +234,11 @@ export function useTraLoiBinhLuan(recipeId: string) {
     mutationFn: ({ chaId, noiDung }: { chaId: string; noiDung: string }) =>
       taoBinhLuan(recipeId, noiDung, chaId),
     onSuccess: (_duLieu, bien) => {
-      queryClient.invalidateQueries({ queryKey: ['cong-thuc', 'binh-luan', recipeId] });
       queryClient.invalidateQueries({
-        queryKey: ['cong-thuc', 'binh-luan', recipeId, 'phan-hoi', bien.chaId],
+        queryKey: ["cong-thuc", "binh-luan", recipeId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cong-thuc", "binh-luan", recipeId, "phan-hoi", bien.chaId],
       });
     },
   });
@@ -205,7 +247,11 @@ export function useTraLoiBinhLuan(recipeId: string) {
 // BR-SOC: Danh sách yêu thích, tự invalidate khi đổi trạng thái tim
 export function useDanhSachYeuThich(page = 0, size = 20) {
   return useQuery({
-    queryKey: [...khoaTruyVan.congThuc.danhSach({ yeuThich: true }), page, size],
+    queryKey: [
+      ...khoaTruyVan.congThuc.danhSach({ yeuThich: true }),
+      page,
+      size,
+    ],
     queryFn: () => layDanhSachYeuThich({ page, size }),
     placeholderData: keepPreviousData,
   });

@@ -1,9 +1,9 @@
-import type { FC } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { Image } from 'expo-image';
-import { Clock, Star, Users } from 'lucide-react-native';
-import { Avatar } from '../ui/Avatar';
-import { NumberDisplay } from '../ui/NumberDisplay';
+import type { FC } from "react";
+import { Pressable, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { Clock, Star, Users } from "lucide-react-native";
+import { Avatar } from "../ui/Avatar";
+import { NumberDisplay } from "../ui/NumberDisplay";
 
 export interface DuLieuTheCongThuc {
   id: string;
@@ -15,9 +15,10 @@ export interface DuLieuTheCongThuc {
   tacGiaAvatar: string | null;
   diemDanhGia?: number;
   soLuotDanhGia?: number;
+  luotYeuThich?: number;
 }
 
-export type BienTheCard = 'compact' | 'large' | 'grid';
+export type BienTheCard = "compact" | "large" | "grid";
 
 interface TheCongThucProps {
   duLieu: DuLieuTheCongThuc;
@@ -31,11 +32,19 @@ const HinhAnhMon: FC<{ uri: string | null; ten: string }> = ({ uri, ten }) => {
   if (!uri) {
     return (
       <View className="h-full w-full items-center justify-center bg-cream">
-        <Text className="text-2xl font-bold text-accent-dark">{ten.trim().charAt(0).toUpperCase()}</Text>
+        <Text className="text-2xl font-bold text-accent-dark">
+          {ten.trim().charAt(0).toUpperCase()}
+        </Text>
       </View>
     );
   }
-  return <Image source={{ uri }} contentFit="cover" style={{ width: '100%', height: '100%' }} />;
+  return (
+    <Image
+      source={{ uri }}
+      contentFit="cover"
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
 };
 
 const NhanDanhGia: FC<{ diem: number }> = ({ diem }) => (
@@ -55,19 +64,29 @@ const ThongTinNgan: FC<{ duLieu: DuLieuTheCongThuc }> = ({ duLieu }) => (
       <Users size={14} color="#97A2B0" />
       <NumberDisplay value={duLieu.khauPhan} unit="người" className="text-xs" />
     </View>
+    <View className="flex-row items-center gap-1">
+      <Text className="text-sm font-bold text-[#CA4844]">♥</Text>
+      <NumberDisplay value={duLieu.luotYeuThich ?? 0} className="text-xs" />
+    </View>
   </View>
 );
 
 const HangTacGia: FC<{ duLieu: DuLieuTheCongThuc }> = ({ duLieu }) => (
   <View className="flex-row items-center gap-1.5">
     <Avatar nguon={duLieu.tacGiaAvatar} ten={duLieu.tacGia} kichThuoc={16} />
-    <Text className="flex-1 text-left text-xs text-neutral-500" numberOfLines={1}>
+    <Text
+      className="flex-1 text-left text-xs text-neutral-500"
+      numberOfLines={1}
+    >
       {duLieu.tacGia}
     </Text>
   </View>
 );
 
-const TheCompact: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLieu, khiBam }) => (
+const TheCompact: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({
+  duLieu,
+  khiBam,
+}) => (
   <Pressable
     accessibilityRole="button"
     onPress={khiBam}
@@ -82,7 +101,10 @@ const TheCompact: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ du
       ) : null}
     </View>
     <View className="p-3">
-      <Text className="text-left font-serif text-[15px] font-bold text-primary" numberOfLines={2}>
+      <Text
+        className="text-left font-serif text-[15px] font-bold text-primary"
+        numberOfLines={2}
+      >
         {duLieu.tenMon}
       </Text>
       <View className="mt-2">
@@ -92,7 +114,10 @@ const TheCompact: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ du
   </Pressable>
 );
 
-const TheLarge: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLieu, khiBam }) => (
+const TheLarge: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({
+  duLieu,
+  khiBam,
+}) => (
   <Pressable
     accessibilityRole="button"
     onPress={khiBam}
@@ -103,7 +128,10 @@ const TheLarge: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLi
     </View>
     <View className="flex-1 justify-between p-3">
       <View>
-        <Text className="text-left font-serif text-base font-bold text-primary" numberOfLines={2}>
+        <Text
+          className="text-left font-serif text-base font-bold text-primary"
+          numberOfLines={2}
+        >
           {duLieu.tenMon}
         </Text>
         <View className="mt-1">
@@ -115,7 +143,10 @@ const TheLarge: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLi
   </Pressable>
 );
 
-const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLieu, khiBam }) => (
+const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({
+  duLieu,
+  khiBam,
+}) => (
   <Pressable
     accessibilityRole="button"
     onPress={khiBam}
@@ -130,7 +161,10 @@ const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLie
       ) : null}
     </View>
     <View className="p-2.5">
-      <Text className="text-left font-serif text-sm font-bold text-primary" numberOfLines={2}>
+      <Text
+        className="text-left font-serif text-sm font-bold text-primary"
+        numberOfLines={2}
+      >
         {duLieu.tenMon}
       </Text>
       <View className="mt-1">
@@ -143,11 +177,33 @@ const TheGrid: FC<{ duLieu: DuLieuTheCongThuc; khiBam?: () => void }> = ({ duLie
   </Pressable>
 );
 
-export const TheCongThuc: FC<TheCongThucProps> = ({ duLieu, khiBam, bienThe = 'large', className = '' }) => (
+// BR-FORK: Huy hiệu nguồn fork dùng chung card + chi tiết — biết ngay món của người khác
+export const NhanNguonGoc: FC<{
+  nguonGoc?: { ten: string; tacGia: string } | null;
+}> = ({ nguonGoc }) => {
+  if (!nguonGoc) return null;
+  return (
+    <View className="mt-1.5 flex-row items-center self-start rounded-full bg-accent-light px-2.5 py-1">
+      <Text
+        className="text-left text-[11px] font-semibold text-primary"
+        numberOfLines={1}
+      >
+        Công thức của {nguonGoc.tacGia}
+      </Text>
+    </View>
+  );
+};
+
+export const TheCongThuc: FC<TheCongThucProps> = ({
+  duLieu,
+  khiBam,
+  bienThe = "large",
+  className = "",
+}) => (
   <View className={className}>
-    {bienThe === 'compact' ? (
+    {bienThe === "compact" ? (
       <TheCompact duLieu={duLieu} khiBam={khiBam} />
-    ) : bienThe === 'grid' ? (
+    ) : bienThe === "grid" ? (
       <TheGrid duLieu={duLieu} khiBam={khiBam} />
     ) : (
       <TheLarge duLieu={duLieu} khiBam={khiBam} />

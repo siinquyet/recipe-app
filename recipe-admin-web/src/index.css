@@ -6,4 +6,11 @@
 .number-vn {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* BR-UI: Chữ số kỹ thuật dùng JetBrains Mono */
+.font-mono-vn {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
 }

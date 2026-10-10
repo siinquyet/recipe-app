@@ -1,9 +1,9 @@
-import type { FC } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
-import type { CongThuc } from '../../types/api';
-import { layUrlAnh } from '../../lib/utils/anh';
-import { TheCongThuc, type BienTheCard } from './TheCongThuc';
-import { TrangDangTai, TrangLoi, TrangTrong } from '../ui/TrangThai';
+import type { FC } from "react";
+import { FlatList, RefreshControl, View } from "react-native";
+import type { CongThuc } from "../../types/api";
+import { layUrlAnh } from "../../lib/utils/anh";
+import { TheCongThuc, type BienTheCard } from "./TheCongThuc";
+import { TrangDangTai, TrangLoi, TrangTrong } from "../ui/TrangThai";
 
 interface DanhSachCongThucProps {
   duLieu: CongThuc[];
@@ -27,6 +27,7 @@ export function chuyenThanhDuLieuThe(congThuc: CongThuc) {
     khauPhan: congThuc.khauPhan,
     tacGia: congThuc.tacGia.tenHienThi,
     tacGiaAvatar: congThuc.tacGia.anhDaiDien,
+    luotYeuThich: congThuc.luotYeuThich ?? 0,
   };
 }
 
@@ -39,11 +40,12 @@ export const DanhSachCongThuc: FC<DanhSachCongThucProps> = ({
   khiTaiThem,
   khiLamMoi,
   khiChon,
-  bienThe = 'large',
+  bienThe = "large",
   cot = 1,
 }) => {
   if (dangTai && duLieu.length === 0) return <TrangDangTai />;
-  if (loi && duLieu.length === 0) return <TrangLoi loi={loi} khiThuLai={khiLamMoi} />;
+  if (loi && duLieu.length === 0)
+    return <TrangLoi loi={loi} khiThuLai={khiLamMoi} />;
 
   return (
     <FlatList
@@ -52,7 +54,7 @@ export const DanhSachCongThuc: FC<DanhSachCongThucProps> = ({
       numColumns={cot}
       key={cot}
       renderItem={({ item }) => (
-        <View className={cot > 1 ? 'flex-1 p-1' : undefined}>
+        <View className={cot > 1 ? "flex-1 p-1" : undefined}>
           <TheCongThuc
             duLieu={chuyenThanhDuLieuThe(item)}
             bienThe={bienThe}
@@ -64,12 +66,19 @@ export const DanhSachCongThuc: FC<DanhSachCongThucProps> = ({
         if (coTheTaiThem && !dangTaiThem) khiTaiThem?.();
       }}
       onEndReachedThreshold={0.5}
-      ListFooterComponent={dangTaiThem ? <TrangDangTai thongDiep="Đang tải thêm..." /> : null}
+      ListFooterComponent={
+        dangTaiThem ? <TrangDangTai thongDiep="Đang tải thêm..." /> : null
+      }
       ListEmptyComponent={
-        <TrangTrong tieuDe="Chưa có công thức" moTa="Hãy thử từ khóa khác hoặc tạo món mới" />
+        <TrangTrong
+          tieuDe="Chưa có công thức"
+          moTa="Hãy thử từ khóa khác hoặc tạo món mới"
+        />
       }
       refreshControl={
-        khiLamMoi ? <RefreshControl refreshing={dangTai} onRefresh={khiLamMoi} /> : undefined
+        khiLamMoi ? (
+          <RefreshControl refreshing={dangTai} onRefresh={khiLamMoi} />
+        ) : undefined
       }
     />
   );

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const apiErrorSchema = z.object({
   code: z.string(),
@@ -44,6 +44,12 @@ export const dinhDuongSchema = z.object({
   chatBeo: z.union([z.string(), z.number()]),
 });
 
+export const banGocSchema = z.object({
+  id: z.string(),
+  ten: z.string(),
+  tacGia: z.string(),
+});
+
 export const congThucSchema = z.object({
   id: z.string(),
   ten: z.string(),
@@ -53,6 +59,10 @@ export const congThucSchema = z.object({
   thoiGianChuanBiPhut: z.number().nullable(),
   khauPhan: z.number(),
   trangThai: z.string(),
+  // BR-FORK: Nguồn fork có thể vắng trong cache cũ nên optional
+  nguonGoc: banGocSchema.nullable().optional(),
+  // BR-SOC: Lượt tim, cache cũ thiếu thì coi như 0
+  luotYeuThich: z.number().optional(),
   tacGia: nguoiDungSchema,
   nguyenLieu: z.array(nguyenLieuSchema),
   cacBuoc: z.array(buocNauAnSchema),

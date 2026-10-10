@@ -1,20 +1,21 @@
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TaoBaoCaoDto {
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsUUID('4', { message: '[REP-00] recipeId không hợp lệ' })
+    // BR-SOC: Id món/bình luận là chuỗi tự do (seed dùng slug, món mới dùng uuid)
+    @IsString({ message: '[REP-00] recipeId không hợp lệ' })
     recipeId?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsUUID('4', { message: '[REP-00] recipeReferenceId không hợp lệ' })
+    @IsString({ message: '[REP-00] recipeReferenceId không hợp lệ' })
     recipeReferenceId?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsUUID('4', { message: '[REP-00] commentId không hợp lệ' })
+    @IsString({ message: '[REP-00] commentId không hợp lệ' })
     commentId?: string;
 
     @ApiProperty({ example: 'INAPPROPRIATE' })

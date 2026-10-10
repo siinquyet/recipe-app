@@ -44,8 +44,18 @@ export class RecipesService {
             include: { author: true },
         });
 
+        const banGocTuongTu = await this.layBanGocTheoId(items.map((r) => r.nguonGocId));
+        const demThichTuongTu = await this.demLuotYeuThich(items.map((r) => r.id));
         return {
-            noiDung: items.map((r) => this.toCongThuc(r, r.author)),
+            noiDung: items.map((r) =>
+                this.toCongThuc(
+                    r,
+                    r.author,
+                    undefined,
+                    banGocTuongTu.get(r.nguonGocId ?? '') ?? null,
+                    demThichTuongTu.get(r.id) ?? 0,
+                ),
+            ),
             tongSoPhanTu: items.length,
             tongSoTrang: 1,
         };
@@ -82,8 +92,18 @@ export class RecipesService {
 
         const tongSoTrang = Math.ceil(tongSoPhanTu / params.kichThuoc);
 
+        const banGocDanhSach = await this.layBanGocTheoId(items.map((r) => r.nguonGocId));
+        const demThichDanhSach = await this.demLuotYeuThich(items.map((r) => r.id));
         return {
-            noiDung: items.map((r) => this.toCongThuc(r, r.author)),
+            noiDung: items.map((r) =>
+                this.toCongThuc(
+                    r,
+                    r.author,
+                    undefined,
+                    banGocDanhSach.get(r.nguonGocId ?? '') ?? null,
+                    demThichDanhSach.get(r.id) ?? 0,
+                ),
+            ),
             tongSoPhanTu,
             tongSoTrang,
         };
@@ -114,8 +134,18 @@ export class RecipesService {
             }),
             this.prisma.recipe.count({ where }),
         ]);
+        const banGocTimKiem = await this.layBanGocTheoId(items.map((r) => r.nguonGocId));
+        const demThichTimKiem = await this.demLuotYeuThich(items.map((r) => r.id));
         return {
-            noiDung: items.map((r) => this.toCongThuc(r, r.author)),
+            noiDung: items.map((r) =>
+                this.toCongThuc(
+                    r,
+                    r.author,
+                    undefined,
+                    banGocTimKiem.get(r.nguonGocId ?? '') ?? null,
+                    demThichTimKiem.get(r.id) ?? 0,
+                ),
+            ),
             tongSoPhanTu,
             tongSoTrang: Math.ceil(tongSoPhanTu / kichThuoc),
         };
@@ -191,11 +221,19 @@ export class RecipesService {
                 nutrition: true,
             },
         });
-        return this.toCongThuc(recipe, recipe.author, {
-            ingredients: recipe.ingredients,
-            steps: recipe.steps,
-            nutrition: recipe.nutrition,
-        });
+        const banGoc = await this.layMotBanGoc(recipe.nguonGocId);
+        const thich = (await this.demLuotYeuThich([recipe.id])).get(recipe.id) ?? 0;
+        return this.toCongThuc(
+            recipe,
+            recipe.author,
+            {
+                ingredients: recipe.ingredients,
+                steps: recipe.steps,
+                nutrition: recipe.nutrition,
+            },
+            banGoc,
+            thich,
+        );
     }
 
     async capNhat(id: string, userId: string, dto: CapNhatCongThucDto) {
@@ -340,11 +378,19 @@ export class RecipesService {
             },
         });
         if (daCo) {
-            return this.toCongThuc(daCo, daCo.author, {
-                ingredients: daCo.ingredients,
-                steps: daCo.steps,
-                nutrition: daCo.nutrition,
-            });
+            const banGocDaCo = await this.layMotBanGoc(daCo.nguonGocId);
+            const thichDaCo = (await this.demLuotYeuThich([daCo.id])).get(daCo.id) ?? 0;
+            return this.toCongThuc(
+                daCo,
+                daCo.author,
+                {
+                    ingredients: daCo.ingredients,
+                    steps: daCo.steps,
+                    nutrition: daCo.nutrition,
+                },
+                banGocDaCo,
+                thichDaCo,
+            );
         }
         const banFork = await this.prisma.recipe.create({
             data: {
@@ -390,11 +436,19 @@ export class RecipesService {
                 nutrition: true,
             },
         });
-        return this.toCongThuc(banFork, banFork.author, {
-            ingredients: banFork.ingredients,
-            steps: banFork.steps,
-            nutrition: banFork.nutrition,
-        });
+        const banGocFork = await this.layMotBanGoc(banFork.nguonGocId);
+        const thichFork = (await this.demLuotYeuThich([banFork.id])).get(banFork.id) ?? 0;
+        return this.toCongThuc(
+            banFork,
+            banFork.author,
+            {
+                ingredients: banFork.ingredients,
+                steps: banFork.steps,
+                nutrition: banFork.nutrition,
+            },
+            banGocFork,
+            thichFork,
+        );
     }
 
     async layBanCaNhan(userId: string, gocId: string) {
@@ -411,11 +465,19 @@ export class RecipesService {
         if (!banFork) {
             return null;
         }
-        return this.toCongThuc(banFork, banFork.author, {
-            ingredients: banFork.ingredients,
-            steps: banFork.steps,
-            nutrition: banFork.nutrition,
-        });
+        const banGocFork = await this.layMotBanGoc(banFork.nguonGocId);
+        const thichFork = (await this.demLuotYeuThich([banFork.id])).get(banFork.id) ?? 0;
+        return this.toCongThuc(
+            banFork,
+            banFork.author,
+            {
+                ingredients: banFork.ingredients,
+                steps: banFork.steps,
+                nutrition: banFork.nutrition,
+            },
+            banGocFork,
+            thichFork,
+        );
     }
 
     async layChiTiet(id: string, nguoiXemId?: string) {
@@ -460,11 +522,47 @@ export class RecipesService {
             }
         }
 
-        return this.toCongThuc(recipe, recipe.author, {
-            ingredients: recipe.ingredients,
-            steps: recipe.steps,
-            nutrition: recipe.nutrition,
+        const banGoc = await this.layMotBanGoc(recipe.nguonGocId);
+        const thich = (await this.demLuotYeuThich([recipe.id])).get(recipe.id) ?? 0;
+        return this.toCongThuc(
+            recipe,
+            recipe.author,
+            {
+                ingredients: recipe.ingredients,
+                steps: recipe.steps,
+                nutrition: recipe.nutrition,
+            },
+            banGoc,
+            thich,
+        );
+    }
+
+    // BR-FORK: Tra cứu món gốc đã fork — batch 1 query cho list, null khi gốc đã xóa
+    private async layBanGocTheoId(ids: Array<string | null>) {
+        const duyNhat = [...new Set(ids.filter((id): id is string => !!id))];
+        if (duyNhat.length === 0) return new Map<string, { id: string; ten: string; tacGia: string }>();
+        const goc = await this.prisma.recipe.findMany({
+            where: { id: { in: duyNhat } },
+            include: { author: true },
         });
+        return new Map(goc.map((r) => [r.id, { id: r.id, ten: r.title, tacGia: r.author.displayName }]));
+    }
+
+    private async layMotBanGoc(nguonGocId: string | null) {
+        if (!nguonGocId) return null;
+        return (await this.layBanGocTheoId([nguonGocId])).get(nguonGocId) ?? null;
+    }
+
+    // BR-SOC: Đếm lượt yêu thích — batch 1 query groupBy cho list, tránh N+1
+    private async demLuotYeuThich(ids: string[]) {
+        const duyNhat = [...new Set(ids)];
+        if (duyNhat.length === 0) return new Map<string, number>();
+        const dem = await this.prisma.favorite.groupBy({
+            by: ['recipeId'],
+            where: { recipeId: { in: duyNhat } },
+            _count: { recipeId: true },
+        });
+        return new Map(dem.filter((d) => d.recipeId).map((d) => [d.recipeId as string, d._count.recipeId]));
     }
 
     private toCongThuc(
@@ -477,6 +575,7 @@ export class RecipesService {
             prepTimeMinutes: number | null;
             servings: number;
             status: string;
+            nguonGocId: string | null;
             createdAt: Date;
             updatedAt: Date;
         },
@@ -493,6 +592,8 @@ export class RecipesService {
             steps?: Array<{ stepOrder: number; content: string; imageUrl: string | null }>;
             nutrition?: { calories: number; protein: Prisma.Decimal; carbs: Prisma.Decimal; fat: Prisma.Decimal } | null;
         },
+        banGoc?: { id: string; ten: string; tacGia: string } | null,
+        luotYeuThich?: number,
     ) {
         // BR-ANTOAN: Gắn cảnh báo combo độc theo nguyên liệu — client hiện banner, không chặn đăng
         const tenNguyenLieu = extra?.ingredients ? extra.ingredients.map((i) => i.originalText) : [];
@@ -517,6 +618,10 @@ export class RecipesService {
             thoiGianChuanBiPhut: recipe.prepTimeMinutes,
             khauPhan: recipe.servings,
             trangThai: recipe.status,
+            // BR-FORK: Món fork mang theo nguồn gốc để app hiện huy hiệu cho người xem
+            nguonGoc: banGoc ?? null,
+            // BR-SOC: Lượt yêu thích để card và chi tiết hiện số tim
+            luotYeuThich: luotYeuThich ?? 0,
             tacGia: {
                 id: author.id,
                 email: author.email,

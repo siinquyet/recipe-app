@@ -1,9 +1,14 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { formatVn } from '@cook/shared';
-import { doiRole, khoaNguoiDung, layNguoiDung, moKhoaNguoiDung } from '../../api/admin';
-import { NhanTrangThai } from '../../components/admin/NhanTrangThai';
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { formatVn } from "@cook/shared";
+import {
+  doiRole,
+  khoaNguoiDung,
+  layNguoiDung,
+  moKhoaNguoiDung,
+} from "../../api/admin";
+import { NhanTrangThai } from "../../components/admin/NhanTrangThai";
 import {
   BangAdmin,
   ChipLoc,
@@ -12,33 +17,43 @@ import {
   PhanTrang,
   TheAdmin,
   TieuDeTrang,
-} from '../../components/admin/KhungAdmin';
+} from "../../components/admin/KhungAdmin";
 
 const KICH_THUOC = 20;
 const CAC_TRANG_THAI = [
-  { ma: '', nhan: 'Tất cả' },
-  { ma: 'ACTIVE', nhan: 'Đang hoạt động' },
-  { ma: 'BANNED', nhan: 'Bị khóa' },
+  { ma: "", nhan: "Tất cả" },
+  { ma: "ACTIVE", nhan: "Đang hoạt động" },
+  { ma: "BANNED", nhan: "Bị khóa" },
 ] as const;
 
 // BR-ADM: Quản lý người dùng — tìm kiếm, lọc trạng thái, khóa/mở, đổi role
 export function NguoiDung() {
   const [trang, setTrang] = useState(0);
-  const [tuKhoa, setTuKhoa] = useState('');
-  const [trangThai, setTrangThai] = useState('');
+  const [tuKhoa, setTuKhoa] = useState("");
+  const [trangThai, setTrangThai] = useState("");
   const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['admin', 'users', trang, trangThai],
-    queryFn: () => layNguoiDung(trang, KICH_THUOC, tuKhoa.trim() || undefined, trangThai || undefined),
+    queryKey: ["admin", "users", trang, trangThai],
+    queryFn: () =>
+      layNguoiDung(
+        trang,
+        KICH_THUOC,
+        tuKhoa.trim() || undefined,
+        trangThai || undefined,
+      ),
   });
   const lamMoi = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-    queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
   };
   const khoa = useMutation({ mutationFn: khoaNguoiDung, onSuccess: lamMoi });
-  const moKhoa = useMutation({ mutationFn: moKhoaNguoiDung, onSuccess: lamMoi });
+  const moKhoa = useMutation({
+    mutationFn: moKhoaNguoiDung,
+    onSuccess: lamMoi,
+  });
   const doi = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: 'USER' | 'ADMIN' }) => doiRole(id, role),
+    mutationFn: ({ id, role }: { id: string; role: "USER" | "ADMIN" }) =>
+      doiRole(id, role),
     onSuccess: lamMoi,
   });
 
@@ -51,8 +66,12 @@ export function NguoiDung() {
   if (isError || !data)
     return (
       <div className="p-4">
-        <p className="text-left text-red-600">Không tải được danh sách</p>
-        <button type="button" onClick={() => refetch()} className="mt-2 rounded bg-teal-600 px-4 py-2 text-white">
+        <p className="text-left text-danger">Không tải được danh sách</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="mt-2 rounded bg-primary px-4 py-2 text-white"
+        >
           Thử lại
         </button>
       </div>
@@ -60,22 +79,25 @@ export function NguoiDung() {
 
   return (
     <div>
-      <TieuDeTrang tieuDe={`Người dùng (${formatVn(data.tongSoPhanTu)})`} moTa="Khóa vi phạm, phân quyền điều hành" />
+      <TieuDeTrang
+        tieuDe={`Người dùng (${formatVn(data.tongSoPhanTu)})`}
+        moTa="Khóa vi phạm, phân quyền điều hành"
+      />
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') tim();
+            if (e.key === "Enter") tim();
           }}
           placeholder="Tìm email, tên..."
           aria-label="Tìm người dùng"
-          className="w-56 rounded-xl border-[1.5px] border-muted/40 bg-white px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-accent"
+          className="w-56 rounded-lg border-[1.5px] border-enterprise-border bg-white px-4 py-2.5 text-sm text-enterprise-text outline-none placeholder:text-enterprise-subtle focus:border-primary"
         />
         <button
           type="button"
           onClick={tim}
-          className="rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.01]"
+          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition "
         >
           Tìm
         </button>
@@ -94,7 +116,7 @@ export function NguoiDung() {
       </div>
       {data.noiDung.length === 0 ? (
         <TheAdmin>
-          <p className="text-left text-muted">Không tìm thấy ai.</p>
+          <p className="text-left text-enterprise-subtle">Không tìm thấy ai.</p>
         </TheAdmin>
       ) : (
         <TheAdmin className="p-2 md:p-3">
@@ -113,16 +135,29 @@ export function NguoiDung() {
             }
             hang={data.noiDung.map((nd, i) => (
               <tr key={nd.id}>
-                <ODuLieu className="number-vn">{trang * KICH_THUOC + i + 1}</ODuLieu>
-                <ODuLieu className="text-sm text-ink">{nd.email}</ODuLieu>
-                <ODuLieu className="text-sm font-semibold text-ink">{nd.tenHienThi}</ODuLieu>
-                <ODuLieu className="number-vn">{formatVn(nd.soBaiViet)}</ODuLieu>
+                <ODuLieu className="number-vn">
+                  {trang * KICH_THUOC + i + 1}
+                </ODuLieu>
+                <ODuLieu className="text-sm text-enterprise-text">
+                  {nd.email}
+                </ODuLieu>
+                <ODuLieu className="text-sm font-semibold text-enterprise-text">
+                  {nd.tenHienThi}
+                </ODuLieu>
+                <ODuLieu className="number-vn">
+                  {formatVn(nd.soBaiViet)}
+                </ODuLieu>
                 <ODuLieu>
                   <select
                     value={nd.vaiTro}
                     aria-label={`Đổi vai trò ${nd.email}`}
-                    onChange={(e) => doi.mutate({ id: nd.id, role: e.target.value as 'USER' | 'ADMIN' })}
-                    className="rounded-xl border-[1.5px] border-muted/40 bg-white px-2.5 py-1.5 text-sm font-semibold text-ink outline-none focus:border-accent"
+                    onChange={(e) =>
+                      doi.mutate({
+                        id: nd.id,
+                        role: e.target.value as "USER" | "ADMIN",
+                      })
+                    }
+                    className="rounded-lg border-[1.5px] border-enterprise-border bg-white px-2.5 py-1.5 text-sm font-semibold text-enterprise-text outline-none focus:border-primary"
                   >
                     <option value="USER">USER</option>
                     <option value="ADMIN">ADMIN</option>
@@ -131,14 +166,16 @@ export function NguoiDung() {
                 <ODuLieu>
                   <NhanTrangThai ma={nd.trangThai} />
                 </ODuLieu>
-                <ODuLieu className="text-sm">{format(new Date(nd.ngayTao), 'dd/MM/yyyy')}</ODuLieu>
+                <ODuLieu className="text-sm">
+                  {format(new Date(nd.ngayTao), "dd/MM/yyyy")}
+                </ODuLieu>
                 <ODuLieu>
-                  {nd.trangThai === 'BANNED' ? (
+                  {nd.trangThai === "BANNED" ? (
                     <button
                       type="button"
                       disabled={moKhoa.isPending}
                       onClick={() => moKhoa.mutate(nd.id)}
-                      className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-50"
+                      className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50"
                     >
                       Mở khóa
                     </button>
@@ -147,11 +184,15 @@ export function NguoiDung() {
                       type="button"
                       disabled={khoa.isPending}
                       onClick={() => {
-                        if (window.confirm(`Khóa tài khoản ${nd.email}? Người này sẽ không đăng nhập được.`)) {
+                        if (
+                          window.confirm(
+                            `Khóa tài khoản ${nd.email}? Người này sẽ không đăng nhập được.`,
+                          )
+                        ) {
                           khoa.mutate(nd.id);
                         }
                       }}
-                      className="rounded-xl border-[1.5px] border-danger/40 bg-white px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/5 disabled:opacity-50"
+                      className="rounded-lg border-[1.5px] border-danger/40 bg-white px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/5 disabled:opacity-50"
                     >
                       Khóa
                     </button>
